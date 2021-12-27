@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test'; // only npm dep needed for this file
 import { existsSync } from 'fs';
 
 if (!existsSync('auth.json')) {
