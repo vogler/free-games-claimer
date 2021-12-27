@@ -1,6 +1,7 @@
 {
   "scripts": {
     "login": "npx playwright open --save-storage=auth.json https://www.epicgames.com/login",
+    "codegen": "npx playwright codegen --load-storage=auth.json https://www.epicgames.com/store/en-US/free-games",
     "start": "npx playwright test --timeout 10000",
     "debug": "npx playwright test --debug"
   },
