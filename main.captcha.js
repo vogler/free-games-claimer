@@ -3,6 +3,7 @@ if (!existsSync('auth.json')) {
   console.error('Missing auth.json! Run `npm login` to login and create this file by closing the opened browser.');
 }
 
+// npm i playwright playwright-extra@next @extra/recaptcha@next
 const { chromium } = require('playwright-extra')
 
 // add recaptcha plugin and provide it your 2captcha token (= their apiKey)
