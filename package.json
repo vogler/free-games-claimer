@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "login": "npx playwright open --save-storage=auth.json https://www.epicgames.com/login",
+    "start": "npx playwright test --timeout 10000",
+    "debug": "npx playwright test --debug"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.17.1"
+  }
+}
