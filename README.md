@@ -1,6 +1,8 @@
 # epicgames-claimer
 ## usage
 
+Setup: `npm install && npx playwright install` (downloads {chromium, firefox, webkit} (742 MB) to cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries))).
+
 Run `npm login` which opens a browser where you can login. When closing the browser, it writes a file `auth.json` containing cookies that should keep you logged in for some time.
 
 Then use `npm start` to run Chrome in headless mode to claim the current free game.
