@@ -1,3 +1,4 @@
+//@ts-check
 const { existsSync } = require('fs');
 if (!existsSync('auth.json')) {
   console.error('Missing auth.json! Run `npm login` to login and create this file by closing the opened browser.');
@@ -50,10 +51,12 @@ const newStealthContext = async (browser, contextOptions = {}) => {
     channel: 'chrome',
     headless: false,
   });
+  /** @type {import('playwright').BrowserContext} */
   const context = await newStealthContext(browser, {
     storageState: 'auth.json',
     viewport: { width: 1280, height: 1280 },
   });
+  context.setDefaultTimeout(10000);
   const page = await context.newPage();
   await page.goto('https://www.epicgames.com/store/en-US/free-games');
   // await expect(page.locator('a[role="button"]:has-text("Sign In")')).toHaveCount(0);
