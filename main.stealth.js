@@ -11,14 +11,17 @@ const { chromium } = require('playwright'); // stealth plugin needs no outdated 
 
 // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
 const newStealthContext = async (browser, contextOptions = {}) => {
-  const dummyContext = await browser.newContext();
-  const originalUserAgent = await (await dummyContext.newPage()).evaluate(() => navigator.userAgent);
-  await dummyContext.close();
-  if (debug) console.log('userAgent:', originalUserAgent); // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/96.0.4664.110 Safari/537.36
-  const context = await browser.newContext({
-    ...contextOptions,
-    userAgent: originalUserAgent.replace("Headless", ""), // HeadlessChrome -> Chrome, TODO needed?
-  });
+  if (!debug) { // fix userAgent in headless mode
+    const dummyContext = await browser.newContext();
+    const originalUserAgent = await (await dummyContext.newPage()).evaluate(() => navigator.userAgent);
+    await dummyContext.close();
+    // console.log('originalUserAgent:', originalUserAgent); // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/96.0.4664.110 Safari/537.36
+    contextOptions = {
+      ...contextOptions,
+      userAgent: originalUserAgent.replace("Headless", ""), // HeadlessChrome -> Chrome, TODO needed?
+    };
+  }
+  const context = await browser.newContext(contextOptions);
   // https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth/evasions
   const enabledEvasions = [
     'chrome.app',
@@ -65,6 +68,7 @@ const newStealthContext = async (browser, contextOptions = {}) => {
   });
   if (!debug) context.setDefaultTimeout(10000);
   const page = await context.newPage();
+  if (debug) console.log('userAgent:', await page.evaluate(() => navigator.userAgent));
   await page.goto('https://www.epicgames.com/store/en-US/free-games');
   await page.click('button:has-text("Accept All Cookies")'); // to not waste screen space in --debug
   if (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
