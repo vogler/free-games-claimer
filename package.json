@@ -4,15 +4,11 @@
     "codegen": "npx playwright codegen --load-storage=auth.json https://www.epicgames.com/store/en-US/free-games",
     "start": "npx playwright test --timeout 10000",
     "debug": "npx playwright test --debug",
-    "captcha": "node main.captcha",
     "stealth": "node main.stealth"
   },
   "devDependencies": {
-    "@extra/recaptcha": "^4.2.1-next.616",
     "@playwright/test": "^1.17.1",
-    "dotenv": "^10.0.0",
     "playwright": "^1.17.1",
-    "playwright-extra": "^4.2.1-next.616",
     "puppeteer-extra-plugin-stealth": "^2.9.0"
   }
 }
