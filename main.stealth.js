@@ -2,6 +2,7 @@
 const { existsSync } = require('fs');
 if (!existsSync('auth.json')) {
   console.error('Missing auth.json! Run `npm login` to login and create this file by closing the opened browser.');
+  process.exit(1);
 }
 
 const { chromium } = require('playwright'); // stealth plugin needs no outdated playwright-extra
@@ -31,7 +32,7 @@ const newStealthContext = async (browser, contextOptions = {}) => {
     'webgl.vendor',
     'window.outerdimensions'
   ];
-  const evasions = enabledEvasions.map(e => new require(`puppeteer-extra-plugin-stealth/evasions/${e}`));
+  const evasions = enabledEvasions.map(e => require(`puppeteer-extra-plugin-stealth/evasions/${e}`));
   const stealth = {
     callbacks: [],
     async evaluateOnNewDocument(...args) {
@@ -59,8 +60,11 @@ const newStealthContext = async (browser, contextOptions = {}) => {
   context.setDefaultTimeout(10000);
   const page = await context.newPage();
   await page.goto('https://www.epicgames.com/store/en-US/free-games');
-  // await expect(page.locator('a[role="button"]:has-text("Sign In")')).toHaveCount(0);
   await page.click('button:has-text("Accept All Cookies")'); // to not waste screen space in --debug
+  if (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
+    console.error('Not signed in anymore. Run `npm login` to login again.');
+    process.exit(1);
+  }
   // click on banner to go to current free game. TODO what if there are multiple games?
   await page.click('[data-testid="offer-card-image-landscape"]');
   const game = await page.locator('h1 div').first().innerText();
