@@ -90,6 +90,10 @@ const newStealthContext = async (browser, contextOptions = {}) => {
     const iframe = page.frameLocator('#webPurchaseContainer iframe')
     await iframe.locator('button:has-text("Place Order")').click();
     await iframe.locator('button:has-text("I Agree")').click();
+    if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
+      console.error('Encountered hcaptcha. Giving up :(');
+      process.exit(1);
+    }
     // await iframe.locator('button.payment-purchase-close').click();
     console.log(await page.locator('[data-testid="purchase-cta-button"]').innerText());
     await page.pause();
