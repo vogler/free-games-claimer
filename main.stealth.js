@@ -5,12 +5,8 @@ if (!existsSync('auth.json')) {
 
 const { chromium } = require('playwright'); // stealth plugin needs no outdated playwright-extra
 
-(async () => {
-  const browser = await chromium.launch({
-    channel: 'chrome',
-    headless: true,
-  });
-  // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
+// stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
+const newStealthContext = async (browser) => {
   const originalUserAgent = await (await (await browser.newContext()).newPage()).evaluate(() => navigator.userAgent);
   console.log('userAgent:', originalUserAgent); // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/96.0.4664.110 Safari/537.36
   const context = await browser.newContext({
@@ -46,7 +42,16 @@ const { chromium } = require('playwright'); // stealth plugin needs no outdated 
   for (let evasion of stealth.callbacks) {
     await context.addInitScript(evasion.cb, evasion.a);
   }
+  return context;
+};
 
+// could change to .mjs to get top-level-await, but would then also need to change require to import and dynamic import for stealth below would just add more async/await
+(async () => {
+  const browser = await chromium.launch({
+    channel: 'chrome',
+    headless: true,
+  });
+  const context = await newStealthContext(browser);
   const page = await context.newPage();
   await page.goto('https://www.epicgames.com/store/en-US/free-games');
   // await expect(page.locator('a[role="button"]:has-text("Sign In")')).toHaveCount(0);
@@ -63,7 +68,7 @@ const { chromium } = require('playwright'); // stealth plugin needs no outdated 
     await page.click('button:has-text("Continue")');
     // it then creates an iframe for the rest
     // await page.frame({ url: /.*store\/purchase.*/ }).click('button:has-text("Place Order")'); // not found because it does not wait for iframe
-    const iframe = page.frameLocator('.webPurchaseContainer iframe')
+    const iframe = page.frameLocator('#webPurchaseContainer iframe')
     await iframe.locator('button:has-text("Place Order")').click();
     await iframe.locator('button:has-text("I Agree")').click();
     console.log(await page.locator('[data-testid="purchase-cta-button"]').innerText());
