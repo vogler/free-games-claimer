@@ -6,7 +6,7 @@ Setup: `npm install && npx playwright install` (downloads {chromium, firefox, we
 Run `npm login` which opens a browser where you can login. When closing the browser, it writes a file `auth.json` containing cookies that should keep you logged in for some time (`expires` in a month?).
 
 Then use `npm start` to run Chrome in headless mode to claim the current free game.
-If something goes wrong, try `npm start -- --debug` to investigate.
+If something goes wrong, use `PWDEBUG=1 npm start` to [inspect](https://playwright.dev/docs/inspector).
 
 ## log
 

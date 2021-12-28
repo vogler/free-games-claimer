@@ -5,8 +5,7 @@ if (!existsSync('auth.json')) {
   process.exit(1);
 }
 
-const args = process.argv.slice(2);
-const debug = args.includes('--debug');
+const debug = process.env.PWDEBUG == '1'; // runs headful and opens https://playwright.dev/docs/inspector
 
 const { chromium } = require('playwright'); // stealth plugin needs no outdated playwright-extra
 
@@ -52,15 +51,14 @@ const newStealthContext = async (browser, contextOptions = {}) => {
 // could change to .mjs to get top-level-await, but would then also need to change require to import and dynamic import for stealth below would just add more async/await
 (async () => {
   const browser = await chromium.launch({
-    channel: 'chrome',
-    headless: !debug,
+    channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
   });
   /** @type {import('playwright').BrowserContext} */
   const context = await newStealthContext(browser, {
     storageState: 'auth.json',
     viewport: { width: 1280, height: 1280 },
   });
-  context.setDefaultTimeout(10000);
+  if (!debug) context.setDefaultTimeout(10000);
   const page = await context.newPage();
   await page.goto('https://www.epicgames.com/store/en-US/free-games');
   await page.click('button:has-text("Accept All Cookies")'); // to not waste screen space in --debug
