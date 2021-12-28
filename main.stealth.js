@@ -6,12 +6,11 @@ if (!existsSync('auth.json')) {
 const { chromium } = require('playwright'); // stealth plugin needs no outdated playwright-extra
 
 // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
-const newStealthContext = async (browser) => {
+const newStealthContext = async (browser, contextOptions = {}) => {
   const originalUserAgent = await (await (await browser.newContext()).newPage()).evaluate(() => navigator.userAgent);
   console.log('userAgent:', originalUserAgent); // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/96.0.4664.110 Safari/537.36
   const context = await browser.newContext({
-    storageState: 'auth.json',
-    viewport: { width: 1280, height: 1280 },
+    ...contextOptions,
     userAgent: originalUserAgent.replace("Headless", ""), // HeadlessChrome -> Chrome
   });
   const enabledEvasions = [
@@ -49,9 +48,12 @@ const newStealthContext = async (browser) => {
 (async () => {
   const browser = await chromium.launch({
     channel: 'chrome',
-    headless: true,
+    headless: false,
   });
-  const context = await newStealthContext(browser);
+  const context = await newStealthContext(browser, {
+    storageState: 'auth.json',
+    viewport: { width: 1280, height: 1280 },
+  });
   const page = await context.newPage();
   await page.goto('https://www.epicgames.com/store/en-US/free-games');
   // await expect(page.locator('a[role="button"]:has-text("Sign In")')).toHaveCount(0);
@@ -71,6 +73,7 @@ const newStealthContext = async (browser) => {
     const iframe = page.frameLocator('#webPurchaseContainer iframe')
     await iframe.locator('button:has-text("Place Order")').click();
     await iframe.locator('button:has-text("I Agree")').click();
+    // await iframe.locator('button.payment-purchase-close').click();
     console.log(await page.locator('[data-testid="purchase-cta-button"]').innerText());
     await page.pause();
     // await context.waitForEvent("close");
