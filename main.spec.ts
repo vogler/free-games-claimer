@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'; // only npm dep needed for this
 import { existsSync } from 'fs';
 
 if (!existsSync('auth.json')) {
-  console.error('Missing auth.json! Run `npm login` to login and create this file by closing the opened browser.');
+  console.error('Missing auth.json! Use `npm run login` to login and create this file by closing the opened browser.');
 }
 test.use({
   storageState: 'auth.json',
