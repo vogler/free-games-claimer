@@ -19,17 +19,20 @@ const newStealthContext = async (browser, contextOptions = {}) => {
     ...contextOptions,
     userAgent: originalUserAgent.replace("Headless", ""), // HeadlessChrome -> Chrome, TODO needed?
   });
+  // https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth/evasions
   const enabledEvasions = [
     'chrome.app',
     'chrome.csi',
     'chrome.loadTimes',
     'chrome.runtime',
+    // 'defaultArgs',
     'iframe.contentWindow',
     'media.codecs',
     'navigator.hardwareConcurrency',
     'navigator.languages',
     'navigator.permissions',
     'navigator.plugins',
+    // 'navigator.vendor',
     'navigator.webdriver',
     'sourceurl',
     // 'user-agent-override', // doesn't work since playwright has no page.browser()
