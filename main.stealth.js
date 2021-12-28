@@ -42,7 +42,7 @@ const newStealthContext = async (browser, contextOptions = {}) => {
     'webgl.vendor',
     'window.outerdimensions'
   ];
-  const evasions = enabledEvasions.map(e => require(`puppeteer-extra-plugin-stealth/evasions/${e}`));
+  const evasions = enabledEvasions.map(e => new require(`puppeteer-extra-plugin-stealth/evasions/${e}`));
   const stealth = {
     callbacks: [],
     async evaluateOnNewDocument(...args) {
@@ -60,6 +60,7 @@ const newStealthContext = async (browser, contextOptions = {}) => {
 (async () => {
   const browser = await chromium.launch({
     channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
+    headless: false,
   });
   /** @type {import('playwright').BrowserContext} */
   const context = await newStealthContext(browser, {
