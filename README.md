@@ -3,9 +3,10 @@
 
 Setup: `npm install && npx playwright install` (downloads {chromium, firefox, webkit} (742 MB) to cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries))).
 
-Run `npm login` which opens a browser where you can login. When closing the browser, it writes a file `auth.json` containing cookies that should keep you logged in for some time.
+Run `npm login` which opens a browser where you can login. When closing the browser, it writes a file `auth.json` containing cookies that should keep you logged in for some time (`expires` in a month?).
 
 Then use `npm start` to run Chrome in headless mode to claim the current free game.
+If something goes wrong, try `npm start -- --debug` to investigate.
 
 ## log
 
@@ -22,3 +23,7 @@ Also, solving via [2captcha](https://2captcha.com?from=13225256) is a paid servi
 
 Added [main.stealth.js](https://github.com/vogler/epicgames-claimer/commit/64d0ba8ce71baec3947d1b64acd567befcb39340#diff-f70d3bd29df4a343f11062a97063953173491ce30fe34f69a0fc52517adbf342) which uses the stealth plugin without `playwright-extra` wrapper but up-to-date `playwright` (from [comment](https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212)).
 The listed evasions are enough to not show an hcaptcha. Script claimed game successfully in headful mode.
+
+Removed `main.captcha.js`.
+Using Playwright Test (`main.spec.ts`) instead of Library (`main.stealth.js`) has the advantage of free CLI like `--debug` and `--timeout`.
+TODO: check if stealth plugin can be setup with `contextOptions` ([doc](https://playwright.dev/docs/test-configuration#more-browser-and-context-options)).

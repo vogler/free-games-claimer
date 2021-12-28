@@ -5,12 +5,15 @@ if (!existsSync('auth.json')) {
   process.exit(1);
 }
 
+const args = process.argv.slice(2);
+const debug = args.includes('--debug');
+
 const { chromium } = require('playwright'); // stealth plugin needs no outdated playwright-extra
 
 // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
 const newStealthContext = async (browser, contextOptions = {}) => {
   const originalUserAgent = await (await (await browser.newContext()).newPage()).evaluate(() => navigator.userAgent);
-  console.log('userAgent:', originalUserAgent); // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/96.0.4664.110 Safari/537.36
+  if (debug) console.log('userAgent:', originalUserAgent); // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/96.0.4664.110 Safari/537.36
   const context = await browser.newContext({
     ...contextOptions,
     userAgent: originalUserAgent.replace("Headless", ""), // HeadlessChrome -> Chrome
@@ -50,7 +53,7 @@ const newStealthContext = async (browser, contextOptions = {}) => {
 (async () => {
   const browser = await chromium.launch({
     channel: 'chrome',
-    headless: false,
+    headless: !debug,
   });
   /** @type {import('playwright').BrowserContext} */
   const context = await newStealthContext(browser, {
