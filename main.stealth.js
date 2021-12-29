@@ -89,8 +89,11 @@ const newStealthContext = async (browser, contextOptions = {}) => {
   if (btnText.toLowerCase() == 'in library') {
     console.log('Already in library! Nothing to claim.');
   } else {
+    console.log('Not in library yet! Click GET.')
     await page.click('[data-testid="purchase-cta-button"]');
     // click Continue if 'Device not supported. This product is not compatible with your current device.'
+    // await page.waitForTimeout(1000); // wait for 1s since count does not wait.
+    await Promise.any([':has-text("Continue")', '#webPurchaseContainer iframe'].map(s => page.waitForSelector(s))); // wait for Continue xor iframe
     if (await page.locator(':has-text("Continue")').count() > 0) {
       console.log('Device not supported. This product is not compatible with your current device.');
       await page.click('button:has-text("Continue")');
