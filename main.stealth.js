@@ -60,14 +60,14 @@ const newStealthContext = async (browser, contextOptions = {}) => {
 (async () => {
   const browser = await chromium.launch({
     channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
-    headless: false,
+    // headless: false,
   });
   /** @type {import('playwright').BrowserContext} */
   const context = await newStealthContext(browser, {
     storageState: 'auth.json',
     viewport: { width: 1280, height: 1280 },
   });
-  if (!debug) context.setDefaultTimeout(10000);
+  if (!debug) context.setDefaultTimeout(10000); // 10s, default 30s
   const page = await context.newPage();
   if (debug) console.log('userAgent:', await page.evaluate(() => navigator.userAgent));
   await page.goto('https://www.epicgames.com/store/en-US/free-games');
@@ -80,12 +80,21 @@ const newStealthContext = async (browser, contextOptions = {}) => {
   await page.click('[data-testid="offer-card-image-landscape"]');
   const game = await page.locator('h1 div').first().innerText();
   console.log('Current free game:', game);
+  // click Continue if 'This game contains mature content recommended only for ages 18+'
+  if (await page.locator(':has-text("Continue")').count() > 0) {
+    console.log('This game contains mature content recommended only for ages 18+');
+    await page.click('button:has-text("Continue")');
+  }
   const btnText = await page.locator('[data-testid="purchase-cta-button"]').innerText();
   if (btnText.toLowerCase() == 'in library') {
     console.log('Already in library! Nothing to claim.');
   } else {
     await page.click('[data-testid="purchase-cta-button"]');
-    await page.click('button:has-text("Continue")');
+    // click Continue if 'Device not supported. This product is not compatible with your current device.'
+    if (await page.locator(':has-text("Continue")').count() > 0) {
+      console.log('Device not supported. This product is not compatible with your current device.');
+      await page.click('button:has-text("Continue")');
+    }
     // it then creates an iframe for the rest
     // await page.frame({ url: /.*store\/purchase.*/ }).click('button:has-text("Place Order")'); // not found because it does not wait for iframe
     const iframe = page.frameLocator('#webPurchaseContainer iframe')
