@@ -1,13 +1,10 @@
 //@ts-check
-const { existsSync } = require('fs');
-if (!existsSync('auth.json')) {
-  console.error('Missing auth.json! Use `npm run login` to login and create this file by closing the opened browser.');
-  process.exit(1);
-}
-
+const { chromium } = require('playwright'); // stealth plugin needs no outdated playwright-extra
 const debug = process.env.PWDEBUG == '1'; // runs headful and opens https://playwright.dev/docs/inspector
 
-const { chromium } = require('playwright'); // stealth plugin needs no outdated playwright-extra
+const URL_LOGIN = 'https://www.epicgames.com/login';
+const URL_CLAIM = 'https://www.epicgames.com/store/en-US/free-games';
+const TIMEOUT = 20 * 1000; // 20s, default is 30s
 
 // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
 const newStealthContext = async (browser, contextOptions = {}) => {
@@ -21,7 +18,20 @@ const newStealthContext = async (browser, contextOptions = {}) => {
       userAgent: originalUserAgent.replace("Headless", ""), // HeadlessChrome -> Chrome, TODO needed?
     };
   }
-  const context = await browser.newContext(contextOptions);
+};
+
+// could change to .mjs to get top-level-await, but would then also need to change require to import and dynamic import for stealth below would just add more async/await
+(async () => {
+  // https://playwright.dev/docs/auth#multi-factor-authentication
+  const context = await chromium.launchPersistentContext('userDataDir', {
+    channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
+    headless: false,
+    viewport: { width: 1280, height: 1280 },
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36', // see replace of Headless in newStealthContext above
+  });
+
+  // Without stealth plugin, the website shows an hcaptcha on login with username/password and in the last step of claiming a game. It may have other heuristics like unsuccessful logins as well. After <6h (TBD) it resets to no captcha again. Getting a new IP also resets.
+  // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
   // https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth/evasions
   const enabledEvasions = [
     'chrome.app',
@@ -53,65 +63,72 @@ const newStealthContext = async (browser, contextOptions = {}) => {
   for (let evasion of stealth.callbacks) {
     await context.addInitScript(evasion.cb, evasion.a);
   }
-  return context;
-};
+  // end stealth setup
 
-// could change to .mjs to get top-level-await, but would then also need to change require to import and dynamic import for stealth below would just add more async/await
-(async () => {
-  const browser = await chromium.launch({
-    channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
-    // headless: false,
-  });
-  /** @type {import('playwright').BrowserContext} */
-  const context = await newStealthContext(browser, {
-    storageState: 'auth.json',
-    viewport: { width: 1280, height: 1280 },
-  });
-  if (!debug) context.setDefaultTimeout(10000); // 10s, default 30s
-  const page = await context.newPage();
-  if (debug) console.log('userAgent:', await page.evaluate(() => navigator.userAgent));
-  await page.goto('https://www.epicgames.com/store/en-US/free-games');
-  await page.click('button:has-text("Accept All Cookies")'); // to not waste screen space in --debug
+  if (!debug) context.setDefaultTimeout(TIMEOUT);
+  const page = context.pages.length ? context.pages[0] : await context.newPage();
+  console.log('userAgent:', await page.evaluate(() => navigator.userAgent));
+  await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'}); // default 'load' takes forever
+  // with persistent context the cookie message will only show up the first time, so we can't unconditionally wait for it - just let the user click it.
+  // await page.click('button:has-text("Accept All Cookies")'); // to not waste screen space in --debug
   if (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
-    console.error('Not signed in anymore. Use `npm run login` to login again.');
-    process.exit(1);
+    console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page.");
+    context.setDefaultTimeout(0); // give user time to log in without timeout
+    await page.goto(URL_LOGIN, {waitUntil: 'domcontentloaded'});
+    // after login it just reloads the login page...
+    await page.waitForNavigation({url: URL_CLAIM});
+    context.setDefaultTimeout(TIMEOUT);
+    // process.exit(1);
   }
-  // click on banner to go to current free game. TODO what if there are multiple games?
-  await page.click('[data-testid="offer-card-image-landscape"]');
-  const game = await page.locator('h1 div').first().innerText();
-  console.log('Current free game:', game);
-  // click Continue if 'This game contains mature content recommended only for ages 18+'
-  if (await page.locator(':has-text("Continue")').count() > 0) {
-    console.log('This game contains mature content recommended only for ages 18+');
-    await page.click('button:has-text("Continue")');
-  }
-  const btnText = await page.locator('[data-testid="purchase-cta-button"]').innerText();
-  if (btnText.toLowerCase() == 'in library') {
-    console.log('Already in library! Nothing to claim.');
-  } else {
-    console.log('Not in library yet! Click GET.')
-    await page.click('[data-testid="purchase-cta-button"]');
-    // click Continue if 'Device not supported. This product is not compatible with your current device.'
-    // await page.waitForTimeout(1000); // wait for 1s since count does not wait.
-    await Promise.any([':has-text("Continue")', '#webPurchaseContainer iframe'].map(s => page.waitForSelector(s))); // wait for Continue xor iframe
+  console.log('Signed in.');
+  // click on each banner with 'Free Now'. TODO just extract the URLs and go to them in the loop
+  const game_sel = 'div[data-component="FreeOfferCard"]:has-text("Free Now")';
+  await page.waitForSelector(game_sel);
+  // const games = await page.$$(game_sel); // 'Element is not attached to the DOM' after navigation; had `for (const game of games) { await game.click(); ... }
+  const n = await page.locator(game_sel).count();
+  console.log(n);
+  for (let i=1; i<=n; i++) {
+    await page.click(`:nth-match(${game_sel}, ${i})`);
+    const title = await page.locator('h1 div').first().innerText();
+    console.log('Current free game:', title);
+    // click Continue if 'This game contains mature content recommended only for ages 18+'
     if (await page.locator(':has-text("Continue")').count() > 0) {
-      console.log('Device not supported. This product is not compatible with your current device.');
+      console.log('This game contains mature content recommended only for ages 18+');
       await page.click('button:has-text("Continue")');
     }
-    // it then creates an iframe for the rest
-    // await page.frame({ url: /.*store\/purchase.*/ }).click('button:has-text("Place Order")'); // not found because it does not wait for iframe
-    const iframe = page.frameLocator('#webPurchaseContainer iframe')
-    await iframe.locator('button:has-text("Place Order")').click();
-    await iframe.locator('button:has-text("I Agree")').click();
-    if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
-      console.error('Encountered hcaptcha. Giving up :(');
-      process.exit(1);
+    const btnText = await page.locator('[data-testid="purchase-cta-button"]').innerText();
+    if (btnText.toLowerCase() == 'in library') {
+      console.log('Already in library! Nothing to claim.');
+    } else {
+      console.log('Not in library yet! Click GET.')
+      await page.click('[data-testid="purchase-cta-button"]');
+      // click Continue if 'Device not supported. This product is not compatible with your current device.'
+      // await page.waitForTimeout(1000); // wait for 1s since count does not wait.
+      // @ts-ignore https://caniuse.com/?search=promise.any
+      await Promise.any([':has-text("Continue")', '#webPurchaseContainer iframe'].map(s => page.waitForSelector(s))); // wait for Continue xor iframe
+      if (await page.locator(':has-text("Continue")').count() > 0) {
+        console.log('Device not supported. This product is not compatible with your current device.');
+        await page.click('button:has-text("Continue")');
+      }
+      // it then creates an iframe for the rest
+      // await page.frame({ url: /.*store\/purchase.*/ }).click('button:has-text("Place Order")'); // not found because it does not wait for iframe
+      const iframe = page.frameLocator('#webPurchaseContainer iframe')
+      await iframe.locator('button:has-text("Place Order")').click();
+      await iframe.locator('button:has-text("I Agree")').click();
+      // This is true even when there is no capture shown! That was the reason why old.stealth.js worked - because it did not have this check...
+      // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
+      //   console.error('Encountered hcaptcha. Giving up :(');
+      //   await page.pause();
+      //   process.exit(1);
+      // }
+      await page.waitForSelector('text=Thank you for buying');
+      await page.pause();
     }
-    // await iframe.locator('button.payment-purchase-close').click();
-    console.log(await page.locator('[data-testid="purchase-cta-button"]').innerText());
-    await page.pause();
-    // await context.waitForEvent("close");
+    if (i<n) { // no need to go back if it's the last game
+      await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
+      await page.waitForSelector(game_sel);
+    }
   }
+  // await context.waitForEvent("close");
   await context.close();
-  await browser.close();
 })();

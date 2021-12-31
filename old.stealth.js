@@ -48,6 +48,7 @@ const { chromium } = require('playwright');
   }
 
   const page = await context.newPage();
+  console.log('userAgent:', await page.evaluate(() => navigator.userAgent));
   await page.goto('https://www.epicgames.com/store/en-US/free-games');
   // await expect(page.locator('a[role="button"]:has-text("Sign In")')).toHaveCount(0);
   await page.click('button:has-text("Accept All Cookies")'); // to not waste screen space in --debug

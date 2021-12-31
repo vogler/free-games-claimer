@@ -3,9 +3,10 @@
 
 Setup: `npm install && npx playwright install` (downloads {chromium, firefox, webkit} (742 MB) to cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries))).
 
-Use `npm run login` which opens a browser where you can login. When closing the browser, it writes a file `auth.json` containing cookies that should keep you logged in for some time (`expires` in a month?).
+<!-- Use `npm run login` which opens a browser where you can login. When closing the browser, it writes a file `auth.json` containing cookies that should keep you logged in for some time (`expires` in a month?). -->
 
-Then use `npm start` to run Chrome in headless mode to claim the current free game.
+Use `npm start` to start Chrome to claim the current free games.
+The first time, the script will wait for you to login. Instead of redirecting back, the website seems to just reload the login URL. Go to https://www.epicgames.com/store/en-US/free-games manually, or restart the script.
 If something goes wrong, use `PWDEBUG=1 npm start` to [inspect](https://playwright.dev/docs/inspector).
 
 ## log
