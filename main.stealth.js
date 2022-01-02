@@ -71,7 +71,7 @@ const newStealthContext = async (browser, contextOptions = {}) => {
   await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'}); // default 'load' takes forever
   // with persistent context the cookie message will only show up the first time, so we can't unconditionally wait for it - just let the user click it.
   // await page.click('button:has-text("Accept All Cookies")'); // to not waste screen space in --debug
-  if (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
+  while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
     console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page.");
     context.setDefaultTimeout(0); // give user time to log in without timeout
     await page.goto(URL_LOGIN, {waitUntil: 'domcontentloaded'});
