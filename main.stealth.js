@@ -115,7 +115,7 @@ const newStealthContext = async (browser, contextOptions = {}) => {
       const iframe = page.frameLocator('#webPurchaseContainer iframe')
       await iframe.locator('button:has-text("Place Order")').click();
       await iframe.locator('button:has-text("I Agree")').click();
-      // This is true even when there is no capture shown! That was the reason why old.stealth.js worked - because it did not have this check...
+      // This is true even when there is no captcha shown! That was the reason why old.stealth.js worked - it did not have this check... TODO check for hcaptcha
       // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
       //   console.error('Encountered hcaptcha. Giving up :(');
       //   await page.pause();
