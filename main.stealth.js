@@ -86,7 +86,7 @@ const newStealthContext = async (browser, contextOptions = {}) => {
   await page.waitForSelector(game_sel);
   // const games = await page.$$(game_sel); // 'Element is not attached to the DOM' after navigation; had `for (const game of games) { await game.click(); ... }
   const n = await page.locator(game_sel).count();
-  console.log(n);
+  console.log('Number of free games:', n);
   for (let i=1; i<=n; i++) {
     await page.click(`:nth-match(${game_sel}, ${i})`);
     const title = await page.locator('h1 div').first().innerText();
@@ -122,6 +122,7 @@ const newStealthContext = async (browser, contextOptions = {}) => {
       //   process.exit(1);
       // }
       await page.waitForSelector('text=Thank you for buying');
+      console.log('Claimed successfully!');
       await page.pause();
     }
     if (i<n) { // no need to go back if it's the last game
