@@ -71,7 +71,7 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
   }
   console.log('Signed in.');
   const game_sel = 'div[data-a-target="offer-list-FGWP_FULL"] .offer__action:has-text("Claim game")';
-  await page.waitForSelector(game_sel); // TODO this will just time out if all games are already claimed!
+  await page.waitForSelector('div[data-a-target="offer-list-FGWP_FULL"]');
   const n = await page.locator(game_sel).count();
   console.log('Number of free unclaimed games:', n);
   console.log('Number of already claimed games:', await page.locator('div[data-a-target="offer-list-FGWP_FULL"] p:has-text("Claimed")').count());
@@ -84,6 +84,27 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
     console.log('Current free game:', title);
     await (await card.$('button')).click();
     // await page.pause();
+  }
+  // claim games in linked stores. Origin: key, Epic Games Store: linked
+  {
+    const game_sel = 'div[data-a-target="offer-list-FGWP_FULL"] .offer__action:has(p:text-is("Claim"))';
+    do {
+      let n = await page.locator(game_sel).count();
+      console.log('Number of free unclaimed games in external stores:', n);
+      const card = await page.$(game_sel);
+      if (!card) break;
+      const title = await (await card.$('h3')).innerText();
+      console.log('Current free game:', title);
+      await (await card.$('button')).click();
+      // await page.waitForNavigation();
+      await page.click('button:has-text("Claim now")');
+      // TODO only Origin shows a key, check for 'Claimed' or code
+      const code = await page.inputValue('input');
+      console.log('Code to redeem game:', code);
+      // await page.pause();
+      await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
+      n = await page.locator(game_sel).count();
+    } while (n);
   }
   await context.close();
 })();
