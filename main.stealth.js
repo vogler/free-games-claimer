@@ -6,20 +6,6 @@ const URL_LOGIN = 'https://www.epicgames.com/login';
 const URL_CLAIM = 'https://www.epicgames.com/store/en-US/free-games';
 const TIMEOUT = 20 * 1000; // 20s, default is 30s
 
-// stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
-const newStealthContext = async (browser, contextOptions = {}) => {
-  if (!debug) { // fix userAgent in headless mode
-    const dummyContext = await browser.newContext();
-    const originalUserAgent = await (await dummyContext.newPage()).evaluate(() => navigator.userAgent);
-    await dummyContext.close();
-    // console.log('originalUserAgent:', originalUserAgent); // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/96.0.4664.110 Safari/537.36
-    contextOptions = {
-      ...contextOptions,
-      userAgent: originalUserAgent.replace("Headless", ""), // HeadlessChrome -> Chrome, TODO needed?
-    };
-  }
-};
-
 // could change to .mjs to get top-level-await, but would then also need to change require to import and dynamic import for stealth below would just add more async/await
 (async () => {
   // https://playwright.dev/docs/auth#multi-factor-authentication
@@ -27,7 +13,7 @@ const newStealthContext = async (browser, contextOptions = {}) => {
     channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
     headless: false,
     viewport: { width: 1280, height: 1280 },
-    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36', // see replace of Headless in newStealthContext above. TODO update if browser is updated!
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO update if browser is updated!
   });
 
   // Without stealth plugin, the website shows an hcaptcha on login with username/password and in the last step of claiming a game. It may have other heuristics like unsuccessful logins as well. After <6h (TBD) it resets to no captcha again. Getting a new IP also resets.
@@ -66,11 +52,17 @@ const newStealthContext = async (browser, contextOptions = {}) => {
   // end stealth setup
 
   if (!debug) context.setDefaultTimeout(TIMEOUT);
-  const page = context.pages.length ? context.pages[0] : await context.newPage();
+  const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
   console.log('userAgent:', await page.evaluate(() => navigator.userAgent));
+
+  const clickIfExists = async selector => {
+    if (await page.locator(selector).count() > 0)
+      await page.click(selector);
+  };
+
   await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'}); // default 'load' takes forever
-  // with persistent context the cookie message will only show up the first time, so we can't unconditionally wait for it - just let the user click it.
-  // await page.click('button:has-text("Accept All Cookies")'); // to not waste screen space in --debug
+  // with persistent context the cookie message will only show up the first time, so we can't unconditionally wait for it - try to catch it or let the user click it.
+  await clickIfExists('button:has-text("Accept All Cookies")'); // to not waste screen space in --debug
   while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
     console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page.");
     context.setDefaultTimeout(0); // give user time to log in without timeout
