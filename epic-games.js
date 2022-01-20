@@ -115,7 +115,7 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
       // }
       await page.waitForSelector('text=Thank you for buying');
       console.log('Claimed successfully!');
-      await page.pause();
+      // await page.pause();
     }
     if (i<n) { // no need to go back if it's the last game
       await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
