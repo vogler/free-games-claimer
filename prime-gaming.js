@@ -9,7 +9,7 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
 // could change to .mjs to get top-level-await, but would then also need to change require to import and dynamic import for stealth below would just add more async/await
 (async () => {
   // https://playwright.dev/docs/auth#multi-factor-authentication
-  const context = await chromium.launchPersistentContext('userDataDir', {
+  const context = await chromium.launchPersistentContext(`${__dirname}\\userDataDir`, {
     channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
     headless: false,
     viewport: { width: 1280, height: 1280 },
