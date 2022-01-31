@@ -1,5 +1,6 @@
 //@ts-check
 const { chromium } = require('playwright'); // stealth plugin needs no outdated playwright-extra
+const path = require('path');
 const debug = process.env.PWDEBUG == '1'; // runs headful and opens https://playwright.dev/docs/inspector
 
 // const URL_LOGIN = 'https://www.amazon.de/ap/signin'; // wrong. needs some session args to be valid?
@@ -9,7 +10,7 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
 // could change to .mjs to get top-level-await, but would then also need to change require to import and dynamic import for stealth below would just add more async/await
 (async () => {
   // https://playwright.dev/docs/auth#multi-factor-authentication
-  const context = await chromium.launchPersistentContext('userDataDir', {
+  const context = await chromium.launchPersistentContext(path.resolve(__dirname, 'userDataDir'), {
     channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
     headless: false,
     viewport: { width: 1280, height: 1280 },
