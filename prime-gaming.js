@@ -100,7 +100,7 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
       // await page.waitForNavigation();
       await page.click('button:has-text("Claim now")');
       // TODO only Origin shows a key, check for 'Claimed' or code
-      const code = await page.inputValue('input');
+      const code = await page.inputValue('input[type="text"]');
       console.log('Code to redeem game:', code);
       // await page.pause();
       await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
