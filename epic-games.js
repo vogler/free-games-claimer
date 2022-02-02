@@ -1,7 +1,7 @@
 //@ts-check
 const { chromium } = require('playwright'); // stealth plugin needs no outdated playwright-extra
 const path = require('path');
-const debug = process.env.PWDEBUG == '1'; // runs headful and opens https://playwright.dev/docs/inspector
+const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
 
 const URL_LOGIN = 'https://www.epicgames.com/login';
 const URL_CLAIM = 'https://www.epicgames.com/store/en-US/free-games';
@@ -64,7 +64,7 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
   await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'}); // default 'load' takes forever
   // with persistent context the cookie message will only show up the first time, so we can't unconditionally wait for it - try to catch it or let the user click it.
   await clickIfExists('button:has-text("Accept All Cookies")'); // to not waste screen space in --debug
-  while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
+  while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) { // TODO also check alternative for signed-in state
     console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page.");
     context.setDefaultTimeout(0); // give user time to log in without timeout
     await page.goto(URL_LOGIN, {waitUntil: 'domcontentloaded'});
@@ -96,7 +96,6 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
       console.log('Not in library yet! Click GET.')
       await page.click('[data-testid="purchase-cta-button"]');
       // click Continue if 'Device not supported. This product is not compatible with your current device.'
-      // await page.waitForTimeout(1000); // wait for 1s since count does not wait.
       // @ts-ignore https://caniuse.com/?search=promise.any
       await Promise.any([':has-text("Continue")', '#webPurchaseContainer iframe'].map(s => page.waitForSelector(s))); // wait for Continue xor iframe
       if (await page.locator(':has-text("Continue")').count() > 0) {
@@ -107,15 +106,25 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
       // await page.frame({ url: /.*store\/purchase.*/ }).click('button:has-text("Place Order")'); // not found because it does not wait for iframe
       const iframe = page.frameLocator('#webPurchaseContainer iframe')
       await iframe.locator('button:has-text("Place Order")').click();
+      // await page.pause();
       await iframe.locator('button:has-text("I Agree")').click();
-      // This is true even when there is no captcha shown! That was the reason why old.stealth.js worked - it did not have this check... TODO check for hcaptcha
+      // This is true even when there is no captcha challenge shown! That was the reason why old.stealth.js worked - it did not have this check... TODO check for hcaptcha
       // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
       //   console.error('Encountered hcaptcha. Giving up :(');
       //   await page.pause();
       //   process.exit(1);
       // }
-      await page.waitForSelector('text=Thank you for buying');
-      console.log('Claimed successfully!');
+      // await page.waitForTimeout(3000);
+      try {
+        await page.waitForSelector('text=Thank you for buying');
+        console.log('Claimed successfully!');
+      } catch (e) {
+        console.log(e);
+        const p = `screenshots/${new Date().toISOString()}.png`;
+        await page.screenshot({ path: p, fullPage: true })
+        console.info('Saved a screenshot of hcaptcha challenge to', p);
+        console.error('Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
+      }
       // await page.pause();
     }
     if (i<n) { // no need to go back if it's the last game

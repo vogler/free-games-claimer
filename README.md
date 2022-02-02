@@ -28,7 +28,7 @@ Claiming the Amazon Games works, external Epic Games also work if the account is
 Origin needs testing - it shows a key, which should be printed to the console, but the selector may be wrong.
 Other stores not tested.
 
-## Log
+## DevLog
 
 Tried [epicgames-freebies-claimer](https://github.com/Revadike/epicgames-freebies-claimer), but does not work anymore since epicgames introduced hcaptcha (see [issue](https://github.com/Revadike/epicgames-freebies-claimer/issues/172)).
 
@@ -43,7 +43,7 @@ Also, solving via [2captcha](https://2captcha.com?from=13225256) is a paid servi
 <!-- Alternative: https://anti-captcha.com -->
 
 Added [main.stealth.js](https://github.com/vogler/epicgames-claimer/commit/64d0ba8ce71baec3947d1b64acd567befcb39340#diff-f70d3bd29df4a343f11062a97063953173491ce30fe34f69a0fc52517adbf342) which uses the stealth plugin without `playwright-extra` wrapper but up-to-date `playwright` (from [comment](https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212)).
-The listed evasions are enough to not show an hcaptcha. Script claimed game successfully in headful mode.
+The listed evasions are enough to not show an hcaptcha. Script claimed game successfully in non-headless mode.
 
 Removed `main.captcha.js`.
 Using Playwright Test (`main.spec.ts`) instead of Library (`main.stealth.js`) has the advantage of free CLI like `--debug` and `--timeout`.
@@ -52,3 +52,5 @@ Using Playwright Test (`main.spec.ts`) instead of Library (`main.stealth.js`) ha
 Button selectors should preferably use text in order to be more stable against changes in the DOM.
 
 Renamed repository from epicgames-claimer to free-games-claimer since a script for Amazon Prime Gaming was also added. Removed all old scripts in favor of just `epic-games.js` and `prime-gaming.js`.
+
+epic games: `headless` mode gets hcaptcha challenge. More details/references in [issue](https://github.com/vogler/free-games-claimer/issues/2).
