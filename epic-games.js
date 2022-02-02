@@ -15,6 +15,10 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
     headless: false,
     viewport: { width: 1280, height: 1280 },
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO update if browser is updated!
+    args: [ // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.', but flags below don't work.
+      '--disable-session-crashed-bubble',
+      '--restore-last-session',
+    ],
   });
 
   // Without stealth plugin, the website shows an hcaptcha on login with username/password and in the last step of claiming a game. It may have other heuristics like unsuccessful logins as well. After <6h (TBD) it resets to no captcha again. Getting a new IP also resets.
