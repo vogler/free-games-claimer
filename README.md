@@ -1,34 +1,44 @@
 # free-games-claimer
-## Usage
+Claims free games on
+- [Epic Games Store](https://www.epicgames.com/store/free-games)
+- [Amazon Prime Gaming](https://gaming.amazon.com)
+- PRs welcome :)
 
-Setup: `npm install && npx playwright install`
+## Setup
+... should be the same on Windows/macOS/Linux:
+
+1. [Install Node.js](https://nodejs.org/en/download)
+2. Clone/download this repository and `cd` into it in a terminal
+3. Run `npm install && npx playwright install`
 
 This downloads {chromium, firefox, webkit} (742 MB) to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
 
+## Usage
 <!-- Use `npm run login` which opens a browser where you can login. When closing the browser, it writes a file `auth.json` containing cookies that should keep you logged in for some time (`expires` in a month?). -->
 
-So far, claiming free games has only been implemented for the two stores below.
-Both start an automated Chrome instance. It will first check if you are logged in, and if not wait for you to do so. After login, you can also restart the script if it does not redirect back.
+Both scripts start an automated Chrome instance. It will first check if you are logged in, and if not wait for you to do so. After login, you can also restart the script if it does not redirect back.
 
 If something goes wrong, use `PWDEBUG=1 node epic-games` to [inspect](https://playwright.dev/docs/inspector).
 
-Ideally, claiming would run in *headless mode* (without browser GUI - comment out `headless: false` to test), and on a RPi:
-- Epic Games Store detects running in headless mode (despite stealth plugin) and gets stuck with a captcha challenge. Did not test it yet for Prime Gaming.
-- Playwright seems to not run on (headless) RPi?
+Ideally, claiming would run in *headless mode* (without browser GUI - comment out `headless: false` to test), and on a Raspberry Pi:
+- Epic Games Store detects running in headless mode (despite stealth plugin) and gets stuck with a captcha challenge ([issue](https://github.com/vogler/free-games-claimer/issues/2)). Did not test it yet for Prime Gaming.
+- Playwright seems to not run on (headless) RPi? See [issue](https://github.com/vogler/free-games-claimer/issues/3).
 
 ### Epic Games Store
-Command: `node epic-games`
+Run `node epic-games`
 
 Login: Instead of redirecting back, the website seems to just reload the login URL. Go to https://www.epicgames.com/store/en-US/free-games manually, or restart the script.
 
 ### Amazon Prime Gaming
-Command: `node prime-gaming` 
+Run `node prime-gaming` 
 
 Claiming the Amazon Games works, external Epic Games also work if the account is linked.
 Origin needs testing - it shows a key, which should be printed to the console, but the selector may be wrong.
 Other stores not tested.
 
-## DevLog
+## History/DevLog
+<details>
+  <summary>Click to expand</summary>
 
 Tried [epicgames-freebies-claimer](https://github.com/Revadike/epicgames-freebies-claimer), but does not work anymore since epicgames introduced hcaptcha (see [issue](https://github.com/Revadike/epicgames-freebies-claimer/issues/172)).
 
@@ -54,3 +64,5 @@ Button selectors should preferably use text in order to be more stable against c
 Renamed repository from epicgames-claimer to free-games-claimer since a script for Amazon Prime Gaming was also added. Removed all old scripts in favor of just `epic-games.js` and `prime-gaming.js`.
 
 epic games: `headless` mode gets hcaptcha challenge. More details/references in [issue](https://github.com/vogler/free-games-claimer/issues/2).
+
+</details>
