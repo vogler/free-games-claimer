@@ -36,6 +36,16 @@ Claiming the Amazon Games works, external Epic Games also work if the account is
 Origin needs testing - it shows a key, which should be printed to the console, but the selector may be wrong.
 Other stores not tested.
 
+### Run periodically
+Epic Games releases one (sometimes more) free game *every week*, but around christmas every day.
+Prime Gaming has new games *every month*.
+
+It is save to run both scripts every day. Since they are not running headless, it makes sense to run them at a time or on a machine that you are not actively using at that point. You could run them in a virtual machine, on a server, or you wake your PC at night to do it.
+
+- Linux/macOS: `crontab -e`
+- macOS: [launchd](https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often)
+- Windows: [task scheduler](https://active-directory-wp.com/docs/Usage/How_to_add_a_cron_job_on_Windows/Scheduled_tasks_and_cron_jobs_on_Windows/index.html), [other options](https://stackoverflow.com/questions/132971/what-is-the-windows-version-of-cron)
+
 ## History/DevLog
 <details>
   <summary>Click to expand</summary>
