@@ -33,7 +33,7 @@ Login: Instead of redirecting back, the website seems to just reload the login U
 Run `node prime-gaming` 
 
 Claiming the Amazon Games works, external Epic Games also work if the account is linked.
-Origin needs testing - it shows a key, which should be printed to the console, but the selector may be wrong.
+Keys for Origin and GOG should be printed to the console and need to be redeemed manually at the moment.
 Other stores not tested.
 
 ### Run periodically
