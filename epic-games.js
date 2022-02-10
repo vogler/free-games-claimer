@@ -109,7 +109,7 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
       // it then creates an iframe for the rest
       // await page.frame({ url: /.*store\/purchase.*/ }).click('button:has-text("Place Order")'); // not found because it does not wait for iframe
       const iframe = page.frameLocator('#webPurchaseContainer iframe')
-      await iframe.locator('button:has-text("Place Order")').click();
+      await iframe.locator('button[class~="payment-btn"]').click();
       // await page.pause();
       await iframe.locator('button:has-text("I Agree")').click();
       // This is true even when there is no captcha challenge shown! That was the reason why old.stealth.js worked - it did not have this check... TODO check for hcaptcha
