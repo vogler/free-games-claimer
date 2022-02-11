@@ -15,7 +15,8 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
     headless: false,
     viewport: { width: 1280, height: 1280 },
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO update if browser is updated!
-    args: [ // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.', but flags below don't work.
+    locale: "en-US",
+	args: [ // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.', but flags below don't work.
       '--disable-session-crashed-bubble',
       '--restore-last-session',
     ],
@@ -109,9 +110,9 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
       // it then creates an iframe for the rest
       // await page.frame({ url: /.*store\/purchase.*/ }).click('button:has-text("Place Order")'); // not found because it does not wait for iframe
       const iframe = page.frameLocator('#webPurchaseContainer iframe')
-      await iframe.locator('button[class~="payment-btn"]').click();
+      await iframe.locator('button:has-text("Place Order")').click();
       // await page.pause();
-      await iframe.locator('button:has-text("I Agree")').click();
+      // await iframe.locator('button:has-text("I Agree")').click();
       // This is true even when there is no captcha challenge shown! That was the reason why old.stealth.js worked - it did not have this check... TODO check for hcaptcha
       // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
       //   console.error('Encountered hcaptcha. Giving up :(');
