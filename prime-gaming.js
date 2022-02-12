@@ -15,6 +15,7 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
     headless: false,
     viewport: { width: 1280, height: 1280 },
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36', // see replace of Headless in newStealthContext above. TODO update if browser is updated!
+    locale: "en-US", // ignore OS locale to be sure to have english text for locators
   });
 
   // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
