@@ -112,7 +112,7 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
       const iframe = page.frameLocator('#webPurchaseContainer iframe')
       await iframe.locator('button:has-text("Place Order")').click();
       // await page.pause();
-      // await iframe.locator('button:has-text("I Agree")').click();
+      await Promise.any(['button:has-text("I Agree")', '#webPurchaseContainer iframe'].map(s => page.click(s)));
       // This is true even when there is no captcha challenge shown! That was the reason why old.stealth.js worked - it did not have this check... TODO check for hcaptcha
       // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
       //   console.error('Encountered hcaptcha. Giving up :(');
