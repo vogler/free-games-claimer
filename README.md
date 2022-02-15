@@ -9,14 +9,14 @@ Claims free games on
 
 1. [Install Node.js](https://nodejs.org/en/download)
 2. Clone/download this repository and `cd` into it in a terminal
-3. Run `npm install && npx playwright install`
+3. Run `npm install && npx playwright install chromium`
 
-This downloads {chromium, firefox, webkit} (742 MB) to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
+This downloads Chromium (337 MB) to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
 
 ## Usage
 <!-- Use `npm run login` which opens a browser where you can login. When closing the browser, it writes a file `auth.json` containing cookies that should keep you logged in for some time (`expires` in a month?). -->
 
-Both scripts start an automated Chrome instance. It will first check if you are logged in, and if not wait for you to do so. After login, you can also restart the script if it does not redirect back.
+Both scripts start an automated Chromium instance. It will first check if you are logged in, and if not wait for you to do so. After login, you can also restart the script if it does not redirect back.
 
 If something goes wrong, use `PWDEBUG=1 node epic-games` to [inspect](https://playwright.dev/docs/inspector).
 
