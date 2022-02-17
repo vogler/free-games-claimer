@@ -112,7 +112,13 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
       const iframe = page.frameLocator('#webPurchaseContainer iframe')
       await iframe.locator('button:has-text("Place Order")').click();
       // await page.pause();
-      await iframe.locator('button:has-text("I Agree")').click();
+      // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
+      const btnAgree = iframe.locator('button:has-text("I Agree")');
+      // @ts-ignore https://caniuse.com/?search=promise.any
+      await Promise.any([btnAgree.waitFor(), page.waitForSelector('text=Thank you for buying')]); // TODO non-EU case will fail with timeout here instead of below; could pull up try, but then it would cover future hcaptcha solving for headless as well
+      // await clickIfExists('button:has-text("I Agree")', iframe); // default arg: FrameLocator is incompatible with Page and even Locator...
+      if (await btnAgree.count() > 0)
+        await btnAgree.click();
       // This is true even when there is no captcha challenge shown! That was the reason why old.stealth.js worked - it did not have this check... TODO check for hcaptcha
       // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
       //   console.error('Encountered hcaptcha. Giving up :(');
