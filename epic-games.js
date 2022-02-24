@@ -114,20 +114,20 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
       // await page.pause();
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
       const btnAgree = iframe.locator('button:has-text("I Agree")');
-      // @ts-ignore https://caniuse.com/?search=promise.any
-      await Promise.any([btnAgree.waitFor(), page.waitForSelector('text=Thank you for buying')]); // TODO non-EU case will fail with timeout here instead of below; could pull up try, but then it would cover future hcaptcha solving for headless as well
-      // await clickIfExists('button:has-text("I Agree")', iframe); // default arg: FrameLocator is incompatible with Page and even Locator...
-      if (await btnAgree.count() > 0)
-        await btnAgree.click();
-      // This is true even when there is no captcha challenge shown! That was the reason why old.stealth.js worked - it did not have this check... TODO check for hcaptcha
-      // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
-      //   console.error('Encountered hcaptcha. Giving up :(');
-      //   await page.pause();
-      //   process.exit(1);
-      // }
-      // await page.waitForTimeout(3000);
       try {
-        await page.waitForSelector('text=Thank you for buying');
+        // @ts-ignore https://caniuse.com/?search=promise.any
+        await Promise.any([btnAgree.waitFor(), page.waitForSelector('text=Thank you for buying')]); // EU: wait for agree button, non-EU: potentially done
+        // await clickIfExists('button:has-text("I Agree")', iframe); // default arg: FrameLocator is incompatible with Page and even Locator...
+        if (await btnAgree.count() > 0)
+          await btnAgree.click();
+        // TODO check for hcaptcha - the following is even true when no captcha is shown...
+        // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
+        //   console.error('Encountered hcaptcha. Giving up :(');
+        //   await page.pause();
+        //   process.exit(1);
+        // }
+        // await page.waitForTimeout(3000);
+        await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again
         console.log('Claimed successfully!');
       } catch (e) {
         console.log(e);
