@@ -1,7 +1,12 @@
+// https://stackoverflow.com/questions/46745014/alternative-for-dirname-in-node-js-when-using-es6-modules
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+export const __filename = fileURLToPath(import.meta.url);
+export const __dirname = path.dirname(__filename);
 
 // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
-const newStealthContext = async (browser, contextOptions = {}) => {
-  if (!debug) { // fix userAgent in headless mode
+const newStealthContext = async (browser, contextOptions = {}, debug = false) => {
+  if (!debug) { // only need to fix userAgent in headless mode
     const dummyContext = await browser.newContext();
     const originalUserAgent = await (await dummyContext.newPage()).evaluate(() => navigator.userAgent);
     await dummyContext.close();
@@ -13,7 +18,7 @@ const newStealthContext = async (browser, contextOptions = {}) => {
   }
 };
 
-const stealth = async (context) => {
+export const stealth = async (context) => {
   // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
   // https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth/evasions
   const enabledEvasions = [
@@ -35,17 +40,17 @@ const stealth = async (context) => {
     'webgl.vendor',
     'window.outerdimensions'
   ];
-  const evasions = enabledEvasions.map(e => require(`puppeteer-extra-plugin-stealth/evasions/${e}`));
   const stealth = {
     callbacks: [],
     async evaluateOnNewDocument(...args) {
       this.callbacks.push({ cb: args[0], a: args[1] })
     }
   }
-  evasions.forEach(e => e().onPageCreated(stealth));
+  for (const e of enabledEvasions) {
+    const evasion = await import(`puppeteer-extra-plugin-stealth/evasions/${e}/index.js`);
+    evasion.default().onPageCreated(stealth);
+  }
   for (let evasion of stealth.callbacks) {
     await context.addInitScript(evasion.cb, evasion.a);
   }
 }
-
-module.exports = { stealth };

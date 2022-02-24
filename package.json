@@ -10,5 +10,6 @@
     "@playwright/test": "^1.17.1",
     "playwright": "^1.17.1",
     "puppeteer-extra-plugin-stealth": "^2.9.0"
-  }
+  },
+  "type": "module"
 }
