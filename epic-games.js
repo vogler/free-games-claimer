@@ -44,7 +44,7 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
     'webgl.vendor',
     'window.outerdimensions'
   ];
-  const evasions = enabledEvasions.map(e => new require(`puppeteer-extra-plugin-stealth/evasions/${e}`));
+  const evasions = enabledEvasions.map(e => require(`puppeteer-extra-plugin-stealth/evasions/${e}`));
   const stealth = {
     callbacks: [],
     async evaluateOnNewDocument(...args) {
