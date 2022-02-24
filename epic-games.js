@@ -104,7 +104,7 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
       // @ts-ignore https://caniuse.com/?search=promise.any
       await Promise.any([':has-text("Continue")', '#webPurchaseContainer iframe'].map(s => page.waitForSelector(s))); // wait for Continue xor iframe
       if (await page.locator(':has-text("Continue")').count() > 0) {
-        console.log('Device not supported. This product is not compatible with your current device.');
+        // console.log('Device not supported. This product is not compatible with your current device.');
         await page.click('button:has-text("Continue")');
       }
       // it then creates an iframe for the rest
