@@ -3,6 +3,8 @@ import path from 'path';
 import { __dirname, stealth } from './util.js';
 const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
 
+import { hcaptcha } from "puppeteer-hcaptcha";
+
 const URL_LOGIN = 'https://www.epicgames.com/login';
 const URL_CLAIM = 'https://www.epicgames.com/store/en-US/free-games';
 const TIMEOUT = 20 * 1000; // 20s, default is 30s
@@ -10,13 +12,15 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await chromium.launchPersistentContext(path.resolve(__dirname, 'userDataDir'), {
   channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
-  headless: false,
+  headless: true,
   viewport: { width: 1280, height: 1280 },
   userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO update if browser is updated!
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
   args: [ // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.', but flags below don't work.
     '--disable-session-crashed-bubble',
     '--restore-last-session',
+    "--disable-dev-shm-usage",
+    "--disable-web-security",
   ],
 });
 
@@ -94,6 +98,8 @@ for (let i=1; i<=n; i++) {
       //   process.exit(1);
       // }
       // await page.waitForTimeout(3000);
+      // <iframe class="" src="/store/purchase?highlightColor=0078f2&amp;offers=1-e...&amp;orderId&amp;purchaseToken&amp;showNavigation=true"></iframe>
+      await hcaptcha(page.frame({ url: /.*\/store\/purchase.*/ }).page()); // TODO Timeout waiting for selector "iframe[src*="newassets.hcaptcha.com"]" to be visible
       await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again
       console.log('Claimed successfully!');
     } catch (e) {

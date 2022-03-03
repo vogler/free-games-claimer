@@ -11,5 +11,8 @@
     "playwright": "^1.17.1",
     "puppeteer-extra-plugin-stealth": "^2.9.0"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "puppeteer-hcaptcha": "^4.1.5"
+  }
 }
