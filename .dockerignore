@@ -1,0 +1,6 @@
+userDataDir**
+node_modules
+
+.gitignore
+**Dockerfile**
+.dockerignore

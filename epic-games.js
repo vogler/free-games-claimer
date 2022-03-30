@@ -3,16 +3,17 @@ import path from 'path';
 import { __dirname, stealth } from './util.js';
 const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
 
-const URL_LOGIN = 'https://www.epicgames.com/login';
-const URL_CLAIM = 'https://www.epicgames.com/store/en-US/free-games';
+const URL_CLAIM = 'https://store.epicgames.com/store/en-US/free-games';
+const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
 const TIMEOUT = 20 * 1000; // 20s, default is 30s
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await chromium.launchPersistentContext(path.resolve(__dirname, 'userDataDir'), {
-  channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
+  // chrome will not work in linux arm64, only chromium
+  // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
   headless: false,
   viewport: { width: 1280, height: 1280 },
-  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO update if browser is updated!
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO update if browser is updated!
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
   args: [ // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.', but flags below don't work.
     '--disable-session-crashed-bubble',
@@ -35,15 +36,15 @@ const clickIfExists = async selector => {
     await page.click(selector);
 };
 
-await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'}); // default 'load' takes forever
+await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // default 'load' takes forever
 // with persistent context the cookie message will only show up the first time, so we can't unconditionally wait for it - try to catch it or let the user click it.
 await clickIfExists('button:has-text("Accept All Cookies")'); // to not waste screen space in --debug
 while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) { // TODO also check alternative for signed-in state
   console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page.");
   context.setDefaultTimeout(0); // give user time to log in without timeout
-  await page.goto(URL_LOGIN, {waitUntil: 'domcontentloaded'});
+  await page.goto(URL_LOGIN, { waitUntil: 'domcontentloaded' });
   // after login it just reloads the login page...
-  await page.waitForNavigation({url: URL_CLAIM});
+  await page.waitForNavigation({ url: URL_CLAIM });
   context.setDefaultTimeout(TIMEOUT);
   // process.exit(1);
 }
@@ -54,7 +55,7 @@ await page.waitForSelector(game_sel);
 // const games = await page.$$(game_sel); // 'Element is not attached to the DOM' after navigation; had `for (const game of games) { await game.click(); ... }
 const n = await page.locator(game_sel).count();
 console.log('Number of free games:', n);
-for (let i=1; i<=n; i++) {
+for (let i = 1; i <= n; i++) {
   await page.click(`:nth-match(${game_sel}, ${i})`);
   const title = await page.locator('h1 div').first().innerText();
   console.log('Current free game:', title);
@@ -105,8 +106,8 @@ for (let i=1; i<=n; i++) {
     }
     // await page.pause();
   }
-  if (i<n) { // no need to go back if it's the last game
-    await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
+  if (i < n) { // no need to go back if it's the last game
+    await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector(game_sel);
   }
 }
