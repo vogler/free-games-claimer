@@ -11,30 +11,35 @@ Claims free games on
 2. Clone/download this repository and `cd` into it in a terminal
 3. Run `npm install && npx playwright install chromium`
 
-This downloads Chromium (337 MB) to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
+This downloads Chromium (343 MB) to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
 
 ## Usage
-<!-- Use `npm run login` which opens a browser where you can login. When closing the browser, it writes a file `auth.json` containing cookies that should keep you logged in for some time (`expires` in a month?). -->
 
-Both scripts start an automated Chromium instance. It will first check if you are logged in, and if not wait for you to do so. After login, you can also restart the script if it does not redirect back.
+Both scripts start an automated Chromium instance, either with the browser GUI shown or hidden (*headless mode*).
 
-If something goes wrong, use `PWDEBUG=1 node epic-games` to [inspect](https://playwright.dev/docs/inspector).
+Login has to be done in the browser. It's hard to automate since you usually need to enter some OTP (but you can select 'remember this device').
+After login, the script will just continue, but you can also restart it.
 
-Ideally, claiming would run in *headless mode* (without browser GUI - comment out `headless: false` to test), and on a Raspberry Pi:
-- Epic Games Store detects running in headless mode (despite stealth plugin) and gets stuck with a captcha challenge ([issue](https://github.com/vogler/free-games-claimer/issues/2)). Did not test it yet for Prime Gaming.
-- Playwright seems to not run on (headless) RPi? See [issue](https://github.com/vogler/free-games-claimer/issues/3).
+If something goes wrong, use `PWDEBUG=1 node ...` to [inspect](https://playwright.dev/docs/inspector).
 
 ### Epic Games Store
 Run `node epic-games`
 
-Login: Instead of redirecting back, the website seems to just reload the login URL. Go to https://www.epicgames.com/store/en-US/free-games manually, or restart the script.
+Does not run headless, but can be run quasi-headless inside a Docker container (see below).
+
+They detect headless mode (despite stealth plugin) and it gets stuck with a captcha challenge ([issue](https://github.com/vogler/free-games-claimer/issues/2)).
 
 ### Amazon Prime Gaming
-Run `node prime-gaming` 
+Run `node prime-gaming`
+
+Runs headless. Run `node prime-gaming show` to show the GUI (to login).
 
 Claiming the Amazon Games works, external Epic Games also work if the account is linked.
-Keys for Origin and GOG should be printed to the console and need to be redeemed manually at the moment ([issue](https://github.com/vogler/free-games-claimer/issues/5)).
+Keys for Origin (and GOG?) should be printed to the console and need to be redeemed manually at the moment ([issue](https://github.com/vogler/free-games-claimer/issues/5)).
 Other stores not tested.
+
+### Docker
+See https://github.com/vogler/free-games-claimer/pull/11 (TODO).
 
 ### Run periodically
 Epic Games releases one (sometimes more) free game *every week*, but around christmas every day.
