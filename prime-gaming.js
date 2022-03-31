@@ -49,6 +49,7 @@ while (await page.locator('button:has-text("Sign in")').count() > 0) {
   if (!debug) context.setDefaultTimeout(TIMEOUT);
 }
 console.log('Signed in.');
+await page.click('button:has-text("Games")');
 await page.waitForSelector('div[data-a-target="offer-list-FGWP_FULL"]');
 console.log('Number of already claimed games (total):', await page.locator('div[data-a-target="offer-list-FGWP_FULL"] p:has-text("Claimed")').count());
 const game_sel = 'div[data-a-target="offer-list-FGWP_FULL"] .offer__action:has-text("Claim game")';
@@ -74,7 +75,7 @@ for (const card of games) {
     if (!card) break;
     const title = await (await card.$('h3')).innerText();
     console.log('Current free game:', title);
-    await (await card.$('button')).click();
+    await (await card.$('text=Claim')).click();
     // await page.waitForNavigation();
     await page.click('button:has-text("Claim now")');
     // TODO only Origin shows a key, check for 'Claimed' or code
