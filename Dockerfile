@@ -15,6 +15,10 @@ ENV VNC_PASSWORD secret
 ENV VNC_PORT 5900
 EXPOSE 5900
 
+# Playwright
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD true
+
 # === INSTALL Node.js ===
 
 # Taken from https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.focal
@@ -36,11 +40,8 @@ RUN apt-get update && \
 RUN apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y \
     xvfb \
-    xauth \
     ca-certificates \
     x11vnc \
-    fluxbox \
-    stterm \
     curl \
     tini \
     && apt-get clean \
@@ -55,10 +56,8 @@ RUN apt-get update \
 WORKDIR /fgc
 COPY package.json .
 # Install chromium & dependencies only
-RUN export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    && npm install \
-    && npx playwright install-deps \
-    && npx playwright install chromium \
+RUN npm install \
+    && npx playwright install --with-deps chromium \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
