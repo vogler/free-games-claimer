@@ -1,6 +1,9 @@
 userDataDir**
 node_modules
+screenshots
 
 .gitignore
 **Dockerfile**
 .dockerignore
+.env
+auth.json
