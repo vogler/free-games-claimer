@@ -15,7 +15,6 @@ const context = await chromium.launchPersistentContext(path.resolve(__dirname, '
   // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge, chrome will not work on arm64 linux, only chromium which is the default
   headless,
   viewport: { width: 1280, height: 1280 },
-  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36', // see replace of Headless in newStealthContext above. TODO update if browser is updated!
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
 });
 
@@ -34,6 +33,7 @@ const clickIfExists = async selector => {
 };
 
 await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'}); // default 'load' takes forever
+// need to wait for some elements to exist before checking if signed in or accepting cookies:
 await Promise.any(['button:has-text("Sign in")', '[data-a-target="user-dropdown-first-name-text"]'].map(s => page.waitForSelector(s)));
 await clickIfExists('[aria-label="Cookies usage disclaimer banner"] button:has-text("Accept Cookies")'); // to not waste screen space in --debug
 while (await page.locator('button:has-text("Sign in")').count() > 0) {
