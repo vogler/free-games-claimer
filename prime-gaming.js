@@ -78,9 +78,12 @@ for (const card of games) {
     await (await card.$('text=Claim')).click();
     // await page.waitForNavigation();
     await page.click('button:has-text("Claim now")');
+    console.log(await (await page.$('[data-a-target="hero-header-subtitle"]')).innerText());
     // TODO only Origin shows a key, check for 'Claimed' or code
-    const code = await page.inputValue('input[type="text"]');
-    console.log('Code to redeem game:', code);
+    if (await page.locator('div:has-text("Origin")').count() > 0) {
+      const code = await page.inputValue('input[type="text"]');
+      console.log('Code to redeem game:', code);
+    }
     // await page.pause();
     await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
     n = await page.locator(game_sel).count();
