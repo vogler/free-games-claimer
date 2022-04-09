@@ -6,7 +6,7 @@ const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https:/
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
 const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
 const TIMEOUT = 20 * 1000; // 20s, default is 30s
-const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) || 1280;
+const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) - 80 || 1280;
 const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
@@ -86,10 +86,7 @@ for (let i = 1; i <= n; i++) {
     // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
     const btnAgree = iframe.locator('button:has-text("I Agree")');
     try {
-      await Promise.any([btnAgree.waitFor(), page.waitForSelector('text=Thank you for buying')]); // EU: wait for agree button, non-EU: potentially done
-      // await clickIfExists('button:has-text("I Agree")', iframe); // default arg: FrameLocator is incompatible with Page and even Locator...
-      if (await btnAgree.count() > 0)
-        await btnAgree.click();
+      await Promise.any([btnAgree.waitFor().then(() => btnAgree.click()), page.waitForSelector('text=Thank you for buying')]); // EU: wait for agree button, non-EU: potentially done
       // TODO check for hcaptcha - the following is even true when no captcha is shown...
       // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
       //   console.error('Encountered hcaptcha. Giving up :(');

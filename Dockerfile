@@ -13,7 +13,9 @@ ENV DISPLAY :60
 ENV VNC_ENABLED true
 ENV VNC_PASSWORD secret
 ENV VNC_PORT 5900
+ENV NOVNC_PORT 6080
 EXPOSE 5900
+EXPOSE 6080
 
 # Playwright
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
@@ -44,6 +46,7 @@ RUN apt-get update \
     x11vnc \
     curl \
     tini \
+    novnc websockify \
     && apt-get clean \
     && rm -rf \
     /tmp/* \
