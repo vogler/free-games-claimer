@@ -9,6 +9,9 @@
 Xvfb "$DISPLAY" -ac -screen 0 "${SCREEN_WIDTH}x${SCREEN_HEIGHT}x${SCREEN_DEPTH}" >/dev/null 2>&1 &
 
 if [ "$VNC_ENABLED" = true ]; then
+    echo "Starting VNC server..."
+    # wait for Xvfb to start up
+    sleep 3
     vnc-start >/dev/null 2>&1 &
 fi
 

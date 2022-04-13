@@ -6,7 +6,7 @@ const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https:/
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
 const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
 const TIMEOUT = 20 * 1000; // 20s, default is 30s
-const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) - 80 || 1280;
+const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) - 50 || 1280;
 const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
@@ -17,6 +17,7 @@ const context = await chromium.launchPersistentContext(path.resolve(__dirname, '
   viewport: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
   userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO update if browser is updated!
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
+  executablePath: "/usr/bin/chromium-browser",
   args: [ // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.', but flags below don't work.
     '--disable-session-crashed-bubble',
     '--restore-last-session',

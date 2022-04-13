@@ -1,0 +1,70 @@
+FROM node:16-alpine
+
+# Configure Xvfb via environment variables:
+ENV SCREEN_WIDTH 1440
+ENV SCREEN_HEIGHT 900
+ENV SCREEN_DEPTH 24
+ENV DISPLAY :60
+
+# Configure VNC via environment variables:
+ENV VNC_ENABLED true
+ENV VNC_PASSWORD secret
+ENV VNC_PORT 5900
+ENV NOVNC_PORT 6080
+EXPOSE 5900
+EXPOSE 6080
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD true
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# Installs latest Chromium package.
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" > /etc/apk/repositories \
+    && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
+    && echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
+    && echo "http://dl-cdn.alpinelinux.org/alpine/v3.12/main" >> /etc/apk/repositories \
+    && apk upgrade -U -a \
+    && apk add --no-cache \
+    libstdc++ \
+    chromium \
+    harfbuzz \
+    nss \
+    freetype \
+    ttf-freefont \
+    font-noto-emoji \
+    wqy-zenhei
+RUN apk add --no-cache \
+    tini \
+    xvfb \
+    x11vnc \
+    novnc
+
+COPY ./docker/local.conf /etc/fonts/local.conf
+
+# Shell scripts
+ENV NOVNC_HOME /usr/share/novnc
+COPY ./docker/entrypoint.sh /usr/local/bin/entrypoint
+COPY ./docker/vnc-start.sh /usr/local/bin/vnc-start
+RUN chmod +x /usr/local/bin/entrypoint \
+    && chmod +x /usr/local/bin/vnc-start \
+    && ln -s "$NOVNC_HOME/vnc.html" "$NOVNC_HOME/index.html"
+
+# Add Chrome as a user
+RUN mkdir -p /fgc \
+    && adduser -D chrome \
+    && chown -R chrome:chrome /fgc
+# Run app as non-privileged
+USER chrome
+WORKDIR /fgc
+
+# Install Playwright
+COPY --chown=chrome package.json package-lock.json ./
+RUN npm install
+RUN npx playwright install chromium
+COPY --chown=chrome . ./
+
+ENV CHROME_BIN=/usr/bin/chromium-browser \
+    CHROME_PATH=/usr/lib/chromium/
+
+ENTRYPOINT [ "entrypoint" ]
+CMD ["node", "epic-games.js"]
