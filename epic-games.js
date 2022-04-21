@@ -62,7 +62,7 @@ for (let i = 1; i <= n; i++) {
   const title = await page.locator('h1 div').first().innerText();
   console.log('Current free game:', title);
   // click Continue if 'This game contains mature content recommended only for ages 18+'
-  if (await page.locator(':has-text("Continue")').count() > 0) {
+  if (await page.locator('button:has-text("Continue")').count() > 0) {
     console.log('This game contains mature content recommended only for ages 18+');
     await page.click('button:has-text("Continue")');
   }
