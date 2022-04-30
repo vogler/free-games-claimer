@@ -14,7 +14,6 @@ Claims free games on
 This downloads Chromium (343 MB) to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
 
 ## Usage
-
 Both scripts start an automated Chromium instance, either with the browser GUI shown or hidden (*headless mode*).
 
 Login has to be done in the browser. It's hard to automate since you usually need to enter some OTP (but you can select 'remember this device').
@@ -23,11 +22,12 @@ After login, the script will just continue, but you can also restart it.
 If something goes wrong, use `PWDEBUG=1 node ...` to [inspect](https://playwright.dev/docs/inspector).
 
 ### Epic Games Store
-Run `node epic-games`
-
-Does not run headless, but can be run quasi-headless inside a Docker container (see below).
-
-They detect headless mode (despite stealth plugin) and it gets stuck with a captcha challenge ([issue](https://github.com/vogler/free-games-claimer/issues/2)).
+Options:
+- Run `node epic-games` (not headless, i.e. browser is visible, [headless leads to captcha](https://github.com/vogler/free-games-claimer/issues/2))
+- Run headless inside Docker:
+  - [Install Docker](https://docs.docker.com/get-docker/)
+  - `npm run docker:build`
+  - `npm run docker:epic-games`
 
 ### Amazon Prime Gaming
 Run `node prime-gaming`
@@ -35,11 +35,8 @@ Run `node prime-gaming`
 Runs headless. Run `node prime-gaming show` to show the GUI (to login).
 
 Claiming the Amazon Games works, external Epic Games also work if the account is linked.
-Keys for Origin (and GOG?) should be printed to the console and need to be redeemed manually at the moment ([issue](https://github.com/vogler/free-games-claimer/issues/5)).
-Other stores not tested.
-
-### Docker
-See https://github.com/vogler/free-games-claimer/pull/11 (TODO).
+Keys for {Origin, GOG.com, Legacy Games} should be printed to the console and need to be redeemed manually at the URL printed to the terminal ([issue](https://github.com/vogler/free-games-claimer/issues/5)).
+A screenshot of the page with the code is saved to `screenshots` as well.
 
 ### Run periodically
 Epic Games releases one (sometimes more) free game *every week*, but around christmas every day.

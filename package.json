@@ -2,9 +2,8 @@
   "scripts": {
     "login": "npx playwright open --save-storage=auth.json https://www.epicgames.com/login",
     "codegen": "npx playwright codegen --load-storage=auth.json https://www.epicgames.com/store/en-US/free-games",
-    "test": "npx playwright test --timeout 10000",
-    "debug": "npx playwright test --debug",
-    "start": "node main.stealth"
+    "docker:build": "docker build --tag free-games-claimer .",
+    "docker:epic-games": "docker run --rm -it -p 5900:5900 -p 6080:6080 -v \"$(pwd)/userDataDir:/fgc/userDataDir\" --name free-games-claimer free-games-claimer"
   },
   "devDependencies": {
     "@playwright/test": "^1.20.1",
