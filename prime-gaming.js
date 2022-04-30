@@ -52,7 +52,7 @@ console.log('Signed in.');
 await page.click('button:has-text("Games")');
 await page.waitForSelector('div[data-a-target="offer-list-FGWP_FULL"]');
 console.log('Number of already claimed games (total):', await page.locator('div[data-a-target="offer-list-FGWP_FULL"] p:has-text("Claimed")').count());
-const game_sel = 'div[data-a-target="offer-list-FGWP_FULL"] .offer__action:has-text("Claim game")';
+const game_sel = 'div[data-a-target="offer-list-FGWP_FULL"] [data-a-target="item-card"]:has-text("Claim game")';
 const n = await page.locator(game_sel).count();
 console.log('Number of free unclaimed games (Prime Gaming):', n);
 const games = await page.$$(game_sel);
@@ -60,20 +60,20 @@ const games = await page.$$(game_sel);
 for (const card of games) {
   // const card = page.locator(`:nth-match(${game_sel}, ${i})`); // this will reevaluate after games are claimed and index will be wrong
   // const title = await card.locator('h3').first().innerText();
-  const title = await (await card.$('h3')).innerText();
+  const title = await (await card.$('.item-card-details__body__primary')).innerText();
   console.log('Current free game:', title);
   await (await card.$('button')).click();
   // await page.pause();
 }
 // claim games in linked stores. Origin: key, Epic Games Store: linked
 {
-  const game_sel = 'div[data-a-target="offer-list-FGWP_FULL"] .offer__action:has(p:text-is("Claim"))';
+  const game_sel = 'div[data-a-target="offer-list-FGWP_FULL"] [data-a-target="item-card"]:has(p:text-is("Claim"))';
   do {
     let n = await page.locator(game_sel).count();
     console.log('Number of free unclaimed games (external stores):', n);
     const card = await page.$(game_sel);
     if (!card) break;
-    const title = await (await card.$('h3')).innerText();
+    const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
     await (await card.$('text=Claim')).click();
     // await page.waitForNavigation();
