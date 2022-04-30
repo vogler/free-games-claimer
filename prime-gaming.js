@@ -50,9 +50,10 @@ while (await page.locator('button:has-text("Sign in")').count() > 0) {
 }
 console.log('Signed in.');
 await page.click('button:has-text("Games")');
-await page.waitForSelector('div[data-a-target="offer-list-FGWP_FULL"]');
-console.log('Number of already claimed games (total):', await page.locator('div[data-a-target="offer-list-FGWP_FULL"] p:has-text("Claimed")').count());
-const game_sel = 'div[data-a-target="offer-list-FGWP_FULL"] [data-a-target="item-card"]:has-text("Claim game")';
+const games_sel = 'div[data-a-target="offer-list-FGWP_FULL"]';
+await page.waitForSelector(games_sel);
+console.log('Number of already claimed games (total):', await page.locator(`${games_sel} p:has-text("Collected")`).count());
+const game_sel = `${games_sel} [data-a-target="item-card"]:has-text("Claim game")`;
 const n = await page.locator(game_sel).count();
 console.log('Number of free unclaimed games (Prime Gaming):', n);
 const games = await page.$$(game_sel);
@@ -62,12 +63,12 @@ for (const card of games) {
   // const title = await card.locator('h3').first().innerText();
   const title = await (await card.$('.item-card-details__body__primary')).innerText();
   console.log('Current free game:', title);
-  await (await card.$('button')).click();
+  await (await card.$('button:has-text("Claim game")')).click();
   // await page.pause();
 }
 // claim games in linked stores. Origin: key, Epic Games Store: linked
 {
-  const game_sel = 'div[data-a-target="offer-list-FGWP_FULL"] [data-a-target="item-card"]:has(p:text-is("Claim"))';
+  const game_sel = `${games_sel} [data-a-target="item-card"]:has(p:text-is("Claim"))`;
   do {
     let n = await page.locator(game_sel).count();
     console.log('Number of free unclaimed games (external stores):', n);
@@ -77,16 +78,29 @@ for (const card of games) {
     console.log('Current free game:', title);
     await (await card.$('text=Claim')).click();
     // await page.waitForNavigation();
-    await page.click('button:has-text("Claim now")');
-    console.log(await (await page.$('[data-a-target="hero-header-subtitle"]')).innerText());
-    // TODO only Origin shows a key, check for 'Claimed' or code
-    if (await page.locator('div:has-text("Origin")').count() > 0) {
+    await page.click('button:has-text("Claim now")'); // waits for navigation
+    const store_text = await (await page.$('[data-a-target="hero-header-subtitle"]')).innerText();
+    // FULL GAME FOR PC ON: GOG.COM, ORIGIN, LEGACY GAMES, EPIC GAMES
+    const store = store_text.toLowerCase().replace('full game for pc on ', '');
+    console.log('External store:', store);
+    // save screenshot of potential code just in case
+    const p = `screenshots/${title.replace(/[^a-z0-9]/gi, '_')}.png`;
+    await page.screenshot({ path: p, fullPage: true });
+    console.info('Saved a screenshot of page to', p);
+    // print code if external store is not connected
+    const redeem = {
+      'origin': 'https://www.origin.com/redeem',
+      'gog.com': 'https://www.gog.com/redeem',
+      'legacy games': 'https://www.legacygames.com/primedeal',
+    };
+    if (store in redeem) {
       const code = await page.inputValue('input[type="text"]');
       console.log('Code to redeem game:', code);
+      console.log('URL to redeem game:', redeem[store]);
     }
     // await page.pause();
     await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
-    n = await page.locator(game_sel).count();
+    await page.click('button:has-text("Games")');
   } while (n);
 }
 await context.close();
