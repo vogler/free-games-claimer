@@ -47,6 +47,7 @@ RUN apt-get update \
     curl \
     tini \
     novnc websockify \
+    dos2unix \
     && apt-get clean \
     && rm -rf \
     /tmp/* \
@@ -67,6 +68,7 @@ RUN npm install \
 COPY . .
 
 # Shell scripts
+RUN dos2unix ./docker/*.sh
 RUN mv ./docker/entrypoint.sh /usr/local/bin/entrypoint \
     && chmod +x /usr/local/bin/entrypoint \
     && mv ./docker/vnc-start.sh /usr/local/bin/vnc-start \
