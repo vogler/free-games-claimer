@@ -3,10 +3,11 @@
     "login": "npx playwright open --save-storage=auth.json https://www.epicgames.com/login",
     "codegen": "npx playwright codegen --load-storage=auth.json https://www.epicgames.com/store/en-US/free-games",
     "docker:build": "docker build --tag free-games-claimer .",
-    "docker:epic-games": "docker run --rm -it -p 5900:5900 -p 6080:6080 -v \"$INIT_CWD/userDataDir:/fgc/userDataDir\" --name free-games-claimer free-games-claimer"
+    "docker:epic-games": "cross-env docker run --rm -it -p 5900:5900 -p 6080:6080 -v \"$INIT_CWD/userDataDir:/fgc/userDataDir\" --name free-games-claimer free-games-claimer"
   },
   "devDependencies": {
     "@playwright/test": "^1.20.1",
+    "cross-env": "^7.0.3",
     "playwright": "^1.20.1",
     "puppeteer-extra-plugin-stealth": "^2.9.0"
   },
