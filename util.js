@@ -1,8 +1,15 @@
 // https://stackoverflow.com/questions/46745014/alternative-for-dirname-in-node-js-when-using-es6-modules
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-export const __filename = fileURLToPath(import.meta.url);
-export const __dirname = path.dirname(__filename);
+// not the same since these will give the absolute paths for this file instead of for the file using them
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// explicit object instead of Object.fromEntries since the built-in type would loose the keys, better type: https://dev.to/svehla/typescript-object-fromentries-389c
+const dataDir = s => path.resolve(__dirname, 'data', s);
+export const dirs = {
+  browser: dataDir('browser'),
+  screenshots: dataDir('screenshots'),
+};
 
 // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
 const newStealthContext = async (browser, contextOptions = {}, debug = false) => {

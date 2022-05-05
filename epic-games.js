@@ -1,6 +1,7 @@
 import { chromium } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
-import { __dirname, stealth } from './util.js';
+import { dirs, stealth } from './util.js';
+
 const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
 
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
@@ -10,7 +11,7 @@ const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) - 80 || 1280;
 const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await chromium.launchPersistentContext(path.resolve(__dirname, 'userDataDir'), {
+const context = await chromium.launchPersistentContext(dirs.browser, {
   // chrome will not work in linux arm64, only chromium
   // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
   headless: false,
@@ -98,7 +99,7 @@ for (let i = 1; i <= n; i++) {
       console.log('Claimed successfully!');
     } catch (e) {
       console.log(e);
-      const p = `screenshots/${new Date().toISOString()}.png`;
+      const p = path.resolve(dirs.screenshots, `${new Date().toISOString()}.png`);
       await page.screenshot({ path: p, fullPage: true });
       console.info('Saved a screenshot of hcaptcha challenge to', p);
       console.error('Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?

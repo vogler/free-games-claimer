@@ -1,5 +1,2 @@
 node_modules/
-auth.json
-.env
-userDataDir/
-screenshots/
+data/

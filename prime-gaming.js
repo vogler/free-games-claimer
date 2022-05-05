@@ -1,6 +1,6 @@
 import { chromium } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
-import { __dirname, stealth } from './util.js';
+import { dirs, stealth } from './util.js';
 
 const debug = process.env.PWDEBUG == '1'; // runs headful and opens https://playwright.dev/docs/inspector
 const show = process.argv.includes('show', 2);
@@ -11,7 +11,7 @@ const URL_CLAIM = 'https://gaming.amazon.com/home';
 const TIMEOUT = 20 * 1000; // 20s, default is 30s
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await chromium.launchPersistentContext(path.resolve(__dirname, 'userDataDir'), {
+const context = await chromium.launchPersistentContext(dirs.browser, {
   // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge, chrome will not work on arm64 linux, only chromium which is the default
   headless,
   viewport: { width: 1280, height: 1280 },
@@ -84,7 +84,7 @@ for (const card of games) {
     const store = store_text.toLowerCase().replace('full game for pc on ', '');
     console.log('External store:', store);
     // save screenshot of potential code just in case
-    const p = `screenshots/${title.replace(/[^a-z0-9]/gi, '_')}.png`;
+    const p = path.resolve(dirs.screenshots, `${title.replace(/[^a-z0-9]/gi, '_')}.png`);
     await page.screenshot({ path: p, fullPage: true });
     console.info('Saved a screenshot of page to', p);
     // print code if external store is not connected

@@ -1,9 +1,6 @@
-userDataDir**
 node_modules
-screenshots
+data
 
 .gitignore
 **Dockerfile**
 .dockerignore
-.env
-auth.json
