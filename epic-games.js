@@ -86,7 +86,7 @@ for (let i = 1; i <= n; i++) {
     // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
     const btnAgree = iframe.locator('button:has-text("I Agree")');
     try {
-      await Promise.any([btnAgree.waitFor().then(() => btnAgree.click()), page.waitForSelector('text=Thank you for buying')]); // EU: wait for agree button, non-EU: potentially done
+      await Promise.any([btnAgree.waitFor().then(() => btnAgree.click()), page.waitForSelector('text=Thank you for buying').then(_ => {})]); // EU: wait for agree button, non-EU: potentially done
       // TODO check for hcaptcha - the following is even true when no captcha is shown...
       // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
       //   console.error('Encountered hcaptcha. Giving up :(');
