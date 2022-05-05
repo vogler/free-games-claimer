@@ -43,7 +43,8 @@ A screenshot of the page with the code is saved to `data/screenshots` as well.
 Epic Games releases one (sometimes more) free game *every week*, but around christmas every day.
 Prime Gaming has new games *every month*.
 
-It is save to run both scripts every day. Since they are not running headless, it makes sense to run them at a time or on a machine that you are not actively using at that point. You could run them in a virtual machine, on a server, or you wake your PC at night to do it.
+It is save to run both scripts every day.
+If you can't use Docker for quasi-headless mode, you could run in a virtual machine, on a server, or you wake your PC at night to avoid being interrupted.
 
 - Linux/macOS: `crontab -e`
 - macOS: [launchd](https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often)
