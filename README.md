@@ -22,12 +22,13 @@ After login, the script will just continue, but you can also restart it.
 If something goes wrong, use `PWDEBUG=1 node ...` to [inspect](https://playwright.dev/docs/inspector).
 
 ### Epic Games Store
-Options:
-- Run `node epic-games` (not headless, i.e. browser is visible, [headless leads to captcha](https://github.com/vogler/free-games-claimer/issues/2))
-- Run headless inside Docker:
+Alternatives:
+- Run `node epic-games` (browser window will open, [headless leads to captcha](https://github.com/vogler/free-games-claimer/issues/2))
+- Run with Docker (browser is hidden inside -> headless for host):
   - [Install Docker](https://docs.docker.com/get-docker/)
   - `npm run docker:build`
   - `npm run docker:epic-games`
+  - When you need to login, go to http://localhost:6080 with password `secret` (you can also connect with another VNC client)
 
 ### Amazon Prime Gaming
 Run `node prime-gaming`
@@ -36,7 +37,7 @@ Runs headless. Run `node prime-gaming show` to show the GUI (to login).
 
 Claiming the Amazon Games works, external Epic Games also work if the account is linked.
 Keys for {Origin, GOG.com, Legacy Games} should be printed to the console and need to be redeemed manually at the URL printed to the terminal ([issue](https://github.com/vogler/free-games-claimer/issues/5)).
-A screenshot of the page with the code is saved to `screenshots` as well.
+A screenshot of the page with the code is saved to `data/screenshots` as well.
 
 ### Run periodically
 Epic Games releases one (sometimes more) free game *every week*, but around christmas every day.
