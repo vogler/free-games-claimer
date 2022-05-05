@@ -2,8 +2,8 @@
   "compilerOptions": {
     "checkJs": true,
     "target": "es2021",
-    "module": "es2022",
-    "moduleResolution": "node",
+    "module": "esnext",
+    "moduleResolution": "node"
   },
   "exclude": ["node_modules", "**/node_modules"]
 }
