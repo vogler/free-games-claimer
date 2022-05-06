@@ -1,5 +1,7 @@
 #!/bin/sh
 
+rm -f /fgc/data/browser/SingletonLock
+
 # 6000+SERVERNUM is the TCP port Xvfb is listening on:
 # SERVERNUM=$(echo "$DISPLAY" | sed 's/:\([0-9][0-9]*\).*/\1/')
 
