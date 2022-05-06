@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Remove chromium profile lock.
+# When running in docker and then killing it, on the next run chromium displayed a dialog to unlock the profile which made the script time out.
+# Maybe due to changed hostname of container or due to how the docker container kills playwright - didn't check.
+# https://bugs.chromium.org/p/chromium/issues/detail?id=367048
 rm -f /fgc/data/browser/SingletonLock
 
 # 6000+SERVERNUM is the TCP port Xvfb is listening on:
