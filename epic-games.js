@@ -43,7 +43,7 @@ await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // default 'load'
 // with persistent context the cookie message will only show up the first time, so we can't unconditionally wait for it - try to catch it or let the user click it.
 await clickIfExists('button:has-text("Accept All Cookies")'); // to not waste screen space in --debug
 while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) { // TODO also check alternative for signed-in state
-  console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page.");
+  console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page. If using docker, open http://localhost:6080");
   context.setDefaultTimeout(0); // give user time to log in without timeout
   await page.goto(URL_LOGIN, { waitUntil: 'domcontentloaded' });
   // after login it just reloads the login page...
