@@ -60,18 +60,18 @@ const n = await page.locator(game_sel).count();
 console.log('Number of free games:', n);
 for (let i = 1; i <= n; i++) {
   await page.click(`:nth-match(${game_sel}, ${i})`);
-  const title = await page.locator('h1 div').first().innerText();
+  const title = await page.locator('h1').first().innerText();
   console.log('Current free game:', title);
   // click Continue if 'This game contains mature content recommended only for ages 18+'
   if (await page.locator('button:has-text("Continue")').count() > 0) {
     console.log('This game contains mature content recommended only for ages 18+');
     await page.click('button:has-text("Continue")');
   }
-  const btnText = await page.locator('[data-testid="purchase-cta-button"]').innerText();
+  const btnText = await page.locator('[data-testid="purchase-cta-button"]').first().innerText();
   if (btnText.toLowerCase() == 'in library') {
     console.log('Already in library! Nothing to claim.');
   } else {
-    console.log('Not in library yet! Click GET.')
+    console.log('Not in library yet! Click GET.');
     await page.click('[data-testid="purchase-cta-button"]');
     // click Continue if 'Device not supported. This product is not compatible with your current device.'
     await Promise.any(['button:has-text("Continue")', '#webPurchaseContainer iframe'].map(s => page.waitForSelector(s))); // wait for Continue xor iframe
@@ -87,7 +87,7 @@ for (let i = 1; i <= n; i++) {
     // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
     const btnAgree = iframe.locator('button:has-text("I Agree")');
     try {
-      await Promise.any([btnAgree.waitFor().then(() => btnAgree.click()), page.waitForSelector('text=Thank you for buying').then(_ => {})]); // EU: wait for agree button, non-EU: potentially done
+      await Promise.any([btnAgree.waitFor().then(() => btnAgree.click()), page.waitForSelector('text=Thank you for buying').then(_ => { })]); // EU: wait for agree button, non-EU: potentially done
       // TODO check for hcaptcha - the following is even true when no captcha is shown...
       // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
       //   console.error('Encountered hcaptcha. Giving up :(');
