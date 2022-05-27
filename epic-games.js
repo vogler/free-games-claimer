@@ -67,7 +67,7 @@ for (let i = 1; i <= n; i++) {
     console.log('This game contains mature content recommended only for ages 18+');
     await page.click('button:has-text("Continue")');
   }
-  const btnText = await page.locator('[data-testid="purchase-cta-button"]').first().innerText();
+  const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText();
   if (btnText.toLowerCase() == 'in library') {
     console.log('Already in library! Nothing to claim.');
   } else {
