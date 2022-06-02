@@ -9,7 +9,8 @@
     "@playwright/test": "^1.20.1",
     "cross-env": "^7.0.3",
     "playwright": "^1.20.1",
-    "puppeteer-extra-plugin-stealth": "^2.9.0"
+    "puppeteer-extra-plugin-stealth": "^2.9.0",
+    "signale": "^1.4.0"
   },
   "type": "module"
 }
