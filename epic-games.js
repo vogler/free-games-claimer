@@ -33,15 +33,9 @@ if (!debug) context.setDefaultTimeout(TIMEOUT);
 
 const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
 console.log('userAgent:', await page.evaluate(() => navigator.userAgent));
-
-const clickIfExists = async selector => {
-  if (await page.locator(selector).count() > 0)
-    await page.click(selector);
-};
-
 await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // default 'load' takes forever
-// with persistent context the cookie message will only show up the first time, so we can't unconditionally wait for it - try to catch it or let the user click it.
-await clickIfExists('button:has-text("Accept All Cookies")'); // to not waste screen space in --debug
+// Accept cookies to get rid of banner to save space on screen. Will only appear for a fresh context, so we don't await, but let it time out if it does not exist and catch the exception. clickIfExists by checking selector's count > 0 did not work.
+page.click('button:has-text("Accept All Cookies")').catch(_ => {}); // _ => console.info('Cookies already accepted')
 while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) { // TODO also check alternative for signed-in state
   console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page. If using docker, open http://localhost:6080");
   context.setDefaultTimeout(0); // give user time to log in without timeout
