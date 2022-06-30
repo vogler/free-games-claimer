@@ -97,6 +97,9 @@ for (const card of games) {
     if (store in redeem) {
       const code = await page.inputValue('input[type="text"]');
       console.log('Code to redeem game:', code);
+      if (store == 'legacy games') { // may be different URL like https://legacygames.com/primeday/puzzleoftheyear/
+        redeem[store] = await (await page.$('li:has-text("Click here") a')).getAttribute('href');
+      }
       console.log('URL to redeem game:', redeem[store]);
     }
     // save screenshot of potential code just in case
