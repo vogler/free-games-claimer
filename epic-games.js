@@ -93,7 +93,7 @@ for (let i = 1; i <= n; i++) {
       console.log('Claimed successfully!');
     } catch (e) {
       console.log(e);
-      const p = path.resolve(dirs.screenshots, `${new Date().toISOString()}.png`);
+      const p = path.resolve(dirs.screenshots, 'epic-games', `${new Date().toISOString()}.png`);
       await page.screenshot({ path: p, fullPage: true });
       console.info('Saved a screenshot of hcaptcha challenge to', p);
       console.error('Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?

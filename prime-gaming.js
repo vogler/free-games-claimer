@@ -64,6 +64,10 @@ for (const card of games) {
   const title = await (await card.$('.item-card-details__body__primary')).innerText();
   console.log('Current free game:', title);
   await (await card.$('button:has-text("Claim game")')).click();
+  // const img = await (await card.$('img.tw-image')).getAttribute('src');
+  // console.log('Image:', img);
+  const p = path.resolve(dirs.screenshots, 'prime-gaming', 'internal', `${title.replace(/[^a-z0-9]/gi, '_')}.png`);
+  await card.screenshot({ path: p });
   // await page.pause();
 }
 // claim games in linked stores. Origin: key, Epic Games Store: linked
@@ -84,7 +88,7 @@ for (const card of games) {
     const store = store_text.toLowerCase().replace('full game for pc on ', '');
     console.log('External store:', store);
     // save screenshot of potential code just in case
-    const p = path.resolve(dirs.screenshots, `${title.replace(/[^a-z0-9]/gi, '_')}.png`);
+    const p = path.resolve(dirs.screenshots, 'prime-gaming', 'external', `${title.replace(/[^a-z0-9]/gi, '_')}.png`);
     await page.screenshot({ path: p, fullPage: true });
     console.info('Saved a screenshot of page to', p);
     // print code if external store is not connected
@@ -102,5 +106,7 @@ for (const card of games) {
     await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
     await page.click('button[data-type="Game"]');
   } while (n);
+  const p = path.resolve(dirs.screenshots, 'prime-gaming', `${new Date().toISOString()}.png`);
+  await page.screenshot({ path: p, fullPage: true });
 }
 await context.close();
