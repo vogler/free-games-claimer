@@ -49,7 +49,7 @@ while (await page.locator('button:has-text("Sign in")').count() > 0) {
   if (!debug) context.setDefaultTimeout(TIMEOUT);
 }
 console.log('Signed in.');
-await page.click('button:has-text("Games")');
+await page.click('button[data-type="Game"]');
 const games_sel = 'div[data-a-target="offer-list-FGWP_FULL"]';
 await page.waitForSelector(games_sel);
 console.log('Number of already claimed games (total):', await page.locator(`${games_sel} p:has-text("Collected")`).count());
@@ -100,7 +100,7 @@ for (const card of games) {
     }
     // await page.pause();
     await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
-    await page.click('button:has-text("Games")');
+    await page.click('button[data-type="Game"]');
   } while (n);
 }
 await context.close();
