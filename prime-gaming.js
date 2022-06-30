@@ -85,12 +85,9 @@ for (const card of games) {
     await page.click('button:has-text("Claim now")'); // waits for navigation
     const store_text = await (await page.$('[data-a-target="hero-header-subtitle"]')).innerText();
     // FULL GAME FOR PC ON: GOG.COM, ORIGIN, LEGACY GAMES, EPIC GAMES
-    const store = store_text.toLowerCase().replace('full game for pc on ', '');
+    // 3 Full PC Games on Legacy Games
+    const store = store_text.toLowerCase().replace(/.* on /, '');
     console.log('External store:', store);
-    // save screenshot of potential code just in case
-    const p = path.resolve(dirs.screenshots, 'prime-gaming', 'external', `${title.replace(/[^a-z0-9]/gi, '_')}.png`);
-    await page.screenshot({ path: p, fullPage: true });
-    console.info('Saved a screenshot of page to', p);
     // print code if external store is not connected
     const redeem = {
       'origin': 'https://www.origin.com/redeem',
@@ -102,6 +99,10 @@ for (const card of games) {
       console.log('Code to redeem game:', code);
       console.log('URL to redeem game:', redeem[store]);
     }
+    // save screenshot of potential code just in case
+    const p = path.resolve(dirs.screenshots, 'prime-gaming', 'external', `${title.replace(/[^a-z0-9]/gi, '_')}.png`);
+    await page.screenshot({ path: p, fullPage: true });
+    console.info('Saved a screenshot of page to', p);
     // await page.pause();
     await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
     await page.click('button[data-type="Game"]');
