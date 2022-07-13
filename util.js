@@ -7,9 +7,19 @@ const __dirname = path.dirname(__filename);
 // explicit object instead of Object.fromEntries since the built-in type would loose the keys, better type: https://dev.to/svehla/typescript-object-fromentries-389c
 const dataDir = s => path.resolve(__dirname, 'data', s);
 export const dirs = {
+  data: dataDir('.'),
   browser: dataDir('browser'),
   screenshots: dataDir('screenshots'),
 };
+
+import { Low, JSONFile } from 'lowdb';
+export const jsonDb = async file => {
+  const db = new Low(new JSONFile(dataDir(file)));
+  await db.read();
+  return db;
+}
+
+export const datetime = (d = new Date()) => d.toISOString();
 
 // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
 const newStealthContext = async (browser, contextOptions = {}, debug = false) => {
