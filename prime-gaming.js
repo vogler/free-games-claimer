@@ -44,55 +44,54 @@ const clickIfExists = async selector => {
 };
 
 try {
-await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'}); // default 'load' takes forever
-// need to wait for some elements to exist before checking if signed in or accepting cookies:
-await Promise.any(['button:has-text("Sign in")', '[data-a-target="user-dropdown-first-name-text"]'].map(s => page.waitForSelector(s)));
-await clickIfExists('[aria-label="Cookies usage disclaimer banner"] button:has-text("Accept Cookies")'); // to not waste screen space in --debug
-while (await page.locator('button:has-text("Sign in")').count() > 0) {
-  console.error('Not signed in anymore.');
-  if (headless) {
-    console.log('Please run `node prime-gaming show` to login in the opened browser.');
-    await context.close(); // not needed?
-    process.exit(1);
+  await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'}); // default 'load' takes forever
+  // need to wait for some elements to exist before checking if signed in or accepting cookies:
+  await Promise.any(['button:has-text("Sign in")', '[data-a-target="user-dropdown-first-name-text"]'].map(s => page.waitForSelector(s)));
+  await clickIfExists('[aria-label="Cookies usage disclaimer banner"] button:has-text("Accept Cookies")'); // to not waste screen space in --debug
+  while (await page.locator('button:has-text("Sign in")').count() > 0) {
+    console.error('Not signed in anymore.');
+    if (headless) {
+      console.log('Please run `node prime-gaming show` to login in the opened browser.');
+      await context.close(); // not needed?
+      process.exit(1);
+    }
+    await page.click('button:has-text("Sign in")');
+    if (!debug) context.setDefaultTimeout(0); // give user time to log in without timeout
+    await page.waitForNavigation({url: 'https://gaming.amazon.com/home?signedIn=true'});
+    if (!debug) context.setDefaultTimeout(TIMEOUT);
   }
-  await page.click('button:has-text("Sign in")');
-  if (!debug) context.setDefaultTimeout(0); // give user time to log in without timeout
-  await page.waitForNavigation({url: 'https://gaming.amazon.com/home?signedIn=true'});
-  if (!debug) context.setDefaultTimeout(TIMEOUT);
-}
-console.log('Signed in.');
-await page.click('button[data-type="Game"]');
-const games_sel = 'div[data-a-target="offer-list-FGWP_FULL"]';
-await page.waitForSelector(games_sel);
-console.log('Number of already claimed games (total):', await page.locator(`${games_sel} p:has-text("Collected")`).count());
-const game_sel = `${games_sel} [data-a-target="item-card"]:has-text("Claim game")`;
-run.n_internal = await page.locator(game_sel).count();
-console.log('Number of free unclaimed games (Prime Gaming):', run.n_internal);
-const games = await page.$$(game_sel);
-// for (let i=1; i<=n; i++) {
-for (const card of games) {
-  // const card = page.locator(`:nth-match(${game_sel}, ${i})`); // this will reevaluate after games are claimed and index will be wrong
-  // const title = await card.locator('h3').first().innerText();
-  const title = await (await card.$('.item-card-details__body__primary')).innerText();
-  console.log('Current free game:', title);
-  await (await card.$('button:has-text("Claim game")')).click();
-  db.data.claimed.push({title, time: datetime(), store: 'internal'});
-  run.c_internal++;
-  // const img = await (await card.$('img.tw-image')).getAttribute('src');
-  // console.log('Image:', img);
-  const p = path.resolve(dirs.screenshots, 'prime-gaming', 'internal', `${title.replace(/[^a-z0-9]/gi, '_')}.png`);
-  await card.screenshot({ path: p });
-  // await page.pause();
-}
-// claim games in linked stores. Origin: key, Epic Games Store: linked
-{
+  console.log('Signed in.');
+  await page.click('button[data-type="Game"]');
+  const games_sel = 'div[data-a-target="offer-list-FGWP_FULL"]';
+  await page.waitForSelector(games_sel);
+  console.log('Number of already claimed games (total):', await page.locator(`${games_sel} p:has-text("Collected")`).count());
+  const game_sel = `${games_sel} [data-a-target="item-card"]:has-text("Claim game")`;
+  run.n_internal = await page.locator(game_sel).count();
+  console.log('Number of free unclaimed games (Prime Gaming):', run.n_internal);
+  const games = await page.$$(game_sel);
+  // for (let i=1; i<=n; i++) {
+  for (const card of games) {
+    // const card = page.locator(`:nth-match(${game_sel}, ${i})`); // this will reevaluate after games are claimed and index will be wrong
+    // const title = await card.locator('h3').first().innerText();
+    const title = await (await card.$('.item-card-details__body__primary')).innerText();
+    console.log('Current free game:', title);
+    await (await card.$('button:has-text("Claim game")')).click();
+    db.data.claimed.push({title, time: datetime(), store: 'internal'});
+    run.c_internal++;
+    // const img = await (await card.$('img.tw-image')).getAttribute('src');
+    // console.log('Image:', img);
+    const p = path.resolve(dirs.screenshots, 'prime-gaming', 'internal', `${title.replace(/[^a-z0-9]/gi, '_')}.png`);
+    await card.screenshot({ path: p });
+    // await page.pause();
+  }
+  // claim games in external/linked stores. Linked: origin.com, epicgames.com; Redeem-key: gog.com, legacygames.com
   let n;
-  const game_sel = `${games_sel} [data-a-target="item-card"]:has(p:text-is("Claim"))`;
+  const game_sel_ext = `${games_sel} [data-a-target="item-card"]:has(p:text-is("Claim"))`;
   do {
-    n = await page.locator(game_sel).count();
+    n = await page.locator(game_sel_ext).count();
     run.n_external ||= n;
     console.log('Number of free unclaimed games (external stores):', n);
-    const card = await page.$(game_sel);
+    const card = await page.$(game_sel_ext);
     if (!card) break;
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
@@ -135,7 +134,6 @@ for (const card of games) {
   } while (n);
   const p = path.resolve(dirs.screenshots, 'prime-gaming', `${datetime()}.png`);
   await page.screenshot({ path: p, fullPage: true });
-}
 } catch(error) {
   console.error(error);
   run.error = error.toString();
