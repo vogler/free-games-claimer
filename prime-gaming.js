@@ -141,7 +141,7 @@ try {
   // write out json db
   run.endTime = datetime();
   db.data.runs.push(run);
-  await db.write(); // TODO try-finally to always write out any updates
+  await db.write();
 
   await context.close();
 }
