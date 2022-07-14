@@ -64,20 +64,21 @@ try {
   const n = run.n = await page.locator(game_sel).count();
   console.log('Number of free games:', n);
   for (let i = 1; i <= n; i++) {
-    await page.click(`:nth-match(${game_sel}, ${i})`);
-    const title = await page.locator('h1').first().innerText();
-    console.log('Current free game:', title);
+    await page.click(`:nth-match(${game_sel}, ${i})`); // navigates to page for game
+    const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText(); // barrier to block until page is loaded
     // click Continue if 'This game contains mature content recommended only for ages 18+'
     if (await page.locator('button:has-text("Continue")').count() > 0) {
       console.log('This game contains mature content recommended only for ages 18+');
       await page.click('button:has-text("Continue")');
     }
-    const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText();
-    const p = path.resolve(dirs.screenshots, 'epic-games', `${title.replace(/[^a-z0-9]/gi, '_')}.png`);
+    const title = await page.locator('h1').first().innerText();
+    console.log('Current free game:', title);
+    const title_url = page.url().split('/').pop();
+    const p = path.resolve(dirs.screenshots, 'epic-games', `${title_url}.png`);
     await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
     if (btnText.toLowerCase() == 'in library') {
       console.log('Already in library! Nothing to claim.');
-    } else {
+    } else { // GET
       console.log('Not in library yet! Click GET.');
       await page.click('[data-testid="purchase-cta-button"]');
       // click Continue if 'Device not supported. This product is not compatible with your current device.'
