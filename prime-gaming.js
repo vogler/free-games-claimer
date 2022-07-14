@@ -76,7 +76,7 @@ try {
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
     await (await card.$('button:has-text("Claim game")')).click();
-    db.data.claimed.push({title, time: datetime(), store: 'internal'});
+    db.data.claimed.push({ title, time: datetime(), store: 'internal' });
     run.c_internal++;
     // const img = await (await card.$('img.tw-image')).getAttribute('src');
     // console.log('Image:', img);
@@ -121,7 +121,7 @@ try {
         }
         console.log('URL to redeem game:', redeem[store]);
       }
-      db.data.claimed.push({title, time: datetime(), store, code});
+      db.data.claimed.push({ title, time: datetime(), store, code, url: page.url() });
       // save screenshot of potential code just in case
       const p = path.resolve(dirs.screenshots, 'prime-gaming', 'external', `${sanitizeFilename(title)}.png`);
       await page.screenshot({ path: p, fullPage: true });

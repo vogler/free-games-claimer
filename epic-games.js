@@ -104,7 +104,7 @@ try {
         // }
         // await page.waitForTimeout(3000);
         await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again
-        db.data.claimed.push({title, time: datetime()});
+        db.data.claimed.push({ title, time: datetime(), url: page.url() });
         run.c++;
         console.log('Claimed successfully!');
       } catch (e) {
