@@ -20,6 +20,7 @@ export const jsonDb = async file => {
 }
 
 export const datetime = (d = new Date()) => d.toISOString();
+export const sanitizeFilename = s => s.replace(/[^a-z0-9_\-]/gi, '_');
 
 // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
 const newStealthContext = async (browser, contextOptions = {}, debug = false) => {

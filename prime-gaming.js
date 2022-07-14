@@ -1,6 +1,6 @@
 import { chromium } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
-import { dirs, jsonDb, datetime, stealth } from './util.js';
+import { dirs, jsonDb, datetime, sanitizeFilename, stealth } from './util.js';
 
 const debug = process.env.PWDEBUG == '1'; // runs headful and opens https://playwright.dev/docs/inspector
 const show = process.argv.includes('show', 2);
@@ -80,7 +80,7 @@ try {
     run.c_internal++;
     // const img = await (await card.$('img.tw-image')).getAttribute('src');
     // console.log('Image:', img);
-    const p = path.resolve(dirs.screenshots, 'prime-gaming', 'internal', `${title.replace(/[^a-z0-9]/gi, '_')}.png`);
+    const p = path.resolve(dirs.screenshots, 'prime-gaming', 'internal', `${sanitizeFilename(title)}.png`);
     await card.screenshot({ path: p });
     // await page.pause();
   }
@@ -123,7 +123,7 @@ try {
       }
       db.data.claimed.push({title, time: datetime(), store, code});
       // save screenshot of potential code just in case
-      const p = path.resolve(dirs.screenshots, 'prime-gaming', 'external', `${title.replace(/[^a-z0-9]/gi, '_')}.png`);
+      const p = path.resolve(dirs.screenshots, 'prime-gaming', 'external', `${sanitizeFilename(title)}.png`);
       await page.screenshot({ path: p, fullPage: true });
       console.info('Saved a screenshot of page to', p);
       run.c_external++;
