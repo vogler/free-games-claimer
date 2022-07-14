@@ -1,6 +1,6 @@
 import { chromium } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
-import { dirs, stealth } from './util.js';
+import { dirs, jsonDb, datetime, stealth } from './util.js';
 
 const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
 
@@ -9,6 +9,15 @@ const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=
 const TIMEOUT = 20 * 1000; // 20s, default is 30s
 const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) - 80 || 1280;
 const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
+
+const db = await jsonDb('epic-games.json');
+db.data ||= { claimed: [], runs: [] };
+const run = {
+  startTime: datetime(),
+  endTime: null,
+  n: null, // unclaimed games at beginning
+  c: 0,    // claimed games at end
+};
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await chromium.launchPersistentContext(dirs.browser, {
@@ -32,78 +41,92 @@ await stealth(context);
 if (!debug) context.setDefaultTimeout(TIMEOUT);
 
 const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
-console.log('userAgent:', await page.evaluate(() => navigator.userAgent));
-await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // default 'load' takes forever
-// Accept cookies to get rid of banner to save space on screen. Will only appear for a fresh context, so we don't await, but let it time out if it does not exist and catch the exception. clickIfExists by checking selector's count > 0 did not work.
-page.click('button:has-text("Accept All Cookies")').catch(_ => {}); // _ => console.info('Cookies already accepted')
-while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) { // TODO also check alternative for signed-in state
-  console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page. If using docker, open http://localhost:6080");
-  context.setDefaultTimeout(0); // give user time to log in without timeout
-  await page.goto(URL_LOGIN, { waitUntil: 'domcontentloaded' });
-  // after login it just reloads the login page...
-  await page.waitForNavigation({ url: URL_CLAIM });
-  context.setDefaultTimeout(TIMEOUT);
-  // process.exit(1);
-}
-console.log('Signed in.');
-// click on each banner with 'Free Now'. TODO just extract the URLs and go to them in the loop
-const game_sel = 'a:has-text("Free Now")';
-await page.waitForSelector(game_sel);
-// const games = await page.$$(game_sel); // 'Element is not attached to the DOM' after navigation; had `for (const game of games) { await game.click(); ... }
-const n = await page.locator(game_sel).count();
-console.log('Number of free games:', n);
-for (let i = 1; i <= n; i++) {
-  await page.click(`:nth-match(${game_sel}, ${i})`);
-  const title = await page.locator('h1').first().innerText();
-  console.log('Current free game:', title);
-  // click Continue if 'This game contains mature content recommended only for ages 18+'
-  if (await page.locator('button:has-text("Continue")').count() > 0) {
-    console.log('This game contains mature content recommended only for ages 18+');
-    await page.click('button:has-text("Continue")');
+console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
+
+try {
+  await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // default 'load' takes forever
+  // Accept cookies to get rid of banner to save space on screen. Will only appear for a fresh context, so we don't await, but let it time out if it does not exist and catch the exception. clickIfExists by checking selector's count > 0 did not work.
+  page.click('button:has-text("Accept All Cookies")').catch(_ => {}); // _ => console.info('Cookies already accepted')
+  while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) { // TODO also check alternative for signed-in state
+    console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page. If using docker, open http://localhost:6080");
+    context.setDefaultTimeout(0); // give user time to log in without timeout
+    await page.goto(URL_LOGIN, { waitUntil: 'domcontentloaded' });
+    // after login it just reloads the login page...
+    await page.waitForNavigation({ url: URL_CLAIM });
+    context.setDefaultTimeout(TIMEOUT);
+    // process.exit(1);
   }
-  const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText();
-  if (btnText.toLowerCase() == 'in library') {
-    console.log('Already in library! Nothing to claim.');
-  } else {
-    console.log('Not in library yet! Click GET.');
-    await page.click('[data-testid="purchase-cta-button"]');
-    // click Continue if 'Device not supported. This product is not compatible with your current device.'
-    await Promise.any(['button:has-text("Continue")', '#webPurchaseContainer iframe'].map(s => page.waitForSelector(s))); // wait for Continue xor iframe
+  console.log('Signed in.');
+  // click on each banner with 'Free Now'. TODO just extract the URLs and go to them in the loop
+  const game_sel = 'a:has-text("Free Now")';
+  await page.waitForSelector(game_sel);
+  // const games = await page.$$(game_sel); // 'Element is not attached to the DOM' after navigation; had `for (const game of games) { await game.click(); ... }
+  const n = run.n = await page.locator(game_sel).count();
+  console.log('Number of free games:', n);
+  for (let i = 1; i <= n; i++) {
+    await page.click(`:nth-match(${game_sel}, ${i})`);
+    const title = await page.locator('h1').first().innerText();
+    console.log('Current free game:', title);
+    // click Continue if 'This game contains mature content recommended only for ages 18+'
     if (await page.locator('button:has-text("Continue")').count() > 0) {
-      // console.log('Device not supported. This product is not compatible with your current device.');
+      console.log('This game contains mature content recommended only for ages 18+');
       await page.click('button:has-text("Continue")');
     }
-    // it then creates an iframe for the rest
-    // await page.frame({ url: /.*store\/purchase.*/ }).click('button:has-text("Place Order")'); // not found because it does not wait for iframe
-    const iframe = page.frameLocator('#webPurchaseContainer iframe')
-    await iframe.locator('button:has-text("Place Order")').click();
-    // await page.pause();
-    // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
-    const btnAgree = iframe.locator('button:has-text("I Agree")');
-    try {
-      await Promise.any([btnAgree.waitFor().then(() => btnAgree.click()), page.waitForSelector('text=Thank you for buying').then(_ => { })]); // EU: wait for agree button, non-EU: potentially done
-      // TODO check for hcaptcha - the following is even true when no captcha is shown...
-      // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
-      //   console.error('Encountered hcaptcha. Giving up :(');
-      //   await page.pause();
-      //   process.exit(1);
-      // }
-      // await page.waitForTimeout(3000);
-      await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again
-      console.log('Claimed successfully!');
-    } catch (e) {
-      console.log(e);
-      const p = path.resolve(dirs.screenshots, 'epic-games', `${new Date().toISOString()}.png`);
-      await page.screenshot({ path: p, fullPage: true });
-      console.info('Saved a screenshot of hcaptcha challenge to', p);
-      console.error('Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
+    const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText();
+    if (btnText.toLowerCase() == 'in library') {
+      console.log('Already in library! Nothing to claim.');
+    } else {
+      console.log('Not in library yet! Click GET.');
+      await page.click('[data-testid="purchase-cta-button"]');
+      // click Continue if 'Device not supported. This product is not compatible with your current device.'
+      await Promise.any(['button:has-text("Continue")', '#webPurchaseContainer iframe'].map(s => page.waitForSelector(s))); // wait for Continue xor iframe
+      if (await page.locator('button:has-text("Continue")').count() > 0) {
+        // console.log('Device not supported. This product is not compatible with your current device.');
+        await page.click('button:has-text("Continue")');
+      }
+      // it then creates an iframe for the rest
+      // await page.frame({ url: /.*store\/purchase.*/ }).click('button:has-text("Place Order")'); // not found because it does not wait for iframe
+      const iframe = page.frameLocator('#webPurchaseContainer iframe')
+      await iframe.locator('button:has-text("Place Order")').click();
+      // await page.pause();
+      // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
+      const btnAgree = iframe.locator('button:has-text("I Agree")');
+      try {
+        await Promise.any([btnAgree.waitFor().then(() => btnAgree.click()), page.waitForSelector('text=Thank you for buying').then(_ => { })]); // EU: wait for agree button, non-EU: potentially done
+        // TODO check for hcaptcha - the following is even true when no captcha is shown...
+        // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
+        //   console.error('Encountered hcaptcha. Giving up :(');
+        //   await page.pause();
+        //   process.exit(1);
+        // }
+        // await page.waitForTimeout(3000);
+        await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again
+        db.data.claimed.push({title, time: datetime()});
+        run.c++;
+        console.log('Claimed successfully!');
+      } catch (e) {
+        console.log(e);
+        const p = path.resolve(dirs.screenshots, 'epic-games', `${datetime()}.png`);
+        await page.screenshot({ path: p, fullPage: true });
+        console.info('Saved a screenshot of hcaptcha challenge to', p);
+        console.error('Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
+      }
+      // await page.pause();
     }
-    // await page.pause();
+    if (i < n) { // no need to go back if it's the last game
+      await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector(game_sel);
+    }
   }
-  if (i < n) { // no need to go back if it's the last game
-    await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector(game_sel);
-  }
+} catch(error) {
+  console.error(error);
+  run.error = error.toString();
+} finally {
+  // write out json db
+  run.endTime = datetime();
+  db.data.runs.push(run);
+  await db.write();
+
+  // await context.waitForEvent("close");
+  await context.close();
 }
-// await context.waitForEvent("close");
-await context.close();
