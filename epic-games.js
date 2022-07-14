@@ -73,6 +73,8 @@ try {
       await page.click('button:has-text("Continue")');
     }
     const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText();
+    const p = path.resolve(dirs.screenshots, 'epic-games', `${title.replace(/[^a-z0-9]/gi, '_')}.png`);
+    await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
     if (btnText.toLowerCase() == 'in library') {
       console.log('Already in library! Nothing to claim.');
     } else {
