@@ -71,7 +71,7 @@ try {
       console.log('This game contains mature content recommended only for ages 18+');
       await page.click('button:has-text("Continue")');
     }
-    const title = await page.locator('h1').first().innerText();
+    const title = await page.locator('h1 div').first().innerText();
     console.log('Current free game:', title);
     const title_url = page.url().split('/').pop();
     const p = path.resolve(dirs.screenshots, 'epic-games', `${title_url}.png`);
