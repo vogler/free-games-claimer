@@ -75,13 +75,13 @@ try {
     // const title = await card.locator('h3').first().innerText();
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
-    await (await card.$('button:has-text("Claim game")')).click();
-    db.data.claimed.push({ title, time: datetime(), store: 'internal' });
-    run.c_internal++;
     // const img = await (await card.$('img.tw-image')).getAttribute('src');
     // console.log('Image:', img);
     const p = path.resolve(dirs.screenshots, 'prime-gaming', 'internal', `${sanitizeFilename(title)}.png`);
     await card.screenshot({ path: p });
+    await (await card.$('button:has-text("Claim game")')).click();
+    db.data.claimed.push({ title, time: datetime(), store: 'internal' });
+    run.c_internal++;
     // await page.pause();
   }
   // claim games in external/linked stores. Linked: origin.com, epicgames.com; Redeem-key: gog.com, legacygames.com
@@ -99,7 +99,7 @@ try {
     // await page.waitForNavigation();
     await Promise.any([page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")')]); // waits for navigation
     const store_text = await (await page.$('[data-a-target="hero-header-subtitle"]')).innerText();
-    // FULL GAME FOR PC ON: GOG.COM, ORIGIN, LEGACY GAMES, EPIC GAMES
+    // Full game for PC [and MAC] on: gog.com, Origin, Legacy Games, EPIC GAMES, Battle.net
     // 3 Full PC Games on Legacy Games
     const store = store_text.toLowerCase().replace(/.* on /, '');
     console.log('External store:', store);
@@ -133,7 +133,8 @@ try {
     await page.click('button[data-type="Game"]');
   } while (n);
   const p = path.resolve(dirs.screenshots, 'prime-gaming', `${datetime()}.png`);
-  await page.screenshot({ path: p, fullPage: true });
+  // await page.screenshot({ path: p, fullPage: true });
+  await page.locator(games_sel).screenshot({ path: p });
 } catch(error) {
   console.error(error);
   run.error = error.toString();
