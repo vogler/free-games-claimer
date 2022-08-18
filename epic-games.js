@@ -58,7 +58,7 @@ try {
   }
   console.log('Signed in.');
   // click on each banner with 'Free Now'. TODO just extract the URLs and go to them in the loop
-  const game_sel = 'a:has-text("Free Now")';
+  const game_sel = 'span:text-is("Free Now")';
   await page.waitForSelector(game_sel);
   // const games = await page.$$(game_sel); // 'Element is not attached to the DOM' after navigation; had `for (const game of games) { await game.click(); ... }
   const n = run.n = await page.locator(game_sel).count();
