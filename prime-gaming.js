@@ -39,7 +39,8 @@ const page = context.pages()[0];
 console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 
 const clickIfExists = async selector => {
-  if (await page.locator(selector).count() > 0)
+  const cookieConsent = await page.locator(selector)
+  if (await cookieConsent.count() > 0 && await cookieConsent.isVisible())
     await page.click(selector);
 };
 
@@ -132,8 +133,8 @@ try {
     await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
     await page.click('button[data-type="Game"]');
   } while (n);
-  const p = path.resolve(dirs.screenshots, 'prime-gaming', `${datetime()}.png`);
-  // await page.screenshot({ path: p, fullPage: true });
+  const p = path.resolve(dirs.screenshots, 'prime-gaming', `${sanitizeFilename(datetime())}.png`);
+  await page.screenshot({ path: p, fullPage: true });
   await page.locator(games_sel).screenshot({ path: p });
 } catch(error) {
   console.error(error);
