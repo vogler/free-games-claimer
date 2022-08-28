@@ -12,10 +12,10 @@ rm -f /fgc/data/browser/SingletonLock
 # Options passed directly to the Xvfb server:
 # -ac disables host-based access control mechanisms
 # −screen NUM WxHxD creates the screen and sets its width, height, and depth
-Xvfb "$DISPLAY" -ac -screen 0 "${SCREEN_WIDTH}x${SCREEN_HEIGHT}x${SCREEN_DEPTH}" >/dev/null 2>&1 &
 
-if [ "$VNC_ENABLED" = true ]; then
-    vnc-start >/dev/null 2>&1 &
-fi
-
+Xvfb :1 -ac -screen 0 "${SCREEN_WIDTH}x${SCREEN_HEIGHT}x${SCREEN_DEPTH}" >/dev/null 2>&1 &
+x11vnc -display :1.0 -forever -shared -rfbport "${VNC_PORT:-5900}" -passwd "${VNC_PASSWORD:-secret}" -bg
+websockify -D --web "$NOVNC_HOME" "$NOVNC_PORT" "localhost:$VNC_PORT" &
+DISPLAY=:1.0
+export DISPLAY
 exec tini -g -- "$@"
