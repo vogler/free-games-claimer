@@ -39,7 +39,7 @@ const page = context.pages()[0];
 console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 
 const clickIfExists = async selector => {
-  if (await page.locator(selector).count() > 0)
+  if (await page.locator(selector).count() > 0 && await page.locator(selector).isVisible())
     await page.click(selector);
 };
 
