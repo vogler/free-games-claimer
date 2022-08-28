@@ -132,7 +132,7 @@ try {
     await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
     await page.click('button[data-type="Game"]');
   } while (n);
-  const p = path.resolve(dirs.screenshots, 'prime-gaming', `${datetime()}.png`);
+  const p = path.resolve(dirs.screenshots, 'prime-gaming', `${datetime().replaceAll(':', '.')}.png`);
   // await page.screenshot({ path: p, fullPage: true });
   await page.locator(games_sel).screenshot({ path: p });
 } catch(error) {
