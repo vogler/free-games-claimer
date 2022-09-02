@@ -12,6 +12,7 @@ Claims free games on
 3. Run `npm install && npx playwright install chromium`
 
 This downloads Chromium (343 MB) to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
+If you are missing some dependencies for the browser on your system, you can use `sudo npx playwright install chromium --with-deps`.
 
 ## Usage
 Both scripts start an automated Chromium instance, either with the browser GUI shown or hidden (*headless mode*).
