@@ -27,6 +27,7 @@ const context = await chromium.launchPersistentContext(dirs.browser, {
   viewport: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
   userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO update if browser is updated!
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
+  // recordVideo: { dir: 'data/videos/' }, // will record a .webm video for each page navigated
   args: [ // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.', but flags below don't work.
     '--disable-session-crashed-bubble',
     '--restore-last-session',
