@@ -28,10 +28,12 @@ const context = await chromium.launchPersistentContext(dirs.browser, {
   userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO update if browser is updated!
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
   // recordVideo: { dir: 'data/videos/' }, // will record a .webm video for each page navigated
-  args: [ // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.', but flags below don't work.
-    '--disable-session-crashed-bubble',
-    '--restore-last-session',
+  args: [ // https://peter.sh/experiments/chromium-command-line-switches
+    // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.'
+    // '--restore-last-session', // does not apply for crash/killed
+    '--hide-crash-restore-bubble',
   ],
+  ignoreDefaultArgs: ['--enable-automation'], // remove default arg that shows the info bar with 'Chrome is being controlled by automated test software.'
 });
 
 // Without stealth plugin, the website shows an hcaptcha on login with username/password and in the last step of claiming a game. It may have other heuristics like unsuccessful logins as well. After <6h (TBD) it resets to no captcha again. Getting a new IP also resets.
