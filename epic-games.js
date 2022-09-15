@@ -47,7 +47,7 @@ const page = context.pages().length ? context.pages()[0] : await context.newPage
 console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 
 try {
-  await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // default 'load' takes forever
+  await page.goto(URL_CLAIM, { waitUntil: 'networkidle' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto - changed to 'networkidle' temporarily due to race https://github.com/vogler/free-games-claimer/issues/25
   // Accept cookies to get rid of banner to save space on screen. Will only appear for a fresh context, so we don't await, but let it time out if it does not exist and catch the exception. clickIfExists by checking selector's count > 0 did not work.
   page.click('button:has-text("Accept All Cookies")').catch(_ => {}); // _ => console.info('Cookies already accepted')
   while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) { // TODO also check alternative for signed-in state
