@@ -1,6 +1,6 @@
 import { chromium } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
-import { dirs, jsonDb, datetime, stealth } from './util.js';
+import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
 
 const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
 
@@ -112,7 +112,7 @@ try {
         console.log('Claimed successfully!');
       } catch (e) {
         console.log(e);
-        const p = path.resolve(dirs.screenshots, 'epic-games', `${datetime().replaceAll(':', '.')}.png`);
+        const p = path.resolve(dirs.screenshots, 'epic-games', `${filenamify(datetime())}.png`);
         await page.screenshot({ path: p, fullPage: true });
         console.info('Saved a screenshot of hcaptcha challenge to', p);
         console.error('Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?

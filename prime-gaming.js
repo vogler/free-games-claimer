@@ -1,6 +1,6 @@
 import { chromium } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
-import { dirs, jsonDb, datetime, sanitizeFilename, stealth } from './util.js';
+import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
 
 const debug = process.env.PWDEBUG == '1'; // runs headful and opens https://playwright.dev/docs/inspector
 const show = process.argv.includes('show', 2);
@@ -77,7 +77,7 @@ try {
     console.log('Current free game:', title);
     // const img = await (await card.$('img.tw-image')).getAttribute('src');
     // console.log('Image:', img);
-    const p = path.resolve(dirs.screenshots, 'prime-gaming', 'internal', `${sanitizeFilename(title)}.png`);
+    const p = path.resolve(dirs.screenshots, 'prime-gaming', 'internal', `${filenamify(title)}.png`);
     await card.screenshot({ path: p });
     await (await card.$('button:has-text("Claim game")')).click();
     db.data.claimed.push({ title, time: datetime(), store: 'internal' });
@@ -123,7 +123,7 @@ try {
       }
       db.data.claimed.push({ title, time: datetime(), store, code, url: page.url() });
       // save screenshot of potential code just in case
-      const p = path.resolve(dirs.screenshots, 'prime-gaming', 'external', `${sanitizeFilename(title)}.png`);
+      const p = path.resolve(dirs.screenshots, 'prime-gaming', 'external', `${filenamify(title)}.png`);
       await page.screenshot({ path: p, fullPage: true });
       console.info('Saved a screenshot of page to', p);
       run.c_external++;
@@ -132,7 +132,7 @@ try {
     await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
     await page.click('button[data-type="Game"]');
   } while (n);
-  const p = path.resolve(dirs.screenshots, 'prime-gaming', `${datetime().replaceAll(':', '.')}.png`);
+  const p = path.resolve(dirs.screenshots, 'prime-gaming', `${filenamify(datetime())}.png`);
   // await page.screenshot({ path: p, fullPage: true });
   await page.locator(games_sel).screenshot({ path: p });
 } catch(error) {
