@@ -66,8 +66,8 @@ try {
   // const games = await page.$$(game_sel); // 'Element is not attached to the DOM' after navigation; had `for (const game of games) { await game.click(); ... }
   const n = run.n = await page.locator(game_sel).count();
   console.log('Number of free games:', n);
-  for (let i = 1; i <= n; i++) {
-    await page.click(`:nth-match(${game_sel}, ${i})`); // navigates to page for game
+  for (let i = 0; i < n; i++) {
+    await page.locator(game_sel).nth(i).click(); // navigates to page for game
     const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText(); // barrier to block until page is loaded
     // click Continue if 'This game contains mature content recommended only for ages 18+'
     if (await page.locator('button:has-text("Continue")').count() > 0) {
@@ -119,7 +119,7 @@ try {
       }
       // await page.pause();
     }
-    if (i < n) { // no need to go back if it's the last game
+    if (i < n-1) { // no need to go back if it's the last game
       await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
       await page.waitForSelector(game_sel);
     }
