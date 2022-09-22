@@ -47,7 +47,7 @@ const page = context.pages().length ? context.pages()[0] : await context.newPage
 console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 
 try {
-  await page.goto(URL_CLAIM, { waitUntil: 'networkidle' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto - changed to 'networkidle' temporarily due to race https://github.com/vogler/free-games-claimer/issues/25
+  await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto
   // Accept cookies to get rid of banner to save space on screen. Will only appear for a fresh context, so we don't await, but let it time out if it does not exist and catch the exception. clickIfExists by checking selector's count > 0 did not work.
   page.click('button:has-text("Accept All Cookies")').catch(_ => {}); // _ => console.info('Cookies already accepted')
   while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) { // TODO also check alternative for signed-in state
@@ -61,14 +61,20 @@ try {
   }
   console.log('Signed in.');
   // click on each banner with 'Free Now'. TODO just extract the URLs and go to them in the loop
+  // This json contains all promotions: https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions
+  // Could filter data.Catalog.searchStore.elements for .promotions.promotionalOffers being set and build URL with .catalogNs.mappings[0].pageSlug or .urlSlug if not set to some wrong id like it was the case for spirit-of-the-north-f58a66
   const game_sel = 'span:text-is("Free Now")';
   await page.waitForSelector(game_sel);
   // const games = await page.$$(game_sel); // 'Element is not attached to the DOM' after navigation; had `for (const game of games) { await game.click(); ... }
   const n = run.n = await page.locator(game_sel).count();
   console.log('Number of free games:', n);
+  // fixes for https://github.com/vogler/free-games-claimer/issues/25 when URL of game is changed by JS:
+  // await page.waitForResponse(/freeGamesPromotions/); // not enough
   for (let i = 0; i < n; i++) {
+    await page.waitForTimeout(3000);
     await page.locator(game_sel).nth(i).click(); // navigates to page for game
     const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText(); // barrier to block until page is loaded
+    // await page.pause();
     // click Continue if 'This game contains mature content recommended only for ages 18+'
     if (await page.locator('button:has-text("Continue")').count() > 0) {
       console.log('This game contains mature content recommended only for ages 18+');
