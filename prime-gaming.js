@@ -44,7 +44,7 @@ const clickIfExists = async selector => {
 };
 
 try {
-  await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'}); // default 'load' takes forever
+  await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // default 'load' takes forever
   // need to wait for some elements to exist before checking if signed in or accepting cookies:
   await Promise.any(['button:has-text("Sign in")', '[data-a-target="user-dropdown-first-name-text"]'].map(s => page.waitForSelector(s)));
   await clickIfExists('[aria-label="Cookies usage disclaimer banner"] button:has-text("Accept Cookies")'); // to not waste screen space in --debug
@@ -57,7 +57,7 @@ try {
     }
     await page.click('button:has-text("Sign in")');
     if (!debug) context.setDefaultTimeout(0); // give user time to log in without timeout
-    await page.waitForNavigation({url: 'https://gaming.amazon.com/home?signedIn=true'});
+    await page.waitForNavigation({ url: 'https://gaming.amazon.com/home?signedIn=true' });
     if (!debug) context.setDefaultTimeout(TIMEOUT);
   }
   console.log('Signed in.');
@@ -103,7 +103,7 @@ try {
     // 3 Full PC Games on Legacy Games
     const store = store_text.toLowerCase().replace(/.* on /, '');
     console.log('External store:', store);
-    if(await page.locator('div:has-text("Link game account")').count()) {
+    if (await page.locator('div:has-text("Link game account")').count()) {
       console.error('Account linking is required to claim this offer!');
     } else {
       // print code if there is one
@@ -129,13 +129,13 @@ try {
       run.c_external++;
     }
     // await page.pause();
-    await page.goto(URL_CLAIM, {waitUntil: 'domcontentloaded'});
+    await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
     await page.click('button[data-type="Game"]');
   } while (n);
   const p = path.resolve(dirs.screenshots, 'prime-gaming', `${filenamify(datetime())}.png`);
   // await page.screenshot({ path: p, fullPage: true });
   await page.locator(games_sel).screenshot({ path: p });
-} catch(error) {
+} catch (error) {
   console.error(error);
   run.error = error.toString();
 } finally {

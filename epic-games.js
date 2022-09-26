@@ -49,7 +49,7 @@ console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 try {
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto
   // Accept cookies to get rid of banner to save space on screen. Will only appear for a fresh context, so we don't await, but let it time out if it does not exist and catch the exception. clickIfExists by checking selector's count > 0 did not work.
-  page.click('button:has-text("Accept All Cookies")').catch(_ => {}); // _ => console.info('Cookies already accepted')
+  page.click('button:has-text("Accept All Cookies")').catch(_ => { }); // _ => console.info('Cookies already accepted')
   while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) { // TODO also check alternative for signed-in state
     console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page. If using docker, open http://localhost:6080");
     context.setDefaultTimeout(0); // give user time to log in without timeout
@@ -98,7 +98,7 @@ try {
       }
       // it then creates an iframe for the rest
       // await page.frame({ url: /.*store\/purchase.*/ }).click('button:has-text("Place Order")'); // not found because it does not wait for iframe
-      const iframe = page.frameLocator('#webPurchaseContainer iframe')
+      const iframe = page.frameLocator('#webPurchaseContainer iframe');
       await iframe.locator('button:has-text("Place Order")').click();
       // await page.pause();
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
@@ -125,12 +125,12 @@ try {
       }
       // await page.pause();
     }
-    if (i < n-1) { // no need to go back if it's the last game
+    if (i < n - 1) { // no need to go back if it's the last game
       await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
       await page.waitForSelector(game_sel);
     }
   }
-} catch(error) {
+} catch (error) {
   console.error(error);
   run.error = error.toString();
 } finally {

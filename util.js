@@ -17,7 +17,7 @@ export const jsonDb = async file => {
   const db = new Low(new JSONFile(dataDir(file)));
   await db.read();
   return db;
-}
+};
 
 export const datetime = (d = new Date()) => d.toISOString().replace('T', ' ').replace('Z', '');
 export const filenamify = s => s.replaceAll(':', '.').replace(/[^a-z0-9 _\-.]/gi, '_'); // alternative: https://www.npmjs.com/package/filenamify - On Unix-like systems, / is reserved. On Windows, <>:"/\|?* along with trailing periods are reserved.
@@ -61,9 +61,9 @@ export const stealth = async (context) => {
   const stealth = {
     callbacks: [],
     async evaluateOnNewDocument(...args) {
-      this.callbacks.push({ cb: args[0], a: args[1] })
+      this.callbacks.push({ cb: args[0], a: args[1] });
     }
-  }
+  };
   for (const e of enabledEvasions) {
     const evasion = await import(`puppeteer-extra-plugin-stealth/evasions/${e}/index.js`);
     evasion.default().onPageCreated(stealth);
@@ -71,4 +71,4 @@ export const stealth = async (context) => {
   for (let evasion of stealth.callbacks) {
     await context.addInitScript(evasion.cb, evasion.a);
   }
-}
+};
