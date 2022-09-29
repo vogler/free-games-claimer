@@ -49,8 +49,10 @@ console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 
 try {
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto
+
   // Accept cookies to get rid of banner to save space on screen. Will only appear for a fresh context, so we don't await, but let it time out if it does not exist and catch the exception. clickIfExists by checking selector's count > 0 did not work.
   page.click('button:has-text("Accept All Cookies")').catch(_ => { }); // _ => console.info('Cookies already accepted')
+
   while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) { // TODO also check alternative for signed-in state
     console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page. If using docker, open http://localhost:6080");
     context.setDefaultTimeout(0); // give user time to log in without timeout
@@ -61,6 +63,7 @@ try {
     // process.exit(1);
   }
   console.log('Signed in.');
+
   // click on each banner with 'Free Now'. TODO just extract the URLs and go to them in the loop
   // This json contains all promotions: https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions
   // Could filter data.Catalog.searchStore.elements for .promotions.promotionalOffers being set and build URL with .catalogNs.mappings[0].pageSlug or .urlSlug if not set to some wrong id like it was the case for spirit-of-the-north-f58a66
@@ -69,63 +72,70 @@ try {
   // const games = await page.$$(game_sel); // 'Element is not attached to the DOM' after navigation; had `for (const game of games) { await game.click(); ... }
   const n = run.n = await page.locator(game_sel).count();
   console.log('Number of free games:', n);
-  // fixes for https://github.com/vogler/free-games-claimer/issues/25 when URL of game is changed by JS:
-  // await page.waitForResponse(/freeGamesPromotions/); // not enough
+
+  // https://github.com/vogler/free-games-claimer/issues/25 sometimes URL of game is changed by JS - in these cases we need to wait, but unclear for what:
+  // await page.waitForResponse(/freeGamesPromotions/); // not enough, needs to be evaluated
+
   for (let i = 0; i < n; i++) {
-    console.log('urlSlug', await page.locator(game_sel).nth(i).getAttribute('href'));
-    await page.waitForTimeout(3000);
+    console.log('urlSlug', await page.locator(game_sel).nth(i).getAttribute('href')); // debug #25
+    await page.waitForTimeout(3000); // preliminary fix for #25
     await page.locator(game_sel).nth(i).click(); // navigates to page for game
     const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText(); // barrier to block until page is loaded
-    // await page.pause();
+
     // click Continue if 'This game contains mature content recommended only for ages 18+'
     if (await page.locator('button:has-text("Continue")').count() > 0) {
       console.log('This game contains mature content recommended only for ages 18+');
       await page.click('button:has-text("Continue")');
     }
+
     const title = await page.locator('h1 div').first().innerText();
-    console.log('Current free game:', title);
     const title_url = page.url().split('/').pop();
-    const p = path.resolve(dirs.screenshots, 'epic-games', `${title_url}.png`);
-    if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
+    console.log('Current free game:', title, title_url);
+
     if (btnText.toLowerCase() == 'in library') {
       console.log('Already in library! Nothing to claim.');
     } else { // GET
       console.log('Not in library yet! Click GET.');
       await page.click('[data-testid="purchase-cta-button"]');
+
       // click Continue if 'Device not supported. This product is not compatible with your current device.'
       await Promise.any(['button:has-text("Continue")', '#webPurchaseContainer iframe'].map(s => page.waitForSelector(s))); // wait for Continue xor iframe
       if (await page.locator('button:has-text("Continue")').count() > 0) {
         // console.log('Device not supported. This product is not compatible with your current device.');
         await page.click('button:has-text("Continue")');
       }
-      // it then creates an iframe for the rest
-      // await page.frame({ url: /.*store\/purchase.*/ }).click('button:has-text("Place Order")'); // not found because it does not wait for iframe
+
+      // if (process.env.DRYRUN) continue; // TODO can't continue yet due to redirect at bottom
+      if (debug) await page.pause();
+
+      // it then creates an iframe for the purchase
       const iframe = page.frameLocator('#webPurchaseContainer iframe');
       await iframe.locator('button:has-text("Place Order")').click();
-      // await page.pause();
+
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
       const btnAgree = iframe.locator('button:has-text("I Agree")');
       try {
         await Promise.any([btnAgree.waitFor().then(() => btnAgree.click()), page.waitForSelector('text=Thank you for buying').then(_ => { })]); // EU: wait for agree button, non-EU: potentially done
-        // TODO check for hcaptcha - the following is even true when no captcha is shown...
+
+        // TODO check for hcaptcha - the following is even true when no captcha challenge is shown...
         // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
         //   console.error('Encountered hcaptcha. Giving up :(');
-        //   await page.pause();
-        //   process.exit(1);
         // }
-        // await page.waitForTimeout(3000);
-        await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again
+
+        await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again = no-op
         db.data.claimed.push({ title, time: datetime(), url: page.url() });
         run.c++;
         console.log('Claimed successfully!');
       } catch (e) {
         console.log(e);
-        const p = path.resolve(dirs.screenshots, 'epic-games', `${filenamify(datetime())}.png`);
+        const p = path.resolve(dirs.screenshots, 'epic-games', 'captcha', `${filenamify(datetime())}.png`);
         await page.screenshot({ path: p, fullPage: true });
         console.info('Saved a screenshot of hcaptcha challenge to', p);
         console.error('Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
       }
-      // await page.pause();
+
+      const p = path.resolve(dirs.screenshots, 'epic-games', `${title_url}.png`);
+      if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
     }
     if (i < n - 1) { // no need to go back if it's the last game
       await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
@@ -140,7 +150,5 @@ try {
   run.endTime = datetime();
   db.data.runs.push(run);
   await db.write();
-
-  // await context.waitForEvent("close");
-  await context.close();
 }
+await context.close();
