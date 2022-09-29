@@ -1,6 +1,7 @@
 import { chromium } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
 import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
+import { existsSync } from 'fs';
 
 const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
 
@@ -84,7 +85,8 @@ try {
     console.log('Current free game:', title);
     const title_url = page.url().split('/').pop();
     const p = path.resolve(dirs.screenshots, 'epic-games', `${title_url}.png`);
-    await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
+    if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
+    continue;
     if (btnText.toLowerCase() == 'in library') {
       console.log('Already in library! Nothing to claim.');
     } else { // GET
