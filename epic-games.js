@@ -64,22 +64,21 @@ try {
   }
   console.log('Signed in.');
 
-  // click on each banner with 'Free Now'. TODO just extract the URLs and go to them in the loop
-  // This json contains all promotions: https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions
-  // Could filter data.Catalog.searchStore.elements for .promotions.promotionalOffers being set and build URL with .catalogNs.mappings[0].pageSlug or .urlSlug if not set to some wrong id like it was the case for spirit-of-the-north-f58a66
-  const game_sel = 'a:has(span:text-is("Free Now"))';
-  await page.waitForSelector(game_sel);
-  // const games = await page.$$(game_sel); // 'Element is not attached to the DOM' after navigation; had `for (const game of games) { await game.click(); ... }
-  const n = run.n = await page.locator(game_sel).count();
-  console.log('Number of free games:', n);
+  // Detect free games
+  const game_loc = await page.locator('a:has(span:text-is("Free Now"))');
+  await game_loc.last().waitFor();
+  // clicking on `game_sel` sometimes led to a 404, see https://github.com/vogler/free-games-claimer/issues/25
+  // debug showed that in those cases the href was still correct, so we `goto` the urls instead of clicking.
+  // Alternative: parse the json loaded to build the page https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions
+    // filter data.Catalog.searchStore.elements for .promotions.promotionalOffers being set and build URL with .catalogNs.mappings[0].pageSlug or .urlSlug if not set to some wrong id like it was the case for spirit-of-the-north-f58a66 - this is also what's done here: https://github.com/claabs/epicgames-freegames-node/blob/938a9653ffd08b8284ea32cf01ac8727d25c5d4c/src/puppet/free-games.ts#L138-L213
+  const urlSlugs = await Promise.all((await game_loc.elementHandles()).map(a => a.getAttribute('href')));
+  const urls = urlSlugs.map(s => 'https://store.epicgames.com' + s);
+  const n = run.n = await game_loc.count();
+  // console.log('Number of free games:', n);
+  console.log('Free games:', urls);
 
-  // https://github.com/vogler/free-games-claimer/issues/25 sometimes URL of game is changed by JS - in these cases we need to wait, but unclear for what:
-  // await page.waitForResponse(/freeGamesPromotions/); // not enough, needs to be evaluated
-
-  for (let i = 0; i < n; i++) {
-    console.log('urlSlug', await page.locator(game_sel).nth(i).getAttribute('href')); // debug #25
-    await page.waitForTimeout(3000); // preliminary fix for #25
-    await page.locator(game_sel).nth(i).click(); // navigates to page for game
+  for (const url of urls) {
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
     const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText(); // barrier to block until page is loaded
 
     // click Continue if 'This game contains mature content recommended only for ages 18+'
@@ -105,7 +104,7 @@ try {
         await page.click('button:has-text("Continue")');
       }
 
-      // if (process.env.DRYRUN) continue; // TODO can't continue yet due to redirect at bottom
+      if (process.env.DRYRUN) continue;
       if (debug) await page.pause();
 
       // it then creates an iframe for the purchase
@@ -136,10 +135,6 @@ try {
 
       const p = path.resolve(dirs.screenshots, 'epic-games', `${title_url}.png`);
       if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
-    }
-    if (i < n - 1) { // no need to go back if it's the last game
-      await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
-      await page.waitForSelector(game_sel);
     }
   }
 } catch (error) {
