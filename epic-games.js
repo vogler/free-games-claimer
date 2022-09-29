@@ -87,7 +87,6 @@ try {
     const title_url = page.url().split('/').pop();
     const p = path.resolve(dirs.screenshots, 'epic-games', `${title_url}.png`);
     if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
-    continue;
     if (btnText.toLowerCase() == 'in library') {
       console.log('Already in library! Nothing to claim.');
     } else { // GET
