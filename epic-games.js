@@ -64,7 +64,7 @@ try {
   // click on each banner with 'Free Now'. TODO just extract the URLs and go to them in the loop
   // This json contains all promotions: https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions
   // Could filter data.Catalog.searchStore.elements for .promotions.promotionalOffers being set and build URL with .catalogNs.mappings[0].pageSlug or .urlSlug if not set to some wrong id like it was the case for spirit-of-the-north-f58a66
-  const game_sel = 'span:text-is("Free Now")';
+  const game_sel = 'a:has(span:text-is("Free Now"))';
   await page.waitForSelector(game_sel);
   // const games = await page.$$(game_sel); // 'Element is not attached to the DOM' after navigation; had `for (const game of games) { await game.click(); ... }
   const n = run.n = await page.locator(game_sel).count();
@@ -72,6 +72,7 @@ try {
   // fixes for https://github.com/vogler/free-games-claimer/issues/25 when URL of game is changed by JS:
   // await page.waitForResponse(/freeGamesPromotions/); // not enough
   for (let i = 0; i < n; i++) {
+    console.log('urlSlug', await page.locator(game_sel).nth(i).getAttribute('href'));
     await page.waitForTimeout(3000);
     await page.locator(game_sel).nth(i).click(); // navigates to page for game
     const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText(); // barrier to block until page is loaded
