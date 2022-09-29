@@ -7,13 +7,12 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV SCREEN_WIDTH 1440
 ENV SCREEN_HEIGHT 900
 ENV SCREEN_DEPTH 24
-ENV DISPLAY :60
 
 # Configure VNC via environment variables:
-ENV VNC_ENABLED true
 ENV VNC_PASSWORD secret
 ENV VNC_PORT 5900
 ENV NOVNC_PORT 6080
+ENV NOVNC_HOME /usr/share/novnc
 EXPOSE 5900
 EXPOSE 6080
 
@@ -54,8 +53,8 @@ RUN apt-get update \
     /usr/share/doc/* \
     /var/cache/* \
     /var/lib/apt/lists/* \
-    /var/tmp/*
-
+    /var/tmp/* \
+    && ln -s $NOVNC_HOME/vnc_auto.html $NOVNC_HOME/index.html
 
 WORKDIR /fgc
 COPY package.json .
@@ -70,10 +69,7 @@ COPY . .
 # Shell scripts
 RUN dos2unix ./docker/*.sh
 RUN mv ./docker/entrypoint.sh /usr/local/bin/entrypoint \
-    && chmod +x /usr/local/bin/entrypoint \
-    && mv ./docker/vnc-start.sh /usr/local/bin/vnc-start \
-    && chmod +x /usr/local/bin/vnc-start
-
+    && chmod +x /usr/local/bin/entrypoint 
 
 ENTRYPOINT ["entrypoint"]
 CMD ["node", "epic-games.js"]
