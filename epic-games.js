@@ -60,7 +60,8 @@ try {
     context.setDefaultTimeout(TIMEOUT);
     // process.exit(1);
   }
-  console.log('Signed in.');
+  const user = await page.locator('#user span').first().innerHTML();
+  console.log(`Signed in as ${user}`);
 
   // Detect free games
   const game_loc = await page.locator('a:has(span:text-is("Free Now"))');
