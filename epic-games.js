@@ -26,7 +26,7 @@ const context = await chromium.launchPersistentContext(dirs.browser, {
   // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
   headless: false,
   viewport: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
-  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO update if browser is updated!
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
   // recordVideo: { dir: 'data/videos/' }, // will record a .webm video for each page navigated
   args: [ // https://peter.sh/experiments/chromium-command-line-switches
@@ -43,7 +43,7 @@ await stealth(context);
 if (!debug) context.setDefaultTimeout(TIMEOUT);
 
 const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
-console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
+// console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 
 try {
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto
@@ -88,18 +88,18 @@ try {
 
     const title = await page.locator('h1 div').first().innerText();
     const title_url = page.url().split('/').pop();
-    console.log('Current free game:', title, title_url);
+    console.log('Current free game:', title);
 
     if (btnText.toLowerCase() == 'in library') {
-      console.log('Already in library! Nothing to claim.');
+      console.log('  Already in library! Nothing to claim.');
     } else { // GET
-      console.log('Not in library yet! Click GET.');
+      console.log('  Not in library yet! Click GET.');
       await page.click('[data-testid="purchase-cta-button"]');
 
-      // click Continue if 'Device not supported. This product is not compatible with your current device.'
+      // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoidable by Windows userAgent?
       await Promise.any(['button:has-text("Continue")', '#webPurchaseContainer iframe'].map(s => page.waitForSelector(s))); // wait for Continue xor iframe
       if (await page.locator('button:has-text("Continue")').count() > 0) {
-        // console.log('Device not supported. This product is not compatible with your current device.');
+        // console.log('  Device not supported. This product is not compatible with your current device.');
         await page.click('button:has-text("Continue")');
       }
 
@@ -117,19 +117,19 @@ try {
 
         // TODO check for hcaptcha - the following is even true when no captcha challenge is shown...
         // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
-        //   console.error('Encountered hcaptcha. Giving up :(');
+        //   console.error('  Encountered hcaptcha. Giving up :(');
         // }
 
         await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again = no-op
         db.data.claimed.push({ title, time: datetime(), url: page.url() });
         run.c++;
-        console.log('Claimed successfully!');
+        console.log('  Claimed successfully!');
       } catch (e) {
         console.log(e);
         const p = path.resolve(dirs.screenshots, 'epic-games', 'captcha', `${filenamify(datetime())}.png`);
         await page.screenshot({ path: p, fullPage: true });
-        console.info('Saved a screenshot of hcaptcha challenge to', p);
-        console.error('Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
+        console.info('  Saved a screenshot of hcaptcha challenge to', p);
+        console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
       }
 
       const p = path.resolve(dirs.screenshots, 'epic-games', `${title_url}.png`);
