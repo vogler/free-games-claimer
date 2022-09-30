@@ -38,8 +38,6 @@ const context = await chromium.launchPersistentContext(dirs.browser, {
 });
 
 // Without stealth plugin, the website shows an hcaptcha on login with username/password and in the last step of claiming a game. It may have other heuristics like unsuccessful logins as well. After <6h (TBD) it resets to no captcha again. Getting a new IP also resets.
-// stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
-// https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth/evasions
 await stealth(context);
 
 if (!debug) context.setDefaultTimeout(TIMEOUT);
