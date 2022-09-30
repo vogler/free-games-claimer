@@ -1,7 +1,7 @@
 import { chromium } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
 import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 
 const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
 
@@ -19,6 +19,36 @@ const run = {
   n: null, // unclaimed games at beginning
   c: 0,    // claimed games at end
 };
+
+// check if there are new games to claim before launching browser? https://github.com/vogler/free-games-claimer/issues/29
+// get current promotionalOffers
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // otherwise got UNABLE_TO_GET_ISSUER_CERT_LOCALLY
+const promoJson = await (await fetch('https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US')).json();
+const currentGames = promoJson.data.Catalog.searchStore.elements.filter(e => e.promotions?.promotionalOffers?.length);
+console.log('Current games:', currentGames.map(e => e.title));
+
+// Option 1: check order history using previously stored cookies
+const cookiesPath = path.resolve(dirs.browser, 'epic-games-cookies.json');
+if (existsSync(cookiesPath)) {
+  const cookieJson = JSON.parse(readFileSync(cookiesPath, 'utf8'));
+  let cookie = cookieJson.filter(e => e.domain == '.epicgames.com').map(e => `${e.name}=${e.value}`).join('; ');
+  // console.log(cookie);
+  // those cookies don't work but result in html to login as response instead of json - override with Dev Tools > Request Headers > cookie
+  if (existsSync('data/cookie')) {
+    cookie = readFileSync('data/cookie', 'utf8');
+  }
+  const orderHistory = await (await fetch('https://www.epicgames.com/account/v2/payment/ajaxGetOrderHistory?locale=en-US', {
+    headers: { cookie }
+  })).json();
+  const ordered = orderHistory.orders.flatMap(o => o.orderStatus == 'COMPLETED' ? o.items.map(i => i.namespace) : []);
+  // console.log(ordered);
+  const unclaimed = currentGames.filter(e => !(e.namespace in ordered));
+  console.log('Unclaimed games:', unclaimed.map(e => e.title));
+}
+// Option 2: launch headless browser to check order history - should take care of handling cookies, but if there are games to claim we need to re-launch non-headless
+// Option 3: ignore order history and check claimed games per account in data/epic-games.json
+
+process.exit(0);
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await chromium.launchPersistentContext(dirs.browser, {
@@ -139,6 +169,8 @@ try {
   console.error(error);
   run.error = error.toString();
 } finally {
+  // write out cookies (only for debugging)
+  await writeFileSync(cookiesPath, JSON.stringify(await context.cookies()));
   // write out json db
   run.endTime = datetime();
   db.data.runs.push(run);
