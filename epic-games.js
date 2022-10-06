@@ -29,7 +29,7 @@ const context = await chromium.launchPersistentContext(dirs.browser, {
   // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
   headless: false,
   viewport: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
-  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
   // recordVideo: { dir: 'data/videos/' }, // will record a .webm video for each page navigated
   args: [ // https://peter.sh/experiments/chromium-command-line-switches
@@ -102,12 +102,8 @@ try {
       console.log('  Not in library yet! Click GET.');
       await page.click('[data-testid="purchase-cta-button"]');
 
-      // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoidable by Windows userAgent?
-      await Promise.any(['button:has-text("Continue")', '#webPurchaseContainer iframe'].map(s => page.waitForSelector(s))); // wait for Continue xor iframe
-      if (await page.locator('button:has-text("Continue")').count() > 0) {
-        // console.log('  Device not supported. This product is not compatible with your current device.');
-        await page.click('button:has-text("Continue")');
-      }
+      // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoided by Windows userAgent?
+      // page.click('button:has-text("Continue")').catch(_ => { });
 
       if (process.env.DRYRUN) continue;
       if (debug) await page.pause();
