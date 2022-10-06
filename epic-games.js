@@ -23,6 +23,9 @@ const migrateDb = (user) => {
   delete db.data.runs;
 }
 
+// https://www.nopecha.com extension source from https://github.com/NopeCHA/NopeCHA/releases/tag/0.1.16
+const ext = path.resolve('nopecha');
+
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await chromium.launchPersistentContext(dirs.browser, {
   // chrome will not work in linux arm64, only chromium
@@ -36,6 +39,8 @@ const context = await chromium.launchPersistentContext(dirs.browser, {
     // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.'
     // '--restore-last-session', // does not apply for crash/killed
     '--hide-crash-restore-bubble',
+    `--disable-extensions-except=${ext}`,
+    `--load-extension=${ext}`,
   ],
   ignoreDefaultArgs: ['--enable-automation'], // remove default arg that shows the info bar with 'Chrome is being controlled by automated test software.'
 });
@@ -120,11 +125,12 @@ try {
 
         const captcha = iframe.locator('#h_captcha_challenge_checkout_free_prod iframe');
         await captcha.waitFor().then(async () => {
-          await page.waitForTimeout(2000);
-          const p = path.resolve(dirs.screenshots, 'epic-games', 'captcha', `${filenamify(datetime())}.png`);
-          await captcha.screenshot({ path: p });
-          console.info('  Saved a screenshot of hcaptcha challenge to', p);
-          console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
+          console.info('  Got hcaptcha challenge! NopeCHA extension will likely solve it.')
+          // await page.waitForTimeout(2000);
+          // const p = path.resolve(dirs.screenshots, 'epic-games', 'captcha', `${filenamify(datetime())}.png`);
+          // await captcha.screenshot({ path: p });
+          // console.info('  Saved a screenshot of hcaptcha challenge to', p);
+          // console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
         });
 
         await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again = no-op
@@ -134,6 +140,7 @@ try {
         context.setDefaultTimeout(TIMEOUT);
       } catch (e) {
         console.log(e);
+        console.error('  Failed to claim! Try again if NopeCHA timed out. Click the extension to see if you ran out of credits (refill after 24h). To avoid captchas try to get a new IP or set a cookie from https://www.hcaptcha.com/accessibility');
         const p = path.resolve(dirs.screenshots, 'epic-games', 'failed', `${game_id}_${filenamify(datetime())}.png`);
         await page.screenshot({ path: p, fullPage: true });
         db.data[user][game_id].status = 'failed';
