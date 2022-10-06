@@ -1,7 +1,7 @@
 import { chromium } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
 import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
-import { existsSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
 
 const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
 
@@ -155,4 +155,5 @@ try {
 } finally {
   await db.write(); // write out json db
 }
+await writeFileSync(path.resolve(dirs.browser, 'cookies.json'), JSON.stringify(await context.cookies()));
 await context.close();
