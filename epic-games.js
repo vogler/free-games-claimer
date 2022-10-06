@@ -115,24 +115,28 @@ try {
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
       const btnAgree = iframe.locator('button:has-text("I Agree")');
       try {
-        await Promise.any([btnAgree.waitFor().then(() => btnAgree.click()), page.waitForSelector('text=Thank you for buying').then(_ => { })]); // EU: wait for agree button, non-EU: potentially done
+        context.setDefaultTimeout(100 * 1000); // give time to solve captcha, iframe goes blank after 60s?
+        await Promise.any([btnAgree.click(), page.waitForSelector('text=Thank you for buying').then(_ => { })]); // EU: wait for agree button, non-EU: potentially done
 
-        // TODO check for hcaptcha - the following is even true when no captcha challenge is shown...
-        // if (await iframe.frameLocator('#talon_frame_checkout_free_prod').locator('text=Please complete a security check to continue').count() > 0) {
-        //   console.error('  Encountered hcaptcha. Giving up :(');
-        // }
+        const captcha = iframe.locator('#h_captcha_challenge_checkout_free_prod iframe');
+        await captcha.waitFor().then(async () => {
+          await page.waitForTimeout(2000);
+          const p = path.resolve(dirs.screenshots, 'epic-games', 'captcha', `${filenamify(datetime())}.png`);
+          await captcha.screenshot({ path: p });
+          console.info('  Saved a screenshot of hcaptcha challenge to', p);
+          console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
+        });
 
         await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again = no-op
         db.data[user][game_id].status = 'claimed';
         db.data[user][game_id].time = datetime(); // claimed time overwrites failed time
         console.log('  Claimed successfully!');
+        context.setDefaultTimeout(TIMEOUT);
       } catch (e) {
         console.log(e);
-        const p = path.resolve(dirs.screenshots, 'epic-games', 'captcha', `${filenamify(datetime())}.png`);
+        const p = path.resolve(dirs.screenshots, 'epic-games', 'failed', `${game_id}_${filenamify(datetime())}.png`);
         await page.screenshot({ path: p, fullPage: true });
         db.data[user][game_id].status = 'failed';
-        console.info('  Saved a screenshot of hcaptcha challenge to', p);
-        console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
       }
 
       const p = path.resolve(dirs.screenshots, 'epic-games', `${game_id}.png`);
