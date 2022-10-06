@@ -12,13 +12,16 @@ const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) - 80 || 1280;
 const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
 
 const db = await jsonDb('epic-games.json');
-db.data ||= { claimed: [], runs: [] };
-const run = {
-  startTime: datetime(),
-  endTime: null,
-  n: null, // unclaimed games at beginning
-  c: 0,    // claimed games at end
-};
+const migrateDb = (user) => {
+  if (user in db.data || !('claimed' in db.data)) return;
+  db.data[user] = {};
+  for (const e of db.data.claimed) {
+    const k = e.url.split('/').pop();
+    db.data[user][k] = e;
+  }
+  delete db.data.claimed;
+  delete db.data.runs;
+}
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await chromium.launchPersistentContext(dirs.browser, {
@@ -62,6 +65,8 @@ try {
   }
   const user = await page.locator('#user span').first().innerHTML();
   console.log(`Signed in as ${user}`);
+  migrateDb(user); // TODO remove this after some time since it will run fine without and people can still use this commit to adjust their data epic-games.json
+  db.data[user] ||= {};
 
   // Detect free games
   const game_loc = await page.locator('a:has(span:text-is("Free Now"))');
@@ -72,8 +77,6 @@ try {
     // filter data.Catalog.searchStore.elements for .promotions.promotionalOffers being set and build URL with .catalogNs.mappings[0].pageSlug or .urlSlug if not set to some wrong id like it was the case for spirit-of-the-north-f58a66 - this is also what's done here: https://github.com/claabs/epicgames-freegames-node/blob/938a9653ffd08b8284ea32cf01ac8727d25c5d4c/src/puppet/free-games.ts#L138-L213
   const urlSlugs = await Promise.all((await game_loc.elementHandles()).map(a => a.getAttribute('href')));
   const urls = urlSlugs.map(s => 'https://store.epicgames.com' + s);
-  const n = run.n = await game_loc.count();
-  // console.log('Number of free games:', n);
   console.log('Free games:', urls);
 
   for (const url of urls) {
@@ -87,11 +90,14 @@ try {
     }
 
     const title = await page.locator('h1 div').first().innerText();
-    const title_url = page.url().split('/').pop();
+    const game_id = page.url().split('/').pop();
+    db.data[user][game_id] ||= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
     console.log('Current free game:', title);
 
     if (btnText.toLowerCase() == 'in library') {
       console.log('  Already in library! Nothing to claim.');
+      db.data[user][game_id].status ||= 'existed'; // does not overwrite claimed or failed
+      if (db.data[user][game_id].status == 'failed') db.data[user][game_id].status = 'manual'; // was failed but now it's claimed
     } else { // GET
       console.log('  Not in library yet! Click GET.');
       await page.click('[data-testid="purchase-cta-button"]');
@@ -121,28 +127,25 @@ try {
         // }
 
         await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again = no-op
-        db.data.claimed.push({ title, time: datetime(), url: page.url() });
-        run.c++;
+        db.data[user][game_id].status = 'claimed';
+        db.data[user][game_id].time = datetime(); // claimed time overwrites failed time
         console.log('  Claimed successfully!');
       } catch (e) {
         console.log(e);
         const p = path.resolve(dirs.screenshots, 'epic-games', 'captcha', `${filenamify(datetime())}.png`);
         await page.screenshot({ path: p, fullPage: true });
+        db.data[user][game_id].status = 'failed';
         console.info('  Saved a screenshot of hcaptcha challenge to', p);
         console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
       }
 
-      const p = path.resolve(dirs.screenshots, 'epic-games', `${title_url}.png`);
+      const p = path.resolve(dirs.screenshots, 'epic-games', `${game_id}.png`);
       if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
     }
   }
 } catch (error) {
-  console.error(error);
-  run.error = error.toString();
+  console.error(error); // .toString()?
 } finally {
-  // write out json db
-  run.endTime = datetime();
-  db.data.runs.push(run);
-  await db.write();
+  await db.write(); // write out json db
 }
 await context.close();
