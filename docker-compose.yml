@@ -1,0 +1,10 @@
+services:
+  free-games-claimer:
+    container_name: free-games-claimer
+    # image: free-games-claimer:latest
+    build: .
+    ports:
+      - '5900:5900'
+      - '6080:6080'
+    volumes:
+      - ./data:/fgc/data
