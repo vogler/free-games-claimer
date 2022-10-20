@@ -13,7 +13,7 @@ const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https:/
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
 const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
 const TIMEOUT = 20 * 1000; // 20s, default is 30s
-const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) - 80 || 1280;
+const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) || 1280;
 const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
 
 const db = await jsonDb('epic-games.json');
