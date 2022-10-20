@@ -3,6 +3,11 @@ import path from 'path';
 import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
 import { existsSync, writeFileSync } from 'fs';
 
+import prompts from 'prompts'; // alternatives: enquirer, inquirer
+// import enquirer from 'enquirer'; const { prompt } = enquirer;
+// single prompt that just returns the non-empty value instead of an object - why name things if there's just one?
+const prompt = async o => (await prompts({name: 'name', type: 'text', message: 'Enter value', validate: s => s.length, ...o})).name;
+
 const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
 
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
@@ -61,14 +66,28 @@ try {
   // Accept cookies to get rid of banner to save space on screen. Clicking this did not always work since the message was animated in too slowly.
   // page.click('button:has-text("Accept All Cookies")').catch(_ => { }); // not needed anymore since we set the cookie above
 
-  while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) { // TODO also check alternative for signed-in state
+  while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
     console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page. If using docker, open http://localhost:6080");
     context.setDefaultTimeout(0); // give user time to log in without timeout
     await page.goto(URL_LOGIN, { waitUntil: 'domcontentloaded' });
-    // after login it just reloads the login page...
+
+    const email = process.env.EMAIL || await prompt({message: 'Enter email'});
+    const password = process.env.PASSWORD || await prompt({type: 'password', message: 'Enter password'});
+    if (email && password) {
+      await page.click('text=Sign in with Epic Games');
+      await page.fill('#email', email);
+      await page.fill('#password', password);
+      await page.click('button[type="submit"]');
+      // TODO alternatively wait for redirectUrl
+      await page.waitForNavigation({ url: '**/id/login/mfa**'}).then(async () => {
+        console.log('Enter the security code to continue - This appears to be a new device, browser or location. A security code has been sent to your email address at ...');
+        const otp = await prompt({type: 'number', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 6 || 'The code must be 6 digits!'});
+        await page.type('input[name="code-input-0"]', otp);
+        await page.click('button[type="submit"]');
+      });
+    }
     await page.waitForNavigation({ url: URL_CLAIM });
     context.setDefaultTimeout(TIMEOUT);
-    // process.exit(1);
   }
   const user = await page.locator('#user span').first().innerHTML();
   console.log(`Signed in as ${user}`);
