@@ -18,9 +18,12 @@ rm -f /tmp/.X1-lock
 # -ac disables host-based access control mechanisms
 # −screen NUM WxHxD creates the screen and sets its width, height, and depth
 
-Xvfb :1 -ac -screen 0 "${SCREEN_WIDTH}x${SCREEN_HEIGHT}x${SCREEN_DEPTH}" >/dev/null 2>&1 &
-x11vnc -display :1.0 -forever -shared -rfbport "${VNC_PORT:-5900}" -bg -nopw # -passwd "${VNC_PASSWORD}"
-websockify -D --web "/usr/share/novnc/" "$NOVNC_PORT" "localhost:$VNC_PORT" &
-DISPLAY=:1.0
-export DISPLAY
+export DISPLAY=:1 # need to export this, otherwise playwright complains with 'Looks like you launched a headed browser without having a XServer running.'
+Xvfb $DISPLAY -ac -screen 0 "${SCREEN_WIDTH}x${SCREEN_HEIGHT}x${SCREEN_DEPTH}" &
+echo "Xvfb display server created screen with resolution ${SCREEN_WIDTH}x${SCREEN_HEIGHT}."
+x11vnc -display $DISPLAY -forever -shared -rfbport $VNC_PORT -bg -nopw 2>/dev/null 1>&2 # -passwd "${VNC_PASSWORD}"
+echo "VNC is running on port $VNC_PORT (no password!)."
+websockify -D --web "/usr/share/novnc/" $NOVNC_PORT "localhost:$VNC_PORT" 2>/dev/null 1>&2 &
+echo "noVNC is running on http://localhost:$NOVNC_PORT"
+echo
 exec tini -g -- "$@"
