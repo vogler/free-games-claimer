@@ -4,7 +4,6 @@
     "docker:epic-games": "cross-env-shell docker run --rm -it -p 5900:5900 -p 6080:6080 -v \\\"$INIT_CWD/data\\\":/fgc/data --name free-games-claimer free-games-claimer"
   },
   "devDependencies": {
-    "@playwright/test": "^1.25.1",
     "cross-env": "^7.0.3",
     "lowdb": "^3.0.0",
     "playwright": "^1.25.1",
