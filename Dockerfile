@@ -3,24 +3,11 @@ FROM ubuntu:focal
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Configure Xvfb via environment variables:
-ENV SCREEN_WIDTH 1440
-ENV SCREEN_HEIGHT 900
-ENV SCREEN_DEPTH 24
-
-# Configure VNC via environment variables:
-ENV VNC_PORT 5900
-ENV NOVNC_PORT 6080
-ENV NOVNC_HOME /usr/share/novnc
-EXPOSE 5900
-EXPOSE 6080
-
 # Playwright
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD true
 
 # === INSTALL Node.js ===
-
 # Taken from https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.focal
 RUN apt-get update && \
     # Install node16
@@ -34,7 +21,6 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     # Create the pwuser
     adduser pwuser
-
 
 #  === Install the base requirements to run and debug webdriver implementations ===
 RUN apt-get update \
@@ -52,11 +38,13 @@ RUN apt-get update \
     /usr/share/doc/* \
     /var/cache/* \
     /var/lib/apt/lists/* \
-    /var/tmp/* \
-    && ln -s $NOVNC_HOME/vnc_auto.html $NOVNC_HOME/index.html
+    /var/tmp/*
+
+RUN ln -s /usr/share/novnc/vnc_auto.html /usr/share/novnc/index.html
 
 WORKDIR /fgc
 COPY package*.json .
+
 # Install chromium & dependencies only
 RUN npm install \
     && npx playwright install --with-deps chromium \
@@ -66,9 +54,21 @@ RUN npm install \
 COPY . .
 
 # Shell scripts
+# On windows, git might be configured to check out dos/CRLF line endings, so we convert.
 RUN dos2unix ./docker/*.sh
 RUN mv ./docker/entrypoint.sh /usr/local/bin/entrypoint \
     && chmod +x /usr/local/bin/entrypoint
+
+# Configure VNC via environment variables:
+ENV VNC_PORT 5900
+ENV NOVNC_PORT 6080
+EXPOSE 5900
+EXPOSE 6080
+
+# Configure Xvfb via environment variables:
+ENV SCREEN_WIDTH 1440
+ENV SCREEN_HEIGHT 900
+ENV SCREEN_DEPTH 24
 
 ENTRYPOINT ["entrypoint"]
 CMD ["node", "epic-games.js"]

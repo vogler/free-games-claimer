@@ -20,7 +20,7 @@ rm -f /tmp/.X1-lock
 
 Xvfb :1 -ac -screen 0 "${SCREEN_WIDTH}x${SCREEN_HEIGHT}x${SCREEN_DEPTH}" >/dev/null 2>&1 &
 x11vnc -display :1.0 -forever -shared -rfbport "${VNC_PORT:-5900}" -bg -nopw # -passwd "${VNC_PASSWORD}"
-websockify -D --web "$NOVNC_HOME" "$NOVNC_PORT" "localhost:$VNC_PORT" &
+websockify -D --web "/usr/share/novnc/" "$NOVNC_PORT" "localhost:$VNC_PORT" &
 DISPLAY=:1.0
 export DISPLAY
 exec tini -g -- "$@"
