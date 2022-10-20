@@ -57,7 +57,7 @@ RUN apt-get update \
     && ln -s $NOVNC_HOME/vnc_auto.html $NOVNC_HOME/index.html
 
 WORKDIR /fgc
-COPY package.json .
+COPY package*.json .
 # Install chromium & dependencies only
 RUN npm install \
     && npx playwright install --with-deps chromium \
@@ -69,7 +69,7 @@ COPY . .
 # Shell scripts
 RUN dos2unix ./docker/*.sh
 RUN mv ./docker/entrypoint.sh /usr/local/bin/entrypoint \
-    && chmod +x /usr/local/bin/entrypoint 
+    && chmod +x /usr/local/bin/entrypoint
 
 ENTRYPOINT ["entrypoint"]
 CMD ["node", "epic-games.js"]
