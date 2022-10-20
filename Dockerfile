@@ -9,7 +9,6 @@ ENV SCREEN_HEIGHT 900
 ENV SCREEN_DEPTH 24
 
 # Configure VNC via environment variables:
-ENV VNC_PASSWORD secret
 ENV VNC_PORT 5900
 ENV NOVNC_PORT 6080
 ENV NOVNC_HOME /usr/share/novnc

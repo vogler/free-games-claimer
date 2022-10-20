@@ -19,7 +19,7 @@ rm -f /tmp/.X1-lock
 # −screen NUM WxHxD creates the screen and sets its width, height, and depth
 
 Xvfb :1 -ac -screen 0 "${SCREEN_WIDTH}x${SCREEN_HEIGHT}x${SCREEN_DEPTH}" >/dev/null 2>&1 &
-x11vnc -display :1.0 -forever -shared -rfbport "${VNC_PORT:-5900}" -passwd "${VNC_PASSWORD:-secret}" -bg
+x11vnc -display :1.0 -forever -shared -rfbport "${VNC_PORT:-5900}" -bg -nopw # -passwd "${VNC_PASSWORD}"
 websockify -D --web "$NOVNC_HOME" "$NOVNC_PORT" "localhost:$VNC_PORT" &
 DISPLAY=:1.0
 export DISPLAY

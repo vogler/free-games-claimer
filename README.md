@@ -31,7 +31,7 @@ Alternatives:
   - [Install Docker](https://docs.docker.com/get-docker/)
   - `npm run docker:build`
   - `npm run docker:epic-games`
-  - When you need to login, go to http://localhost:6080 with password `secret` (you can also connect with another VNC client)
+  - When you need to login, go to http://localhost:6080 (you can also connect with any other VNC client on port 5900)
 
 ### Amazon Prime Gaming
 Run `node prime-gaming`
