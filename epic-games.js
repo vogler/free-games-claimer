@@ -67,7 +67,8 @@ try {
   // page.click('button:has-text("Accept All Cookies")').catch(_ => { }); // not needed anymore since we set the cookie above
 
   while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
-    console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page. If using docker, open http://localhost:6080");
+    console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page.");
+    if (process.env.NOVNC_PORT) console.info(`Open http://localhost:${process.env.NOVNC_PORT} to login inside the docker container.`);
     context.setDefaultTimeout(0); // give user time to log in without timeout
     await page.goto(URL_LOGIN, { waitUntil: 'domcontentloaded' });
 
