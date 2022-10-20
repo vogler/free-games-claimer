@@ -5,8 +5,8 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "lowdb": "^3.0.0",
-    "playwright": "^1.25.1",
+    "lowdb": "^4.0.0",
+    "playwright": "^1.27.1",
     "puppeteer-extra-plugin-stealth": "^2.11.1"
   },
   "type": "module"
