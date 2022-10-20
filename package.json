@@ -1,14 +1,25 @@
 {
+  "name": "free-games-claimer",
+  "version": "1.0.0",
+  "description": "Claims free games on the Epic Games Store and Amazon Prime Gaming.",
+  "homepage": "https://github.com/vogler/free-games-claimer",
+  "main": "index.js",
   "scripts": {
-    "docker:build": "docker build --tag free-games-claimer .",
-    "docker:epic-games": "cross-env-shell docker run --rm -it -p 5900:5900 -p 6080:6080 -v \\\"$INIT_CWD/data\\\":/fgc/data --name free-games-claimer free-games-claimer"
+    "docker:build": "docker build . -t free-games-claimer",
+    "docker:run": "cross-env-shell docker run --rm -it -p 5900:5900 -p 6080:6080 -v \\\"$INIT_CWD/data\\\":/fgc/data --name free-games-claimer free-games-claimer"
   },
-  "devDependencies": {
+  "type": "module",
+  "dependencies": {
     "cross-env": "^7.0.3",
     "lowdb": "^4.0.0",
     "playwright": "^1.27.1",
     "prompts": "^2.4.2",
     "puppeteer-extra-plugin-stealth": "^2.11.1"
   },
-  "type": "module"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vogler/free-games-claimer.git"
+  },
+  "author": "Ralf Vogler",
+  "license": "MIT"
 }
