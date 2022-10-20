@@ -1,7 +1,7 @@
 services:
   free-games-claimer:
-    container_name: free-games-claimer
-    # image: free-games-claimer:latest
+    container_name: fgc # is printed in front of every output line
+    image: free-games-claimer # otherwise image name will be free-games-claimer-free-games-claimer
     build: .
     ports:
       - '5900:5900'
