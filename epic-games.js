@@ -67,11 +67,12 @@ try {
   // page.click('button:has-text("Accept All Cookies")').catch(_ => { }); // not needed anymore since we set the cookie above
 
   while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
-    console.error("Not signed in anymore. Please login and then navigate to the 'Free Games' page.");
+    console.error('Not signed in anymore. Please login in the browser or here in the terminal.');
     if (process.env.NOVNC_PORT) console.info(`Open http://localhost:${process.env.NOVNC_PORT} to login inside the docker container.`);
     context.setDefaultTimeout(0); // give user time to log in without timeout
     await page.goto(URL_LOGIN, { waitUntil: 'domcontentloaded' });
 
+    console.info('Press ESC to skip if you want to login in the browser.');
     const email = process.env.EMAIL || await prompt({message: 'Enter email'});
     const password = process.env.PASSWORD || await prompt({type: 'password', message: 'Enter password'});
     if (email && password) {
@@ -79,6 +80,9 @@ try {
       await page.fill('#email', email);
       await page.fill('#password', password);
       await page.click('button[type="submit"]');
+      page.waitForSelector('#h_captcha_challenge_login_prod iframe').then(() => {
+        console.log('Got a captcha! You may have to solve it in the browser if the NopeCHA extension fails to do so.');
+      });
       // TODO alternatively wait for redirectUrl
       await page.waitForNavigation({ url: '**/id/login/mfa**'}).then(async () => {
         console.log('Enter the security code to continue - This appears to be a new device, browser or location. A security code has been sent to your email address at ...');
@@ -86,6 +90,8 @@ try {
         await page.type('input[name="code-input-0"]', otp.toString());
         await page.click('button[type="submit"]');
       });
+    } else {
+      console.log('Waiting for you to login in the browser.');
     }
     await page.waitForNavigation({ url: URL_CLAIM });
     context.setDefaultTimeout(TIMEOUT);
