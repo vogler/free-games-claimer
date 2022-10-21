@@ -5,8 +5,8 @@
   "homepage": "https://github.com/vogler/free-games-claimer",
   "main": "index.js",
   "scripts": {
-    "docker:build": "docker build . -t free-games-claimer",
-    "docker:run": "cross-env-shell docker run --rm -it -p 5900:5900 -p 6080:6080 -v \\\"$INIT_CWD/data\\\":/fgc/data --name free-games-claimer free-games-claimer"
+    "docker:build": "docker build . -t ghcr.io/vogler/free-games-claimer",
+    "docker": "cross-env-shell docker run --rm -it -p 5900:5900 -p 6080:6080 -v \\\"$INIT_CWD/data\\\":/fgc/data --name fgc ghcr.io/vogler/free-games-claimer"
   },
   "type": "module",
   "dependencies": {

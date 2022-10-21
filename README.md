@@ -6,15 +6,25 @@ Claims free games periodically on
 
 Pull requests welcome :)
 
+_Works on Windows/macOS/Linux._
+
 ## Setup
-... should be the same on Windows/macOS/Linux:
+[Install Docker](https://docs.docker.com/get-docker/) and use
+```
+docker run --rm -it -p 6080:6080 -v fgc:/fgc/data ghcr.io/vogler/free-games-claimer
+```
+Data is stored in the volume `fgc`.
+
+<details>
+  <summary>I want to run without Docker or develop locally.</summary>
 
 1. [Install Node.js](https://nodejs.org/en/download)
 2. Clone/download this repository and `cd` into it in a terminal
 3. Run `npm install && npx playwright install chromium`
 
-This downloads Chromium (343 MB) to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
+This downloads Chromium to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
 If you are missing some dependencies for the browser on your system, you can use `sudo npx playwright install chromium --with-deps`.
+</details>
 
 ## Usage
 Both scripts start an automated Chromium instance, either with the browser GUI shown or hidden (*headless mode*).
@@ -25,16 +35,18 @@ After login, the script will just continue, but you can also restart it.
 If something goes wrong, use `PWDEBUG=1 node ...` to [inspect](https://playwright.dev/docs/inspector).
 
 ### Epic Games Store
-Alternatives:
+Options:
 - Run `node epic-games` (browser window will open, [headless leads to captcha](https://github.com/vogler/free-games-claimer/issues/2))
-- Run with Docker (browser is hidden inside -> headless for host):
+- Run inside Docker (browser is hidden, headless for host):
   - [Install Docker](https://docs.docker.com/get-docker/)
-  - `npm run docker:build`
-  - `npm run docker:epic-games`
-  - When you need to login, go to http://localhost:6080 (you can also connect with any other VNC client on port 5900)
+  - Options:
+    - `docker run` command from above
+    - `npm run docker` which does the same but stores files in `./data` instead of a Docker volume.
+    - `docker compose up`
+  - When you need to login, go to http://localhost:6080 (you can also connect with a VNC client on port 5900)
 
 ### Amazon Prime Gaming
-Run `node prime-gaming`
+Run `node prime-gaming` (locally or in Docker).
 
 Runs headless. Run `node prime-gaming show` to show the GUI (to login).
 
@@ -43,8 +55,8 @@ Keys for {Origin, GOG.com, Legacy Games} should be printed to the console and ne
 A screenshot of the page with the code is saved to `data/screenshots` as well.
 
 ### Run periodically
-Epic Games releases one (sometimes more) free game *every week*, but around christmas every day.
-Prime Gaming has new games *every month*.
+Epic Games usually has two free games *every week*, before Christmas every day.
+Prime Gaming has new games *every month* or more often during Prime days.
 
 It is save to run both scripts every day.
 If you can't use Docker for quasi-headless mode, you could run in a virtual machine, on a server, or you wake your PC at night to avoid being interrupted.
