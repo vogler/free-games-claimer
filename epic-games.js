@@ -118,7 +118,7 @@ try {
 
     // click Continue if 'This game contains mature content recommended only for ages 18+'
     if (await page.locator('button:has-text("Continue")').count() > 0) {
-      console.log('This game contains mature content recommended only for ages 18+');
+      console.log('  This game contains mature content recommended only for ages 18+');
       await page.click('button:has-text("Continue")');
     }
 
