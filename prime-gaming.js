@@ -111,6 +111,7 @@ try {
         // 'origin': 'https://www.origin.com/redeem', // TODO still needed or now only via account linking?
         'gog.com': 'https://www.gog.com/redeem',
         'legacy games': 'https://www.legacygames.com/primedeal',
+        'microsoft games': 'https://redeem.microsoft.com',
       };
       let code;
       if (store in redeem) { // did not work for linked origin: && !await page.locator('div:has-text("Successfully Claimed")').count()
