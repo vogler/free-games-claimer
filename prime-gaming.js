@@ -102,9 +102,9 @@ try {
     // Full game for PC [and MAC] on: gog.com, Origin, Legacy Games, EPIC GAMES, Battle.net
     // 3 Full PC Games on Legacy Games
     const store = store_text.toLowerCase().replace(/.* on /, '');
-    console.log('External store:', store);
+    console.log('  External store:', store);
     if (await page.locator('div:has-text("Link game account")').count()) {
-      console.error('Account linking is required to claim this offer!');
+      console.error('  Account linking is required to claim this offer!');
     } else {
       // print code if there is one
       const redeem = {
@@ -115,17 +115,17 @@ try {
       let code;
       if (store in redeem) { // did not work for linked origin: && !await page.locator('div:has-text("Successfully Claimed")').count()
         code = await page.inputValue('input[type="text"]');
-        console.log('Code to redeem game:', code);
+        console.log('  Code to redeem game:', code);
         if (store == 'legacy games') { // may be different URL like https://legacygames.com/primeday/puzzleoftheyear/
           redeem[store] = await (await page.$('li:has-text("Click here") a')).getAttribute('href');
         }
-        console.log('URL to redeem game:', redeem[store]);
+        console.log('  URL to redeem game:', redeem[store]);
       }
       db.data.claimed.push({ title, time: datetime(), store, code, url: page.url() });
       // save screenshot of potential code just in case
       const p = path.resolve(dirs.screenshots, 'prime-gaming', 'external', `${filenamify(title)}.png`);
       await page.screenshot({ path: p, fullPage: true });
-      console.info('Saved a screenshot of page to', p);
+      // console.info('  Saved a screenshot of page to', p);
       run.c_external++;
     }
     // await page.pause();
