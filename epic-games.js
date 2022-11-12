@@ -17,6 +17,7 @@ const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) || 1280;
 const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
 
 const db = await jsonDb('epic-games.json');
+db.data ||= {};
 const migrateDb = (user) => {
   if (user in db.data || !('claimed' in db.data)) return;
   db.data[user] = {};

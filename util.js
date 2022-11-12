@@ -16,7 +16,6 @@ import { Low, JSONFile } from 'lowdb';
 export const jsonDb = async file => {
   const db = new Low(new JSONFile(dataDir(file)));
   await db.read();
-  db.data ||= {};
   return db;
 };
 
