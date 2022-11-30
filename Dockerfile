@@ -43,7 +43,7 @@ RUN apt-get update \
 RUN ln -s /usr/share/novnc/vnc_auto.html /usr/share/novnc/index.html
 
 WORKDIR /fgc
-COPY package*.json .
+COPY package*.json ./
 
 # Install chromium & dependencies only
 RUN npm install \
