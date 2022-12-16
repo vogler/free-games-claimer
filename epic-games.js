@@ -1,4 +1,4 @@
-import { chromium } from 'playwright'; // stealth plugin needs no outdated playwright-extra
+import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
 import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
 import { existsSync, writeFileSync } from 'fs';
@@ -30,23 +30,24 @@ const migrateDb = (user) => {
 }
 
 // https://www.nopecha.com extension source from https://github.com/NopeCHA/NopeCHA/releases/tag/0.1.16
-const ext = path.resolve('nopecha');
+const ext = path.resolve('nopecha'); // used in Chromium, currently not needed in Firefox
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await chromium.launchPersistentContext(dirs.browser, {
+const context = await firefox.launchPersistentContext(dirs.browser, {
   // chrome will not work in linux arm64, only chromium
   // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
   headless: false,
   viewport: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
+  // userAgent for firefox: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:106.0) Gecko/20100101 Firefox/106.0
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
   // recordVideo: { dir: 'data/videos/' }, // will record a .webm video for each page navigated
   args: [ // https://peter.sh/experiments/chromium-command-line-switches
     // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.'
     // '--restore-last-session', // does not apply for crash/killed
     '--hide-crash-restore-bubble',
-    `--disable-extensions-except=${ext}`,
-    `--load-extension=${ext}`,
+    // `--disable-extensions-except=${ext}`,
+    // `--load-extension=${ext}`,
   ],
   // ignoreDefaultArgs: ['--enable-automation'], // remove default arg that shows the info bar with 'Chrome is being controlled by automated test software.'. Since Chromeium 106 this leads to show another info bar with 'You are using an unsupported command-line flag: --no-sandbox. Stability and security will suffer.'.
 });
@@ -114,7 +115,7 @@ try {
   console.log('Free games:', urls);
 
   for (const url of urls) {
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    await page.goto(url); // , { waitUntil: 'domcontentloaded' });
     const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText(); // barrier to block until page is loaded
 
     // click Continue if 'This game contains mature content recommended only for ages 18+'
@@ -137,12 +138,13 @@ try {
       await page.click('[data-testid="purchase-cta-button"]');
 
       // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoided by Windows userAgent?
-      // page.click('button:has-text("Continue")').catch(_ => { });
+      page.click('button:has-text("Continue")').catch(_ => { }); // needed since change from Chromium to Firefox?
 
       if (process.env.DRYRUN) continue;
       if (debug) await page.pause();
 
       // it then creates an iframe for the purchase
+      await page.waitForSelector('#webPurchaseContainer iframe'); // TODO needed?
       const iframe = page.frameLocator('#webPurchaseContainer iframe');
       await iframe.locator('button:has-text("Place Order")').click();
 
@@ -153,15 +155,14 @@ try {
         await Promise.any([btnAgree.click(), page.waitForSelector('text=Thank you for buying').then(_ => { })]); // EU: wait for agree button, non-EU: potentially done
 
         const captcha = iframe.locator('#h_captcha_challenge_checkout_free_prod iframe');
-        await captcha.waitFor().then(async () => {
+        captcha.waitFor().then(async () => { // don't await, since element may not be shown
           console.info('  Got hcaptcha challenge! NopeCHA extension will likely solve it.')
           // await page.waitForTimeout(2000);
           // const p = path.resolve(dirs.screenshots, 'epic-games', 'captcha', `${filenamify(datetime())}.png`);
           // await captcha.screenshot({ path: p });
           // console.info('  Saved a screenshot of hcaptcha challenge to', p);
           // console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
-        });
-
+        }).catch(_ => { }); // may time out if not shown
         await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again = no-op
         db.data[user][game_id].status = 'claimed';
         db.data[user][game_id].time = datetime(); // claimed time overwrites failed time
