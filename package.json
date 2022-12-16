@@ -12,7 +12,7 @@
   "dependencies": {
     "cross-env": "^7.0.3",
     "lowdb": "^5.0.5",
-    "playwright": "^1.27.1",
+    "playwright": "^1.29.0",
     "prompts": "^2.4.2",
     "puppeteer-extra-plugin-stealth": "^2.11.1"
   },
