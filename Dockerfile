@@ -45,9 +45,9 @@ RUN ln -s /usr/share/novnc/vnc_auto.html /usr/share/novnc/index.html
 WORKDIR /fgc
 COPY package*.json ./
 
-# Install chromium & dependencies only
+# Install browser & dependencies only
 RUN npm install \
-    && npx playwright install --with-deps chromium \
+    && npx playwright install --with-deps firefox chromium \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
