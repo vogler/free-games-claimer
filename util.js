@@ -12,7 +12,8 @@ export const dirs = {
   screenshots: dataDir('screenshots'),
 };
 
-import { Low, JSONFile } from 'lowdb';
+import { Low } from 'lowdb';
+import { JSONFile } from 'lowdb/node';
 export const jsonDb = async file => {
   const db = new Low(new JSONFile(dataDir(file)));
   await db.read();
