@@ -4,7 +4,7 @@ FROM ubuntu:focal
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Playwright
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
+# ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD true
 
 # === INSTALL Node.js ===
@@ -47,7 +47,7 @@ COPY package*.json ./
 
 # Install browser & dependencies only
 RUN npm install \
-    && npx playwright install --with-deps firefox chromium \
+    && npx playwright install --with-deps firefox \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

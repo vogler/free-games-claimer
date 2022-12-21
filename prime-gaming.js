@@ -1,4 +1,4 @@
-import { chromium } from 'playwright'; // stealth plugin needs no outdated playwright-extra
+import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
 import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
 
@@ -22,7 +22,7 @@ const run = {
 };
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await chromium.launchPersistentContext(dirs.browser, {
+const context = await firefox.launchPersistentContext(dirs.browser, {
   // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge, chrome will not work on arm64 linux, only chromium which is the default
   headless,
   viewport: { width: 1280, height: 1280 },
