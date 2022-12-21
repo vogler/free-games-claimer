@@ -9,7 +9,7 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD true
 #  Install up-to-date node & npm, then deps for virtual screen & noVNC
 RUN apt-get update \
     && apt-get install -y curl \
-    && curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+    && curl -fsSL https://deb.nodesource.com/setup_19.x | bash - \
     && apt-get install -y nodejs \
     && apt-get install --no-install-recommends --no-install-suggests -y \
       xvfb \
