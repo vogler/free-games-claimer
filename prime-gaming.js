@@ -1,4 +1,4 @@
-import { chromium } from 'playwright'; // stealth plugin needs no outdated playwright-extra
+import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
 import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
 
@@ -9,6 +9,8 @@ const headless = !debug && !show;
 // const URL_LOGIN = 'https://www.amazon.de/ap/signin'; // wrong. needs some session args to be valid?
 const URL_CLAIM = 'https://gaming.amazon.com/home';
 const TIMEOUT = 20 * 1000; // 20s, default is 30s
+const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) || 1280;
+const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
 
 const db = await jsonDb('prime-gaming.json');
 db.data ||= { claimed: [], runs: [] };
@@ -22,11 +24,14 @@ const run = {
 };
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await chromium.launchPersistentContext(dirs.browser, {
-  // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge, chrome will not work on arm64 linux, only chromium which is the default
-  headless,
-  viewport: { width: 1280, height: 1280 },
+const context = await firefox.launchPersistentContext(dirs.browser, {
+  headless: false,
+  viewport: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36',
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
+  args: [ // https://peter.sh/experiments/chromium-command-line-switches
+    '--hide-crash-restore-bubble',
+  ]
 });
 
 // TODO test if needed

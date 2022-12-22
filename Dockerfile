@@ -71,4 +71,4 @@ ENV SCREEN_HEIGHT 1280
 ENV SCREEN_DEPTH 24
 
 ENTRYPOINT ["entrypoint"]
-CMD ["node", "epic-games.js"]
+CMD ["/bin/bash", "-c", "node epic-games.js && node prime-gaming.js show"]
