@@ -16,6 +16,8 @@ const TIMEOUT = 20 * 1000; // 20s, default is 30s
 const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) || 1280;
 const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
 
+console.log(datetime(), 'started checking epic-games');
+
 const db = await jsonDb('epic-games.json');
 db.data ||= {};
 const migrateDb = (user) => {

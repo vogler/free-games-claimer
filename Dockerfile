@@ -56,5 +56,7 @@ ENV SCREEN_WIDTH 1280
 ENV SCREEN_HEIGHT 1280
 ENV SCREEN_DEPTH 24
 
+# Script to setup display server & VNC is always executed.
 ENTRYPOINT ["entrypoint"]
-CMD ["node", "epic-games.js"]
+# Default command to run. This is replaced by appending own command, e.g. `docker run ... node prime-gaming` to only run this script.
+CMD node epic-games; node prime-gaming

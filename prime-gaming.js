@@ -10,6 +10,8 @@ const headless = !debug && !show;
 const URL_CLAIM = 'https://gaming.amazon.com/home';
 const TIMEOUT = 20 * 1000; // 20s, default is 30s
 
+console.log(datetime(), 'started checking prime-gaming');
+
 const db = await jsonDb('prime-gaming.json');
 db.data ||= { claimed: [], runs: [] };
 const run = {
