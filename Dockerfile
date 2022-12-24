@@ -2,12 +2,15 @@
 # Partially from https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.focal
 FROM ubuntu:jammy
 
+# Configuration variables are at the end!
+
 # https://github.com/hadolint/hadolint/wiki/DL4006
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD true
 
-#  Install up-to-date node & npm, then deps for virtual screen & noVNC
+# Install up-to-date node & npm, deps for virtual screen & noVNC, browser.
+# Playwright needs --with-deps for firefox.
 RUN apt-get update \
     && apt-get install -y curl \
     && curl -fsSL https://deb.nodesource.com/setup_19.x | bash - \
@@ -19,6 +22,7 @@ RUN apt-get update \
       tini \
       novnc websockify \
       dos2unix \
+    && npx playwright install --with-deps firefox \
     && apt-get clean \
     && rm -rf \
       /tmp/* \
@@ -32,16 +36,11 @@ RUN ln -s /usr/share/novnc/vnc_auto.html /usr/share/novnc/index.html
 WORKDIR /fgc
 COPY package*.json ./
 
-# Install browser & dependencies only
-RUN npm install \
-    && npx playwright install --with-deps firefox \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN npm install
 
 COPY . .
 
-# Shell scripts
-# On windows, git might be configured to check out dos/CRLF line endings, so we convert them for those people in case they want to build the image.
+# Shell scripts need Linux line endings. On Windows, git might be configured to check out dos/CRLF line endings, so we convert them for those people in case they want to build the image.
 RUN dos2unix ./docker/*.sh
 RUN mv ./docker/entrypoint.sh /usr/local/bin/entrypoint \
     && chmod +x /usr/local/bin/entrypoint
