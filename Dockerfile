@@ -2,8 +2,9 @@
 # Partially from https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.focal
 FROM ubuntu:jammy
 
+# https://github.com/hadolint/hadolint/wiki/DL4006
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
-
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD true
 
 #  Install up-to-date node & npm, then deps for virtual screen & noVNC
