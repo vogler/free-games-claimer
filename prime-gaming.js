@@ -20,7 +20,16 @@ const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
 console.log(datetime(), 'started checking prime-gaming');
 
 const db = await jsonDb('prime-gaming.json');
-db.data ||= { claimed: [] };
+db.data ||= {};
+const migrateDb = (user) => {
+  if (user in db.data || !('claimed' in db.data)) return;
+  db.data[user] = {};
+  for (const e of db.data.claimed) {
+    db.data[user][e.title] = e;
+  }
+  delete db.data.claimed;
+  delete db.data.runs;
+}
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(dirs.browser, {
@@ -73,7 +82,14 @@ try {
     await page.waitForNavigation({ url: 'https://gaming.amazon.com/home?signedIn=true' });
     if (!debug) context.setDefaultTimeout(TIMEOUT);
   }
-  console.log('Signed in.');
+  const user = await page.locator('[data-a-target="user-dropdown-first-name-text"]').first().innerText();
+  console.log(`Signed in as ${user}`);
+  // await page.click('button[aria-label="User dropdown and more options"]');
+  // const twitch = await page.locator('[data-a-target="TwitchDisplayName"]').first().innerText();
+  // console.log(`Twitch user name is ${twitch}`);
+  migrateDb(user); // TODO remove this after some time since it will run fine without and people can still use this commit to adjust their data/prime-gaming.json
+  db.data[user] ||= {};
+
   await page.click('button[data-type="Game"]');
   const games_sel = 'div[data-a-target="offer-list-FGWP_FULL"]';
   await page.waitForSelector(games_sel);
@@ -93,7 +109,7 @@ try {
     const p = path.resolve(dirs.screenshots, 'prime-gaming', 'internal', `${filenamify(title)}.png`);
     await card.screenshot({ path: p });
     await (await card.$('button:has-text("Claim game")')).click();
-    db.data.claimed.push({ title, time: datetime(), store: 'internal' });
+    db.data[user][title] ||= { title, time: datetime(), store: 'internal' };
     // await page.pause();
   }
   // claim games in external/linked stores. Linked: origin.com, epicgames.com; Redeem-key: gog.com, legacygames.com
@@ -134,7 +150,7 @@ try {
         }
         console.log('  URL to redeem game:', redeem[store]);
       }
-      db.data.claimed.push({ title, time: datetime(), store, code, url: page.url() });
+      db.data[user][title] ||= { title, time: datetime(), store, code, url: page.url() };
       // save screenshot of potential code just in case
       const p = path.resolve(dirs.screenshots, 'prime-gaming', 'external', `${filenamify(title)}.png`);
       await page.screenshot({ path: p, fullPage: true });
