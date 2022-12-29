@@ -112,7 +112,7 @@ try {
     db.data[user][title] ||= { title, time: datetime(), store: 'internal' };
     // await page.pause();
   }
-  // claim games in external/linked stores. Linked: origin.com, epicgames.com; Redeem-key: gog.com, legacygames.com
+  // claim games in external/linked stores. Linked: origin.com, epicgames.com; Redeem-key: gog.com, legacygames.com, microsoft
   let n;
   const game_sel_ext = `${games_sel} [data-a-target="item-card"]:has(p:text-is("Claim"))`;
   do {
