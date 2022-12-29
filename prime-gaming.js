@@ -2,7 +2,7 @@ import { firefox } from 'playwright'; // stealth plugin needs no outdated playwr
 import path from 'path';
 import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
 
-const debug = process.env.PWDEBUG == '1'; // runs headful and opens https://playwright.dev/docs/inspector
+const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
 const show = process.argv.includes('show', 2);
 const headless = !debug && !show;
 
@@ -27,7 +27,6 @@ const run = {
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(dirs.browser, {
-  // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge, chrome will not work on arm64 linux, only chromium which is the default
   headless,
   viewport: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
@@ -38,20 +37,14 @@ await stealth(context);
 
 if (!debug) context.setDefaultTimeout(TIMEOUT);
 
-// const page = /* context.pages().length ? context.pages[0] : */ await context.newPage();
-const page = context.pages()[0];
-console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
-
-const clickIfExists = async selector => {
-  if (await page.locator(selector).count() > 0 && await page.locator(selector).isVisible())
-    await page.click(selector);
-};
+const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
+// console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 
 try {
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // default 'load' takes forever
   // need to wait for some elements to exist before checking if signed in or accepting cookies:
   await Promise.any(['button:has-text("Sign in")', '[data-a-target="user-dropdown-first-name-text"]'].map(s => page.waitForSelector(s)));
-  await clickIfExists('[aria-label="Cookies usage disclaimer banner"] button:has-text("Accept Cookies")'); // to not waste screen space in --debug
+  await page.click('[aria-label="Cookies usage disclaimer banner"] button:has-text("Accept Cookies")').catch(_ => { }); // to not waste screen space in --debug
   while (await page.locator('button:has-text("Sign in")').count() > 0) {
     console.error('Not signed in anymore.');
     if (headless) {
@@ -79,6 +72,7 @@ try {
     // const title = await card.locator('h3').first().innerText();
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
+    if (process.env.DRYRUN) continue;
     // const img = await (await card.$('img.tw-image')).getAttribute('src');
     // console.log('Image:', img);
     const p = path.resolve(dirs.screenshots, 'prime-gaming', 'internal', `${filenamify(title)}.png`);
@@ -99,6 +93,7 @@ try {
     if (!card) break;
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
+    if (process.env.DRYRUN) continue;
     await (await card.$('text=Claim')).click();
     // await page.waitForNavigation();
     await Promise.any([page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")')]); // waits for navigation
@@ -141,13 +136,11 @@ try {
   // await page.screenshot({ path: p, fullPage: true });
   await page.locator(games_sel).screenshot({ path: p });
 } catch (error) {
-  console.error(error);
+  console.error(error); // .toString()?
   run.error = error.toString();
 } finally {
-  // write out json db
   run.endTime = datetime();
   db.data.runs.push(run);
-  await db.write();
-
-  await context.close();
+  await db.write(); // write out json db
 }
+await context.close();
