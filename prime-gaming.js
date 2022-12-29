@@ -9,6 +9,8 @@ const headless = !debug && !show;
 // const URL_LOGIN = 'https://www.amazon.de/ap/signin'; // wrong. needs some session args to be valid?
 const URL_CLAIM = 'https://gaming.amazon.com/home';
 const TIMEOUT = 20 * 1000; // 20s, default is 30s
+const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) || 1280;
+const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
 
 console.log(datetime(), 'started checking prime-gaming');
 
@@ -27,7 +29,7 @@ const run = {
 const context = await firefox.launchPersistentContext(dirs.browser, {
   // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge, chrome will not work on arm64 linux, only chromium which is the default
   headless,
-  viewport: { width: 1280, height: 1280 },
+  viewport: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
 });
 
