@@ -125,7 +125,7 @@ try {
     if (process.env.DRYRUN) continue;
     await (await card.$('text=Claim')).click();
     // await page.waitForNavigation();
-    await Promise.any([page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")')]); // waits for navigation
+    await Promise.any([page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")')]); // waits for navigation
     const store_text = await (await page.$('[data-a-target="hero-header-subtitle"]')).innerText();
     // Full game for PC [and MAC] on: gog.com, Origin, Legacy Games, EPIC GAMES, Battle.net
     // 3 Full PC Games on Legacy Games
