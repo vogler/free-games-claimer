@@ -14,6 +14,7 @@ _Works on Windows/macOS/Linux._
 ```
 docker run --rm -it -p 6080:6080 -v fgc:/fgc/data ghcr.io/vogler/free-games-claimer
 ```
+which will run `epic-games` and then `prime-gaming`.
 Data is stored in the volume `fgc`.
 
 <details>
@@ -21,14 +22,14 @@ Data is stored in the volume `fgc`.
 
 1. [Install Node.js](https://nodejs.org/en/download)
 2. Clone/download this repository and `cd` into it in a terminal
-3. Run `npm install && npx playwright install chromium`
+3. Run `npm install && npx playwright install firefox`
 
-This downloads Chromium to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
-If you are missing some dependencies for the browser on your system, you can use `sudo npx playwright install chromium --with-deps`.
+This downloads Firefox to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
+If you are missing some dependencies for the browser on your system, you can use `sudo npx playwright install firefox --with-deps`.
 </details>
 
 ## Usage
-Both scripts start an automated Chromium instance, either with the browser GUI shown or hidden (*headless mode*).
+Both scripts start an automated Firefox instance, either with the browser GUI shown or hidden (*headless mode*).
 
 Login has to be done in the browser. It's hard to automate since you usually need to enter some OTP (but you can select 'remember this device').
 After login, the script will just continue, but you can also restart it.
