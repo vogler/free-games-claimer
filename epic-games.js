@@ -86,7 +86,7 @@ try {
       await page.click('button[type="submit"]');
       page.waitForSelector('#h_captcha_challenge_login_prod iframe').then(() => {
         console.log('Got a captcha! You may have to solve it in the browser if the NopeCHA extension fails to do so.');
-      });
+      }).catch(_ => { });
       // handle MFA, but don't await it
       page.waitForNavigation({ url: '**/id/login/mfa**'}).then(async () => {
         console.log('Enter the security code to continue - This appears to be a new device, browser or location. A security code has been sent to your email address at ...');
