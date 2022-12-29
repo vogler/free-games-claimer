@@ -15,15 +15,7 @@ const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
 console.log(datetime(), 'started checking prime-gaming');
 
 const db = await jsonDb('prime-gaming.json');
-db.data ||= { claimed: [], runs: [] };
-const run = {
-  startTime: datetime(),
-  endTime: null,
-  n_internal: null, // unclaimed games at beginning
-  c_internal: 0,    // claimed games at end
-  n_external: null,
-  c_external: 0,
-};
+db.data ||= { claimed: [] };
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(dirs.browser, {
@@ -63,8 +55,7 @@ try {
   await page.waitForSelector(games_sel);
   console.log('Number of already claimed games (total):', await page.locator(`${games_sel} p:has-text("Collected")`).count());
   const game_sel = `${games_sel} [data-a-target="item-card"]:has-text("Claim game")`;
-  run.n_internal = await page.locator(game_sel).count();
-  console.log('Number of free unclaimed games (Prime Gaming):', run.n_internal);
+  console.log('Number of free unclaimed games (Prime Gaming):', await page.locator(game_sel).count());
   const games = await page.$$(game_sel);
   // for (let i=1; i<=n; i++) {
   for (const card of games) {
@@ -79,7 +70,6 @@ try {
     await card.screenshot({ path: p });
     await (await card.$('button:has-text("Claim game")')).click();
     db.data.claimed.push({ title, time: datetime(), store: 'internal' });
-    run.c_internal++;
     // await page.pause();
   }
   // claim games in external/linked stores. Linked: origin.com, epicgames.com; Redeem-key: gog.com, legacygames.com
@@ -87,7 +77,6 @@ try {
   const game_sel_ext = `${games_sel} [data-a-target="item-card"]:has(p:text-is("Claim"))`;
   do {
     n = await page.locator(game_sel_ext).count();
-    run.n_external ||= n;
     console.log('Number of free unclaimed games (external stores):', n);
     const card = await page.$(game_sel_ext);
     if (!card) break;
@@ -126,7 +115,6 @@ try {
       const p = path.resolve(dirs.screenshots, 'prime-gaming', 'external', `${filenamify(title)}.png`);
       await page.screenshot({ path: p, fullPage: true });
       // console.info('  Saved a screenshot of page to', p);
-      run.c_external++;
     }
     // await page.pause();
     await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
@@ -137,10 +125,7 @@ try {
   await page.locator(games_sel).screenshot({ path: p });
 } catch (error) {
   console.error(error); // .toString()?
-  run.error = error.toString();
 } finally {
-  run.endTime = datetime();
-  db.data.runs.push(run);
   await db.write(); // write out json db
 }
 await context.close();
