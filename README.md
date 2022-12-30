@@ -14,7 +14,7 @@ _Works on Windows/macOS/Linux._
 ```
 docker run --rm -it -p 6080:6080 -v fgc:/fgc/data ghcr.io/vogler/free-games-claimer
 ```
-which will run `epic-games` and then `prime-gaming`.
+which will run `node epic-games; node prime-gaming`. If you only want to claim games for one store, you can override the default by appending e.g. `node epic-games` at the end of the `docker run` command.
 Data is stored in the volume `fgc`.
 
 <details>
