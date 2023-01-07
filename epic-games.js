@@ -63,12 +63,11 @@ const page = context.pages().length ? context.pages()[0] : await context.newPage
 // console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 
 try {
-  await context.addCookies([{name: 'OptanonAlertBoxClosed', value: '2022-10-06T21:15:28.081Z', domain: '.epicgames.com', path: '/'}]);
+  await context.addCookies([{name: 'OptanonAlertBoxClosed', value: '2022-10-06T21:15:28.081Z', domain: '.epicgames.com', path: '/'}]); // Accept cookies to get rid of banner to save space on screen.
 
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto
 
-  // Accept cookies to get rid of banner to save space on screen. Clicking this did not always work since the message was animated in too slowly.
-  // page.click('button:has-text("Accept All Cookies")').catch(_ => { }); // not needed anymore since we set the cookie above
+  // page.click('button:has-text("Accept All Cookies")').catch(_ => { }); // Not needed anymore since we set the cookie above. Clicking this did not always work since the message was animated in too slowly.
 
   while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
     console.error('Not signed in anymore. Please login in the browser or here in the terminal.');
