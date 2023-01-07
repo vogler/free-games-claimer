@@ -63,7 +63,7 @@ const page = context.pages().length ? context.pages()[0] : await context.newPage
 // console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 
 try {
-  await context.addCookies([{name: 'OptanonAlertBoxClosed', value: '2022-10-06T21:15:28.081Z', domain: '.epicgames.com', path: '/'}]); // Accept cookies to get rid of banner to save space on screen.
+  await context.addCookies([{name: 'OptanonAlertBoxClosed', value: new Date(Date.now() - 5*24*60*60*1000).toISOString(), domain: '.epicgames.com', path: '/'}]); // Accept cookies to get rid of banner to save space on screen. Set accept time to 5 days ago.
 
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto
 
