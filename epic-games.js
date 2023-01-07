@@ -9,6 +9,8 @@ import prompts from 'prompts'; // alternatives: enquirer, inquirer
 const prompt = async o => (await prompts({name: 'name', type: 'text', message: 'Enter value', validate: s => s.length, ...o})).name;
 
 const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
+const show = process.env.SHOW == '1';
+const headless = !debug && !show;
 
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
 const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
@@ -38,7 +40,7 @@ const ext = path.resolve('nopecha'); // used in Chromium, currently not needed i
 const context = await firefox.launchPersistentContext(dirs.browser, {
   // chrome will not work in linux arm64, only chromium
   // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
-  headless: false,
+  headless,
   viewport: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
   // userAgent for firefox: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:106.0) Gecko/20100101 Firefox/106.0

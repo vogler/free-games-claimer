@@ -56,6 +56,9 @@ ENV SCREEN_WIDTH 1280
 ENV SCREEN_HEIGHT 1280
 ENV SCREEN_DEPTH 24
 
+# Show browser instead of running headless
+ENV SHOW 1
+
 # Script to setup display server & VNC is always executed.
 ENTRYPOINT ["entrypoint"]
 # Default command to run. This is replaced by appending own command, e.g. `docker run ... node prime-gaming` to only run this script.

@@ -8,7 +8,7 @@ import prompts from 'prompts'; // alternatives: enquirer, inquirer
 const prompt = async o => (await prompts({name: 'name', type: 'text', message: 'Enter value', validate: s => s.length, ...o})).name;
 
 const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
-const show = process.argv.includes('show', 2);
+const show = process.env.SHOW == '1';
 const headless = !debug && !show;
 
 // const URL_LOGIN = 'https://www.amazon.de/ap/signin'; // wrong. needs some session args to be valid?
