@@ -53,8 +53,8 @@ The available options/variables and their default values are:
 | Option        	| Default 	| Description                                                            	|
 |---------------	|---------	|------------------------------------------------------------------------	|
 | SHOW          	| 1       	| Show browser if 1. Default for Docker, not shown when running outside. 	|
-| SCREEN_WIDTH  	| 1280    	| Width of the opened browser (and screen vor VNC in Docker).            	|
-| SCREEN_HEIGHT 	| 1280    	| Height of the opened browser (and screen vor VNC in Docker).           	|
+| WIDTH         	| 1280    	| Width of the opened browser (and screen vor VNC in Docker).            	|
+| HEIGHT        	| 1280    	| Height of the opened browser (and screen vor VNC in Docker).           	|
 | VNC_PASSWORD  	|         	| VNC password for Docker. No password used by default!                  	|
 | EMAIL         	|         	| Default email for any login.                                           	|
 | PASSWORD      	|         	| Default password for any login.                                        	|
@@ -62,6 +62,8 @@ The available options/variables and their default values are:
 | EG_PASSWORD   	|         	| Epic Games password for login. Overrides PASSWORD.                     	|
 | PG_EMAIL      	|         	| Prime Gaming email for login. Overrides EMAIL.                         	|
 | PG_PASSWORD   	|         	| Prime Gaming password for login. Overrides PASSWORD.                   	|
+| GOG_EMAIL      	|         	| GOG email for login. Overrides EMAIL.                         	|
+| GOG_PASSWORD   	|         	| GOG password for login. Overrides PASSWORD.                   	|
 
 #### Other ways to set options
 On Linux/macOS you can prefix the variables you want to set, for example `EMAIL=foo@bar.baz SHOW=1 node epic-games` will show the browser and skip asking you for your login email.

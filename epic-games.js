@@ -15,8 +15,8 @@ const headless = !debug && !show;
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
 const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
 const TIMEOUT = 20 * 1000; // 20s, default is 30s
-const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) || 1280;
-const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
+const WIDTH = Number(process.env.WIDTH) || 1280;
+const HEIGHT = Number(process.env.HEIGHT) || 1280;
 
 console.log(datetime(), 'started checking epic-games');
 
@@ -41,7 +41,7 @@ const context = await firefox.launchPersistentContext(dirs.browser, {
   // chrome will not work in linux arm64, only chromium
   // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
   headless,
-  viewport: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
+  viewport: { width: WIDTH, height: HEIGHT },
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
   // userAgent for firefox: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:106.0) Gecko/20100101 Firefox/106.0
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
@@ -78,8 +78,8 @@ try {
     await page.goto(URL_LOGIN, { waitUntil: 'domcontentloaded' });
 
     console.info('Press ESC to skip if you want to login in the browser.');
-    const email = process.env.EMAIL || await prompt({message: 'Enter email'});
-    const password = process.env.PASSWORD || await prompt({type: 'password', message: 'Enter password'});
+    const email = process.env.EG_EMAIL || process.env.EMAIL || await prompt({message: 'Enter email'});
+    const password = process.env.EG_PASSWORD || process.env.PASSWORD || await prompt({type: 'password', message: 'Enter password'});
     if (email && password) {
       await page.click('text=Sign in with Epic Games');
       await page.fill('#email', email);

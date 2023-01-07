@@ -19,8 +19,8 @@ rm -f /tmp/.X1-lock
 # −screen NUM WxHxD creates the screen and sets its width, height, and depth
 
 export DISPLAY=:1 # need to export this, otherwise playwright complains with 'Looks like you launched a headed browser without having a XServer running.'
-Xvfb $DISPLAY -ac -screen 0 "${SCREEN_WIDTH}x${SCREEN_HEIGHT}x${SCREEN_DEPTH}" &
-echo "Xvfb display server created screen with resolution ${SCREEN_WIDTH}x${SCREEN_HEIGHT}"
+Xvfb $DISPLAY -ac -screen 0 "${WIDTH}x${HEIGHT}x${DEPTH}" &
+echo "Xvfb display server created screen with resolution ${WIDTH}x${HEIGHT}"
 x11vnc -display $DISPLAY -forever -shared -rfbport $VNC_PORT -bg -nopw 2>/dev/null 1>&2 # -passwd "${VNC_PASSWORD}"
 echo "VNC is running on port $VNC_PORT (no password!)"
 websockify -D --web "/usr/share/novnc/" $NOVNC_PORT "localhost:$VNC_PORT" 2>/dev/null 1>&2 &

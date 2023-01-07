@@ -12,9 +12,9 @@ const show = process.argv.includes('show', 2);
 const headless = !debug && !show;
 
 const URL_CLAIM = 'https://www.gog.com/en';
-const TIMEOUT = 0 * 1000; // 20s, default is 30s
-const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) || 1280;
-const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
+const TIMEOUT = 20 * 1000; // 20s, default is 30s
+const WIDTH = Number(process.env.WIDTH) || 1280;
+const HEIGHT = Number(process.env.HEIGHT) || 1280;
 
 console.log(datetime(), 'started checking gog');
 
@@ -24,7 +24,7 @@ db.data ||= {};
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(dirs.browser, {
   headless,
-  viewport: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
+  viewport: { width: WIDTH, height: HEIGHT },
   locale: "en-US", // ignore OS locale to be sure to have english text for locators -> done via /en in URL
 });
 
@@ -48,8 +48,8 @@ try {
     const iframe = page.frameLocator('#GalaxyAccountsFrameContainer iframe');
     if (!debug) context.setDefaultTimeout(0); // give user time to log in without timeout
     console.info('Press ESC to skip if you want to login in the browser (not possible in headless mode).');
-    const email = process.env.EMAIL || await prompt({message: 'Enter email'});
-    const password = process.env.PASSWORD || await prompt({type: 'password', message: 'Enter password'});
+    const email = process.env.GOG_EMAIL || process.env.EMAIL || await prompt({message: 'Enter email'});
+    const password = process.env.GOG_PASSWORD || process.env.PASSWORD || await prompt({type: 'password', message: 'Enter password'});
     if (email && password) {
       iframe.locator('a[href="/logout"]').click().catch(_ => { }); // Click 'Change account' (email from previous login is set in some cookie)
       await iframe.locator('#login_username').fill(email);

@@ -14,8 +14,8 @@ const headless = !debug && !show;
 // const URL_LOGIN = 'https://www.amazon.de/ap/signin'; // wrong. needs some session args to be valid?
 const URL_CLAIM = 'https://gaming.amazon.com/home';
 const TIMEOUT = 20 * 1000; // 20s, default is 30s
-const SCREEN_WIDTH = Number(process.env.SCREEN_WIDTH) || 1280;
-const SCREEN_HEIGHT = Number(process.env.SCREEN_HEIGHT) || 1280;
+const WIDTH = Number(process.env.WIDTH) || 1280;
+const HEIGHT = Number(process.env.HEIGHT) || 1280;
 
 console.log(datetime(), 'started checking prime-gaming');
 
@@ -34,7 +34,7 @@ const migrateDb = (user) => {
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(dirs.browser, {
   headless,
-  viewport: { width: SCREEN_WIDTH, height: SCREEN_HEIGHT },
+  viewport: { width: WIDTH, height: HEIGHT },
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
 });
 
@@ -56,8 +56,8 @@ try {
     await page.click('button:has-text("Sign in")');
     if (!debug) context.setDefaultTimeout(0); // give user time to log in without timeout
     console.info('Press ESC to skip if you want to login in the browser (not possible in default headless mode).');
-    const email = process.env.EMAIL || await prompt({message: 'Enter email'});
-    const password = process.env.PASSWORD || await prompt({type: 'password', message: 'Enter password'});
+    const email = process.env.PG_EMAIL || process.env.EMAIL || await prompt({message: 'Enter email'});
+    const password = process.env.PG_PASSWORD || process.env.PASSWORD || await prompt({type: 'password', message: 'Enter password'});
     if (email && password) {
       await page.fill('[name=email]', email);
       await page.fill('[name=password]', password);

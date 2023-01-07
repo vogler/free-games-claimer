@@ -52,9 +52,9 @@ EXPOSE 5900
 EXPOSE 6080
 
 # Configure Xvfb via environment variables:
-ENV SCREEN_WIDTH 1280
-ENV SCREEN_HEIGHT 1280
-ENV SCREEN_DEPTH 24
+ENV WIDTH 1280
+ENV HEIGHT 1280
+ENV DEPTH 24
 
 # Show browser instead of running headless
 ENV SHOW 1
