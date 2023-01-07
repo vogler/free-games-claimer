@@ -2,7 +2,7 @@
 Claims free games periodically on
 - <img src="https://upload.wikimedia.org/wikipedia/commons/3/31/Epic_Games_logo.svg" width="32"/> [Epic Games Store](https://www.epicgames.com/store/free-games)
 - <img src="https://seeklogo.com/images/P/prime-gaming-logo-61A701B3F5-seeklogo.com.png" width="32"/> [Amazon Prime Gaming](https://gaming.amazon.com)
-- <img src="https://static.wikia.nocookie.net/this-war-of-mine/images/1/1a/Logo_GoG.png/revision/latest?cb=20160711062658" width="32"/> [GOG](https://www.gog.com) - planned
+- <img src="https://static.wikia.nocookie.net/this-war-of-mine/images/1/1a/Logo_GoG.png/revision/latest?cb=20160711062658" width="32"/> [GOG](https://www.gog.com) - WIP
 - <img src="https://www.freepnglogos.com/uploads/xbox-logo-picture-png-14.png" width="32"/> [Xbox Live Games with Gold](https://www.xbox.com/en-US/live/gold#gameswithgold) - planned
 
 Pull requests welcome :)
@@ -26,46 +26,80 @@ Data is stored in the volume `fgc`.
 
 This downloads Firefox to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
 If you are missing some dependencies for the browser on your system, you can use `sudo npx playwright install firefox --with-deps`.
+
+If you don't want to use Docker for quasi-headless mode, you could run inside a virtual machine, on a server, or you wake your PC at night to avoid being interrupted.
 </details>
 
 ## Usage
-Both scripts start an automated Firefox instance, either with the browser GUI shown or hidden (*headless mode*).
+Both scripts start an automated Firefox instance, either with the browser GUI shown or hidden (*headless mode*). By default, you won't see any browser open on your host system.
 
-Login has to be done in the browser. It's hard to automate since you usually need to enter some OTP (but you can select 'remember this device').
-After login, the script will just continue, but you can also restart it.
+- When running inside Docker, the browser will be shown only inside the Container. You can open http://localhost:6080 to interact with the browser running inside the container via noVNC (or use other VNC clients on port 5900).
+- When running the scripts outside of Docker, the browser will be hidden by default; you can use `SHOW=1 ...` to show the UI (see options below).
 
-If something goes wrong, use `PWDEBUG=1 node ...` to [inspect](https://playwright.dev/docs/inspector).
+When running the first time, you have to login for each store you want to claim games on.
+You can login indirectly via the terminal or directly in the browser. The scripts will wait until you are successfully logged in.
+
+There will be prompts in the terminal asking you to enter email, password, and afterwards some OTP (one time password / security code) if you have 2FA/MFA (two-/multi-factor authentication) enabled. If you want to login yourself via the browser, you can just hit Escape to skip the prompts.
+
+After login, the script will just continue claiming the current games. If it still waits after you are already logged in, you can restart it (and open an issue).
+
+### Options
+Options are set via [environment variables](https://kinsta.com/knowledgebase/what-is-an-environment-variable/) which can be set in many ways and allow for flexible configuration.
+
+TODO: On the first run, the script will guide you through configuration and save all settings to a `.env` file. You can edit this file directly or run `node fgc config` to run the configuration assistant again.
+
+The available options/variables and their default values are:
+
+| Option        	| Default 	| Description                                                            	|
+|---------------	|---------	|------------------------------------------------------------------------	|
+| SHOW          	| 1       	| Show browser if 1. Default for Docker, not shown when running outside. 	|
+| SCREEN_WIDTH  	| 1280    	| Width of the opened browser (and screen vor VNC in Docker).            	|
+| SCREEN_HEIGHT 	| 1280    	| Height of the opened browser (and screen vor VNC in Docker).           	|
+| VNC_PASSWORD  	|         	| VNC password for Docker. No password used by default!                  	|
+| EMAIL         	|         	| Default email for any login.                                           	|
+| PASSWORD      	|         	| Default password for any login.                                        	|
+| EG_EMAIL      	|         	| Epic Games email for login. Overrides EMAIL.                           	|
+| EG_PASSWORD   	|         	| Epic Games password for login. Overrides PASSWORD.                     	|
+| PG_EMAIL      	|         	| Prime Gaming email for login. Overrides EMAIL.                         	|
+| PG_PASSWORD   	|         	| Prime Gaming password for login. Overrides PASSWORD.                   	|
+
+#### Other ways to set options
+On Linux/macOS you can prefix the variables you want to set, for example `EMAIL=foo@bar.baz SHOW=1 node epic-games` will show the browser and skip asking you for your login email.
+For Docker you can pass variables using `-e VAR=VAL`, for example `docker run -e EMAIL=foo@bar.baz ...` or using `--env-file` (see [docs](https://docs.docker.com/engine/reference/commandline/run/#set-environment-variables--e---env---env-file)). If you are using [docker compose](https://docs.docker.com/compose/environment-variables/), you can put them in the `environment:` section.
 
 ### Epic Games Store
-Options:
-- Run `node epic-games` (browser window will open, [headless leads to captcha](https://github.com/vogler/free-games-claimer/issues/2))
-- Run inside Docker (browser is hidden, headless for host):
-  - [Install Docker](https://docs.docker.com/get-docker/)
-  - Options:
-    - `docker run` command from above
-    - `npm run docker` which does the same but stores files in `./data` instead of a Docker volume.
-    - `docker compose up`
-  - When you need to login, go to http://localhost:6080 (you can also connect with a VNC client on port 5900)
+Run `node epic-games` (locally or in Docker).
 
 ### Amazon Prime Gaming
 Run `node prime-gaming` (locally or in Docker).
 
-Runs headless. Run `node prime-gaming show` to show the GUI (to login).
-
 Claiming the Amazon Games works, external Epic Games also work if the account is linked.
-Keys for {Origin, GOG.com, Legacy Games} should be printed to the console and need to be redeemed manually at the URL printed to the terminal ([issue](https://github.com/vogler/free-games-claimer/issues/5)).
+Keys for {Origin, GOG.com, Legacy Games} are printed to the console and need to be redeemed manually at the URL printed to the terminal ([issue](https://github.com/vogler/free-games-claimer/issues/5)).
 A screenshot of the page with the code is saved to `data/screenshots` as well.
 
 ### Run periodically
+#### How often?
 Epic Games usually has two free games *every week*, before Christmas every day.
 Prime Gaming has new games *every month* or more often during Prime days.
 
 It is save to run both scripts every day.
-If you can't use Docker for quasi-headless mode, you could run in a virtual machine, on a server, or you wake your PC at night to avoid being interrupted.
+
+#### How to schedule?
+The container/scripts will claim currently available games and then exit.
+If you want it to run regularly, you have to schedule the runs yourself.
+
+TODO: add some server-mode where the script just keeps running and claims games e.g. every day.
 
 - Linux/macOS: `crontab -e`
 - macOS: [launchd](https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often)
 - Windows: [task scheduler](https://active-directory-wp.com/docs/Usage/How_to_add_a_cron_job_on_Windows/Scheduled_tasks_and_cron_jobs_on_Windows/index.html), [other options](https://stackoverflow.com/questions/132971/what-is-the-windows-version-of-cron)
+
+### Problems?
+
+Check the open [issues](https://github.com/vogler/free-games-claimer/issues) and comment there or open a new issue.
+
+If you're a developer, you can use `PWDEBUG=1 ...` to [inspect](https://playwright.dev/docs/inspector) which opens a debugger where you can step through the script.
+
 
 ## History/DevLog
 <details>
