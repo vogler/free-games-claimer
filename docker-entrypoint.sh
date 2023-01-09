@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+set -euo pipefail # exit on error, error on undef var, error on any fail in pipe (not just last cmd); add -x to print each cmd; see gist bash_strict_mode.md
 
 # Remove chromium profile lock.
 # When running in docker and then killing it, on the next run chromium displayed a dialog to unlock the profile which made the script time out.
@@ -26,4 +28,4 @@ echo "VNC is running on port $VNC_PORT (no password!)"
 websockify -D --web "/usr/share/novnc/" $NOVNC_PORT "localhost:$VNC_PORT" 2>/dev/null 1>&2 &
 echo "noVNC (VNC via browser) is running on http://localhost:$NOVNC_PORT"
 echo
-exec tini -g -- "$@"
+exec tini -g -- "$@" # https://github.com/krallin/tini/issues/8 node/playwright respond to signals like ctrl-c, but unsure about zombie processes
