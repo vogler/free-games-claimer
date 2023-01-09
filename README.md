@@ -60,8 +60,10 @@ Available options/variables and their default values:
 | PASSWORD      	|         	| Default password for any login.                                        	|
 | EG_EMAIL      	|         	| Epic Games email for login. Overrides EMAIL.                           	|
 | EG_PASSWORD   	|         	| Epic Games password for login. Overrides PASSWORD.                     	|
+| EG_OTPKEY   	  |         	| Epic Games MFA OTP key.                     	|
 | PG_EMAIL      	|         	| Prime Gaming email for login. Overrides EMAIL.                         	|
 | PG_PASSWORD   	|         	| Prime Gaming password for login. Overrides PASSWORD.                   	|
+| PG_OTPKEY   	  |         	| Prime Gaming MFA OTP key.                     	|
 | GOG_EMAIL      	|         	| GOG email for login. Overrides EMAIL.                         	|
 | GOG_PASSWORD   	|         	| GOG password for login. Overrides PASSWORD.                   	|
 
@@ -70,6 +72,16 @@ See `config.js` for all options.
 #### Other ways to set options
 On Linux/macOS you can prefix the variables you want to set, for example `EMAIL=foo@bar.baz SHOW=1 node epic-games` will show the browser and skip asking you for your login email.
 For Docker you can pass variables using `-e VAR=VAL`, for example `docker run -e EMAIL=foo@bar.baz ...` or using `--env-file` (see [docs](https://docs.docker.com/engine/reference/commandline/run/#set-environment-variables--e---env---env-file)). If you are using [docker compose](https://docs.docker.com/compose/environment-variables/), you can put them in the `environment:` section.
+
+### Automatic login, two-factor authentication
+If you set the options for email, password and OTP key, there will be no prompts and logins automatic. This is optional since all stores should stay logged in since cookies are refreshed.
+To get the OTP key, it is easiest to follow the store's guide for adding an authenticator app. You should also scan the shown QR code with your favorite app to have an alternative.
+
+- Epic Games: visit [password & security](https://www.epicgames.com/account/password), enable 'third-party authenticator app', copy the 'Manual Entry Key' and use it to set `EG_OTPKEY`.
+- Prime Gaming: visit Amazon 'Your Account › Login & security', 2-step verification › Manage › Add new app › Can't scan the barcode, copy the bold key and use it to set `PG_OTPKEY`
+- GOG: only offers OTP via email
+
+Beware that storing passwords and OTP keys as clear text may be a security risk. Use a unique/generated password! TODO: maybe at least offer to base64 encode for storage.
 
 ### Epic Games Store
 Run `node epic-games` (locally or in Docker).
