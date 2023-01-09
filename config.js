@@ -1,15 +1,16 @@
-// import * as dotenv from 'dotenv';
-// dotenv.config({ path: 'data/config.env' });
+import * as dotenv from 'dotenv';
+dotenv.config({ path: 'data/config.env' }); // loads env vars from file - will not set vars that are already set, i.e., can overwrite values from file by prefixing, e.g., VAR=VAL node ...
 
+// Options - also see table in README.md
 export const cfg = {
   debug: process.env.PWDEBUG == '1', // runs non-headless and opens https://playwright.dev/docs/inspector
   dryrun: process.env.DRYRUN == '1', // don't claim anything
   show: process.env.SHOW == '1', // run non-headless
   get headless() { return !this.debug && !this.show },
-  width: Number(process.env.WIDTH) || 1280,
-  height: Number(process.env.HEIGHT) || 1280,
+  width: Number(process.env.WIDTH) || 1280, // width of the opened browser
+  height: Number(process.env.HEIGHT) || 1280, // height of the opened browser
   timeout: (Number(process.env.TIMEOUT) || 20) * 1000, // 20s, default for playwright is 30s
-  novnc_port: process.env.NOVNC_PORT,
+  novnc_port: process.env.NOVNC_PORT, // running in docker if set
   eg_email: process.env.EG_EMAIL || process.env.EMAIL,
   eg_password: process.env.EG_PASSWORD || process.env.PASSWORD,
   pg_email: process.env.PG_EMAIL || process.env.EMAIL,

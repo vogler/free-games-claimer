@@ -46,9 +46,9 @@ After login, the script will just continue claiming the current games. If it sti
 ### Options
 Options are set via [environment variables](https://kinsta.com/knowledgebase/what-is-an-environment-variable/) which can be set in many ways and allow for flexible configuration.
 
-TODO: On the first run, the script will guide you through configuration and save all settings to a `.env` file. You can edit this file directly or run `node fgc config` to run the configuration assistant again.
+TODO: On the first run, the script will guide you through configuration and save all settings to `data/config.env`. You can edit this file directly or run `node fgc config` to run the configuration assistant again.
 
-The available options/variables and their default values are:
+Available options/variables and their default values:
 
 | Option        	| Default 	| Description                                                            	|
 |---------------	|---------	|------------------------------------------------------------------------	|
@@ -64,6 +64,8 @@ The available options/variables and their default values are:
 | PG_PASSWORD   	|         	| Prime Gaming password for login. Overrides PASSWORD.                   	|
 | GOG_EMAIL      	|         	| GOG email for login. Overrides EMAIL.                         	|
 | GOG_PASSWORD   	|         	| GOG password for login. Overrides PASSWORD.                   	|
+
+See `config.js` for all options.
 
 #### Other ways to set options
 On Linux/macOS you can prefix the variables you want to set, for example `EMAIL=foo@bar.baz SHOW=1 node epic-games` will show the browser and skip asking you for your login email.

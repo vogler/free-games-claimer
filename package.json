@@ -11,6 +11,7 @@
   "type": "module",
   "dependencies": {
     "cross-env": "^7.0.3",
+    "dotenv": "^16.0.3",
     "lowdb": "^5.0.5",
     "playwright": "^1.29.0",
     "prompts": "^2.4.2",
