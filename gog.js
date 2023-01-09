@@ -1,20 +1,14 @@
 import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
 import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
+import { cfg } from './config.js';
 
 import prompts from 'prompts'; // alternatives: enquirer, inquirer
 // import enquirer from 'enquirer'; const { prompt } = enquirer;
 // single prompt that just returns the non-empty value instead of an object - why name things if there's just one?
 const prompt = async o => (await prompts({name: 'name', type: 'text', message: 'Enter value', validate: s => s.length, ...o})).name;
 
-const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
-const show = process.argv.includes('show', 2);
-const headless = !debug && !show;
-
 const URL_CLAIM = 'https://www.gog.com/en';
-const TIMEOUT = 20 * 1000; // 20s, default is 30s
-const WIDTH = Number(process.env.WIDTH) || 1280;
-const HEIGHT = Number(process.env.HEIGHT) || 1280;
 
 console.log(datetime(), 'started checking gog');
 
@@ -23,12 +17,12 @@ db.data ||= {};
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(dirs.browser, {
-  headless,
-  viewport: { width: WIDTH, height: HEIGHT },
+  headless: cfg.headless,
+  viewport: { width: cfg.width, height: cfg.height },
   locale: "en-US", // ignore OS locale to be sure to have english text for locators -> done via /en in URL
 });
 
-if (!debug) context.setDefaultTimeout(TIMEOUT);
+if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
 const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
 // console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
@@ -46,10 +40,10 @@ try {
     // it then creates an iframe for the login
     await page.waitForSelector('#GalaxyAccountsFrameContainer iframe'); // TODO needed?
     const iframe = page.frameLocator('#GalaxyAccountsFrameContainer iframe');
-    if (!debug) context.setDefaultTimeout(0); // give user time to log in without timeout
+    if (!cfg.debug) context.setDefaultTimeout(0); // give user time to log in without timeout
     console.info('Press ESC to skip if you want to login in the browser (not possible in headless mode).');
-    const email = process.env.GOG_EMAIL || process.env.EMAIL || await prompt({message: 'Enter email'});
-    const password = process.env.GOG_PASSWORD || process.env.PASSWORD || await prompt({type: 'password', message: 'Enter password'});
+    const email = cfg.gog_email || await prompt({message: 'Enter email'});
+    const password = cfg.gog_password || await prompt({type: 'password', message: 'Enter password'});
     if (email && password) {
       iframe.locator('a[href="/logout"]').click().catch(_ => { }); // Click 'Change account' (email from previous login is set in some cookie)
       await iframe.locator('#login_username').fill(email);
@@ -65,7 +59,7 @@ try {
         await page.waitForTimeout(1000); // TODO wait for something else below?
       });
     } else {
-      if (headless) {
+      if (cfg.headless) {
         console.log('Please run `node gog show` to login in the opened browser.');
         await context.close(); // not needed?
         process.exit(1);
@@ -73,7 +67,7 @@ try {
       console.log('Waiting for you to login in the browser.');
     }
     // await page.waitForNavigation(); // TODO was blocking
-    if (!debug) context.setDefaultTimeout(TIMEOUT);
+    if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
   const user = await page.locator('#menuUsername').first().innerHTML();
   console.log(`Signed in as ${user}`);

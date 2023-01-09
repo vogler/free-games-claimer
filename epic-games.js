@@ -1,6 +1,7 @@
 import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
 import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
+import { cfg } from './config.js';
 import { existsSync, writeFileSync } from 'fs';
 
 import prompts from 'prompts'; // alternatives: enquirer, inquirer
@@ -8,15 +9,8 @@ import prompts from 'prompts'; // alternatives: enquirer, inquirer
 // single prompt that just returns the non-empty value instead of an object - why name things if there's just one?
 const prompt = async o => (await prompts({name: 'name', type: 'text', message: 'Enter value', validate: s => s.length, ...o})).name;
 
-const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
-const show = process.env.SHOW == '1';
-const headless = !debug && !show;
-
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
 const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
-const TIMEOUT = 20 * 1000; // 20s, default is 30s
-const WIDTH = Number(process.env.WIDTH) || 1280;
-const HEIGHT = Number(process.env.HEIGHT) || 1280;
 
 console.log(datetime(), 'started checking epic-games');
 
@@ -40,8 +34,8 @@ const ext = path.resolve('nopecha'); // used in Chromium, currently not needed i
 const context = await firefox.launchPersistentContext(dirs.browser, {
   // chrome will not work in linux arm64, only chromium
   // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
-  headless,
-  viewport: { width: WIDTH, height: HEIGHT },
+  headless: cfg.headless,
+  viewport: { width: cfg.width, height: cfg.height },
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
   // userAgent for firefox: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:106.0) Gecko/20100101 Firefox/106.0
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
@@ -59,7 +53,7 @@ const context = await firefox.launchPersistentContext(dirs.browser, {
 // Without stealth plugin, the website shows an hcaptcha on login with username/password and in the last step of claiming a game. It may have other heuristics like unsuccessful logins as well. After <6h (TBD) it resets to no captcha again. Getting a new IP also resets.
 await stealth(context);
 
-if (!debug) context.setDefaultTimeout(TIMEOUT);
+if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
 const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
 // console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
@@ -73,13 +67,13 @@ try {
 
   while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
     console.error('Not signed in anymore. Please login in the browser or here in the terminal.');
-    if (process.env.NOVNC_PORT) console.info(`Open http://localhost:${process.env.NOVNC_PORT} to login inside the docker container.`);
+    if (cfg.novnc_port) console.info(`Open http://localhost:${cfg.novnc_port} to login inside the docker container.`);
     context.setDefaultTimeout(0); // give user time to log in without timeout
     await page.goto(URL_LOGIN, { waitUntil: 'domcontentloaded' });
 
     console.info('Press ESC to skip if you want to login in the browser.');
-    const email = process.env.EG_EMAIL || process.env.EMAIL || await prompt({message: 'Enter email'});
-    const password = process.env.EG_PASSWORD || process.env.PASSWORD || await prompt({type: 'password', message: 'Enter password'});
+    const email = cfg.eg_email || await prompt({message: 'Enter email'});
+    const password = cfg.eg_password || await prompt({type: 'password', message: 'Enter password'});
     if (email && password) {
       await page.click('text=Sign in with Epic Games');
       await page.fill('#email', email);
@@ -99,7 +93,7 @@ try {
       console.log('Waiting for you to login in the browser.');
     }
     await page.waitForNavigation({ url: URL_CLAIM });
-    context.setDefaultTimeout(TIMEOUT);
+    context.setDefaultTimeout(cfg.timeout);
   }
   const user = await page.locator('#user span').first().innerHTML();
   console.log(`Signed in as ${user}`);
@@ -143,8 +137,8 @@ try {
       // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoided by Windows userAgent?
       page.click('button:has-text("Continue")').catch(_ => { }); // needed since change from Chromium to Firefox?
 
-      if (process.env.DRYRUN) continue;
-      if (debug) await page.pause();
+      if (cfg.dryrun) continue;
+      if (cfg.debug) await page.pause();
 
       // it then creates an iframe for the purchase
       await page.waitForSelector('#webPurchaseContainer iframe'); // TODO needed?
@@ -170,7 +164,7 @@ try {
         db.data[user][game_id].status = 'claimed';
         db.data[user][game_id].time = datetime(); // claimed time overwrites failed time
         console.log('  Claimed successfully!');
-        context.setDefaultTimeout(TIMEOUT);
+        context.setDefaultTimeout(cfg.timeout);
       } catch (e) {
         console.log(e);
         console.error('  Failed to claim! Try again if NopeCHA timed out. Click the extension to see if you ran out of credits (refill after 24h). To avoid captchas try to get a new IP or set a cookie from https://www.hcaptcha.com/accessibility');

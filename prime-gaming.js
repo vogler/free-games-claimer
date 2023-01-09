@@ -1,21 +1,15 @@
 import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
 import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
+import { cfg } from './config.js';
 
 import prompts from 'prompts'; // alternatives: enquirer, inquirer
 // import enquirer from 'enquirer'; const { prompt } = enquirer;
 // single prompt that just returns the non-empty value instead of an object - why name things if there's just one?
 const prompt = async o => (await prompts({name: 'name', type: 'text', message: 'Enter value', validate: s => s.length, ...o})).name;
 
-const debug = process.env.PWDEBUG == '1'; // runs non-headless and opens https://playwright.dev/docs/inspector
-const show = process.env.SHOW == '1';
-const headless = !debug && !show;
-
 // const URL_LOGIN = 'https://www.amazon.de/ap/signin'; // wrong. needs some session args to be valid?
 const URL_CLAIM = 'https://gaming.amazon.com/home';
-const TIMEOUT = 20 * 1000; // 20s, default is 30s
-const WIDTH = Number(process.env.WIDTH) || 1280;
-const HEIGHT = Number(process.env.HEIGHT) || 1280;
 
 console.log(datetime(), 'started checking prime-gaming');
 
@@ -33,15 +27,15 @@ const migrateDb = (user) => {
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(dirs.browser, {
-  headless,
-  viewport: { width: WIDTH, height: HEIGHT },
+  headless: cfg.headless,
+  viewport: { width: cfg.width, height: cfg.height },
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
 });
 
 // TODO test if needed
 await stealth(context);
 
-if (!debug) context.setDefaultTimeout(TIMEOUT);
+if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
 const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
 // console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
@@ -54,10 +48,10 @@ try {
   while (await page.locator('button:has-text("Sign in")').count() > 0) {
     console.error('Not signed in anymore.');
     await page.click('button:has-text("Sign in")');
-    if (!debug) context.setDefaultTimeout(0); // give user time to log in without timeout
+    if (!cfg.debug) context.setDefaultTimeout(0); // give user time to log in without timeout
     console.info('Press ESC to skip if you want to login in the browser (not possible in default headless mode).');
-    const email = process.env.PG_EMAIL || process.env.EMAIL || await prompt({message: 'Enter email'});
-    const password = process.env.PG_PASSWORD || process.env.PASSWORD || await prompt({type: 'password', message: 'Enter password'});
+    const email = cfg.pg_email || await prompt({message: 'Enter email'});
+    const password = cfg.pg_password || await prompt({type: 'password', message: 'Enter password'});
     if (email && password) {
       await page.fill('[name=email]', email);
       await page.fill('[name=password]', password);
@@ -72,7 +66,7 @@ try {
         await page.click('input[type="submit"]');
       });
     } else {
-      if (headless) {
+      if (cfg.headless) {
         console.log('Please run `node prime-gaming show` to login in the opened browser.');
         await context.close(); // not needed?
         process.exit(1);
@@ -80,7 +74,7 @@ try {
       console.log('Waiting for you to login in the browser.');
     }
     await page.waitForNavigation({ url: 'https://gaming.amazon.com/home?signedIn=true' });
-    if (!debug) context.setDefaultTimeout(TIMEOUT);
+    if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
   const user = await page.locator('[data-a-target="user-dropdown-first-name-text"]').first().innerText();
   console.log(`Signed in as ${user}`);
@@ -103,7 +97,7 @@ try {
     // const title = await card.locator('h3').first().innerText();
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
-    if (process.env.DRYRUN) continue;
+    if (cfg.dryrun) continue;
     // const img = await (await card.$('img.tw-image')).getAttribute('src');
     // console.log('Image:', img);
     const p = path.resolve(dirs.screenshots, 'prime-gaming', 'internal', `${filenamify(title)}.png`);
@@ -122,7 +116,7 @@ try {
     if (!card) break;
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
-    if (process.env.DRYRUN) continue;
+    if (cfg.dryrun) continue;
     await (await card.$('text=Claim')).click();
     // await page.waitForNavigation();
     await Promise.any([page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")')]); // waits for navigation
