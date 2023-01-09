@@ -40,10 +40,9 @@ RUN npm install
 
 COPY . .
 
-# Shell scripts need Linux line endings. On Windows, git might be configured to check out dos/CRLF line endings, so we convert them for those people in case they want to build the image.
-RUN dos2unix ./docker/*.sh
-RUN mv ./docker/entrypoint.sh /usr/local/bin/entrypoint \
-    && chmod +x /usr/local/bin/entrypoint
+# Shell scripts need Linux line endings. On Windows, git might be configured to check out dos/CRLF line endings, so we convert them for those people in case they want to build the image. They could also use --config core.autocrlf=input
+RUN dos2unix *.sh && chmod +x *.sh
+COPY docker-entrypoint.sh /usr/local/bin/
 
 # Configure VNC via environment variables:
 ENV VNC_PORT 5900
@@ -60,6 +59,6 @@ ENV DEPTH 24
 ENV SHOW 1
 
 # Script to setup display server & VNC is always executed.
-ENTRYPOINT ["entrypoint"]
+ENTRYPOINT ["docker-entrypoint.sh"]
 # Default command to run. This is replaced by appending own command, e.g. `docker run ... node prime-gaming` to only run this script.
 CMD node epic-games; node prime-gaming
