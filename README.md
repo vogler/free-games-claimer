@@ -9,6 +9,8 @@ Pull requests welcome :)
 
 _Works on Windows/macOS/Linux._
 
+Raspberry Pi (3, 4, Zero 2): Raspbian won't work since it's 32-bit, but Raspberry Pi OS (64-bit) or Ubuntu will.
+
 ## Setup
 [Install Docker](https://docs.docker.com/get-docker/) and use
 ```
