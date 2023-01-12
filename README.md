@@ -33,7 +33,7 @@ If you don't want to use Docker for quasi-headless mode, you could run inside a 
 ## Usage
 Both scripts start an automated Firefox instance, either with the browser GUI shown or hidden (*headless mode*). By default, you won't see any browser open on your host system.
 
-- When running inside Docker, the browser will be shown only inside the Container. You can open http://localhost:6080 to interact with the browser running inside the container via noVNC (or use other VNC clients on port 5900).
+- When running inside Docker, the browser will be shown only inside the container. You can open http://localhost:6080 to interact with the browser running inside the container via noVNC (or use other VNC clients on port 5900).
 - When running the scripts outside of Docker, the browser will be hidden by default; you can use `SHOW=1 ...` to show the UI (see options below).
 
 When running the first time, you have to login for each store you want to claim games on.
