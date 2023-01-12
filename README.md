@@ -33,7 +33,7 @@ If you don't want to use Docker for quasi-headless mode, you could run inside a 
 </details>
 
 ## Usage
-Both scripts start an automated Firefox instance, either with the browser GUI shown or hidden (*headless mode*). By default, you won't see any browser open on your host system.
+All scripts start an automated Firefox instance, either with the browser GUI shown or hidden (*headless mode*). By default, you won't see any browser open on your host system.
 
 - When running inside Docker, the browser will be shown only inside the container. You can open http://localhost:6080 to interact with the browser running inside the container via noVNC (or use other VNC clients on port 5900).
 - When running the scripts outside of Docker, the browser will be hidden by default; you can use `SHOW=1 ...` to show the UI (see options below).
@@ -41,9 +41,9 @@ Both scripts start an automated Firefox instance, either with the browser GUI sh
 When running the first time, you have to login for each store you want to claim games on.
 You can login indirectly via the terminal or directly in the browser. The scripts will wait until you are successfully logged in.
 
-There will be prompts in the terminal asking you to enter email, password, and afterwards some OTP (one time password / security code) if you have 2FA/MFA (two-/multi-factor authentication) enabled. If you want to login yourself via the browser, you can just hit Escape to skip the prompts.
+There will be prompts in the terminal asking you to enter email, password, and afterwards some OTP (one time password / security code) if you have 2FA/MFA (two-/multi-factor authentication) enabled. If you want to login yourself via the browser, you can press escape in the terminal to skip the prompts.
 
-After login, the script will just continue claiming the current games. If it still waits after you are already logged in, you can restart it (and open an issue).
+After login, the script will continue claiming the current games. If it still waits after you are already logged in, you can restart it (and open an issue). If you run the scripts regularly, you should not have to login again.
 
 ### Options
 Options are set via [environment variables](https://kinsta.com/knowledgebase/what-is-an-environment-variable/) which can be set in many ways and allow for flexible configuration.
@@ -76,12 +76,12 @@ On Linux/macOS you can prefix the variables you want to set, for example `EMAIL=
 For Docker you can pass variables using `-e VAR=VAL`, for example `docker run -e EMAIL=foo@bar.baz ...` or using `--env-file` (see [docs](https://docs.docker.com/engine/reference/commandline/run/#set-environment-variables--e---env---env-file)). If you are using [docker compose](https://docs.docker.com/compose/environment-variables/), you can put them in the `environment:` section.
 
 ### Automatic login, two-factor authentication
-If you set the options for email, password and OTP key, there will be no prompts and logins automatic. This is optional since all stores should stay logged in since cookies are refreshed.
-To get the OTP key, it is easiest to follow the store's guide for adding an authenticator app. You should also scan the shown QR code with your favorite app to have an alternative.
+If you set the options for email, password and OTP key, there will be no prompts and logins should happen automatically. This is optional since all stores should stay logged in since cookies are refreshed.
+To get the OTP key, it is easiest to follow the store's guide for adding an authenticator app. You should also scan the shown QR code with your favorite app to have an alternative method for 2FA.
 
-- Epic Games: visit [password & security](https://www.epicgames.com/account/password), enable 'third-party authenticator app', copy the 'Manual Entry Key' and use it to set `EG_OTPKEY`.
-- Prime Gaming: visit Amazon 'Your Account › Login & security', 2-step verification › Manage › Add new app › Can't scan the barcode, copy the bold key and use it to set `PG_OTPKEY`
-- GOG: only offers OTP via email
+- **Epic Games**: visit [password & security](https://www.epicgames.com/account/password), enable 'third-party authenticator app', copy the 'Manual Entry Key' and use it to set `EG_OTPKEY`.
+- **Prime Gaming**: visit Amazon 'Your Account › Login & security', 2-step verification › Manage › Add new app › Can't scan the barcode, copy the bold key and use it to set `PG_OTPKEY`
+- **GOG**: only offers OTP via email
 
 Beware that storing passwords and OTP keys as clear text may be a security risk. Use a unique/generated password! TODO: maybe at least offer to base64 encode for storage.
 
