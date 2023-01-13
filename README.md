@@ -155,4 +155,6 @@ v1.0 Standalone scripts node epic-games and node prime-gaming using Chromium.
 Changed to Firefox for all scripts since Chromium led to captchas. Claiming then also worked in headless mode without Docker.
 
 Added options via env vars, configurable in `data/config.env`.
+  
+Added OTP generation via otplib for automatic login, even with 2FA.
 </details>
