@@ -148,4 +148,11 @@ Renamed repository from epicgames-claimer to free-games-claimer since a script f
 
 epic games: `headless` mode gets hcaptcha challenge. More details/references in [issue](https://github.com/vogler/free-games-claimer/issues/2).
 
+https://github.com/vogler/free-games-claimer/pull/11 introduced a Dockerfile for running non-headless inside the container via xvfb which makes it headless for the host running the container.
+
+v1.0 Standalone scripts node epic-games and node prime-gaming using Chromium.
+
+Changed to Firefox for all scripts since Chromium led to captchas. Claiming then also worked in headless mode without Docker.
+
+Added options via env vars, configurable in `data/config.env`.
 </details>
