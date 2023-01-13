@@ -123,7 +123,7 @@ If you're a developer, you can use `PWDEBUG=1 ...` to [inspect](https://playwrig
 <details>
   <summary>Click to expand</summary>
 
-Tried [epicgames-freebies-claimer](https://github.com/Revadike/epicgames-freebies-claimer), but does not work anymore since epicgames introduced hcaptcha (see [issue](https://github.com/Revadike/epicgames-freebies-claimer/issues/172)).
+Tried [epicgames-freebies-claimer](https://github.com/Revadike/epicgames-freebies-claimer), but had problems since epicgames introduced hcaptcha (see [issue](https://github.com/Revadike/epicgames-freebies-claimer/issues/172)).
 
 Played around with puppeteer before, now trying newer https://playwright.dev which is pretty similar.
 Playwright Inspector and `codegen` to generate scripts are nice, but failed to generate the right code for clicking a button in an iframe.
