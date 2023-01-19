@@ -145,13 +145,12 @@ try {
       // it then creates an iframe for the purchase
       await page.waitForSelector('#webPurchaseContainer iframe'); // TODO needed?
       const iframe = page.frameLocator('#webPurchaseContainer iframe');
-      if (await Promise.any([
-        iframe.locator('button:has-text("Place Order")').click(),
-        iframe.locator(':has-text("unavailable in your region")').waitFor().then(_ => 'unavailable'),
-      ]) == 'unavailable') { // can't continue loop from the promise
+      // skip game if unavailable in region, https://github.com/vogler/free-games-claimer/issues/46 TODO check games for account's region
+      if (await iframe.locator(':has-text("unavailable in your region")').count() > 0) {
         console.error('  This product is unavailable in your region!');
         continue;
-      };
+      }
+      await iframe.locator('button:has-text("Place Order")').click();
 
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
       const btnAgree = iframe.locator('button:has-text("I Agree")');
