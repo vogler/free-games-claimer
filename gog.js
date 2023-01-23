@@ -1,6 +1,6 @@
 import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
-import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
+import { dirs, jsonDb, datetime, filenamify } from './util.js';
 import { cfg } from './config.js';
 
 import prompts from 'prompts'; // alternatives: enquirer, inquirer
@@ -20,6 +20,8 @@ const context = await firefox.launchPersistentContext(dirs.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
   locale: "en-US", // ignore OS locale to be sure to have english text for locators -> done via /en in URL
+  // recordHar: { path: './data/gog.har' }, // https://toolbox.googleapps.com/apps/har_analyzer/
+  // recordVideo: { dir: './data/videos' }, // console.log(await page.video().path());
 });
 
 if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
@@ -69,17 +71,51 @@ try {
     // await page.waitForNavigation(); // TODO was blocking
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
-  const user = await page.locator('#menuUsername').first().innerHTML();
-  console.log(`Signed in as ${user}`);
+  const user = await page.locator('#menuUsername').first().textContent(); // innerText is uppercase due to styling!
+  console.log(`Signed in as '${user}'`);
   db.data[user] ||= {};
 
-  console.log('TODO get title of current game (waiting for next offer)');
-  await page.goto('https://www.gog.com/giveaway/claim');
-  console.log(await page.innerText('body'));
+  const banner = page.locator('#giveaway');
+  if (!await banner.count()) {
+    console.log('Currently no free giveaway!');
+  } else {
+    const text = await page.locator('.giveaway-banner__title').innerText();
+    const title = text.match(/Claim (.*) and don't miss/)[1];
+    const slug = await banner.getAttribute('href');
+    const url = `https://gog.com${slug}`;
+    console.log(`Current free game: ${title} - ${url}`);
+    db.data[user][title] ||= { title, time: datetime(), url };
+    const p = path.resolve(dirs.screenshots, 'gog', `${filenamify(title)}.png`);
+    await banner.screenshot({ path: p }); // overwrites every time - only keep first?
+    // await banner.getByRole('button', { name: 'Add to library' }).click();
+    // instead of clicking the button, we visit the auto-claim URL which gives as a JSON response which is easier than checking the state of a button
+    await page.goto('https://www.gog.com/giveaway/claim');
+    const response = await page.innerText('body');
+    // console.log(response);
+    // {} // when successfully claimed
+    // {"message":"Already claimed"}
+    // {"message":"Unauthorized"}
+    // {"message":"Giveaway has ended"}
+    let status;
+    if (response == '{}') {
+      status = 'claimed';
+      console.log('  Claimed successfully!');
+      } else {
+      const message = JSON.parse(response).message;
+      if (message == 'Already claimed') {
+        status = 'existed'; // same status text as for epic-games
+        console.log('  Already in library! Nothing to claim.');
+      } else {
+        console.log(response);
+        status = message;
+      }
+    }
+    db.data[user][title].status ||= status;
 
-  console.log("Unsubscribe from 'Promotions and hot deals' newsletter");
-  await page.goto('https://www.gog.com/en/account/settings/subscriptions');
-  await page.locator('li:has-text("Promotions and hot deals") input').uncheck();
+    console.log("Unsubscribe from 'Promotions and hot deals' newsletter");
+    await page.goto('https://www.gog.com/en/account/settings/subscriptions');
+    await page.locator('li:has-text("Promotions and hot deals") label').uncheck();
+  }
 } catch (error) {
   console.error(error); // .toString()?
 } finally {
