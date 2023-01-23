@@ -22,4 +22,5 @@ export const cfg = {
   // auth gog
   gog_email: process.env.GOG_EMAIL || process.env.EMAIL,
   gog_password: process.env.GOG_PASSWORD || process.env.PASSWORD,
+  // OTP only via GOG_EMAIL, can't add app...
 };
