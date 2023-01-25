@@ -123,7 +123,7 @@ try {
       await page.click('button:has-text("Continue")');
     }
 
-    const title = await page.locator('h1 div').first().innerText();
+    const title = await page.locator('h1').first().innerText();
     const game_id = page.url().split('/').pop();
     db.data[user][game_id] ||= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
     console.log('Current free game:', title);
