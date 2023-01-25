@@ -11,6 +11,7 @@ export const cfg = {
   height: Number(process.env.HEIGHT) || 1280, // height of the opened browser
   timeout: (Number(process.env.TIMEOUT) || 20) * 1000, // 20s, default for playwright is 30s
   novnc_port: process.env.NOVNC_PORT, // running in docker if set
+  notify: process.env.NOTIFY, // apprise notification services
   // auth epic-games
   eg_email: process.env.EG_EMAIL || process.env.EMAIL,
   eg_password: process.env.EG_PASSWORD || process.env.PASSWORD,

@@ -76,3 +76,22 @@ export const stealth = async (context) => {
     await context.addInitScript(evasion.cb, evasion.a);
   }
 };
+
+// notifications via apprise CLI
+import { exec } from 'child_process';
+import { cfg } from './config.js';
+
+export const notify = (html) => {
+  if (!cfg.notify) return;
+  exec(`apprise ${cfg.notify} -i html -b '${html}'`, (error, stdout, stderr) => {
+    if (error) {
+        console.log(`error: ${error.message}`);
+        if (error.message.includes('command not found')) {
+          console.info('Run `pip install apprise`. See https://github.com/vogler/free-games-claimer#notifications');
+        }
+        return;
+    }
+    if (stderr) console.error(`stderr: ${stderr}`);
+    if (stdout) console.log(`stdout: ${stdout}`);
+  });
+}
