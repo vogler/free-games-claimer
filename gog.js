@@ -1,6 +1,6 @@
 import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
-import { dirs, jsonDb, datetime, filenamify } from './util.js';
+import { dirs, jsonDb, datetime, filenamify, notify } from './util.js';
 import { cfg } from './config.js';
 
 import prompts from 'prompts'; // alternatives: enquirer, inquirer
@@ -28,6 +28,8 @@ if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
 const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
 // console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
+
+const notify_games = [];
 
 try {
   await context.addCookies([{name: 'CookieConsent', value: '{stamp:%274oR8MJL+bxVlG6g+kl2we5+suMJ+Tv7I4C5d4k+YY4vrnhCD+P23RQ==%27%2Cnecessary:true%2Cpreferences:true%2Cstatistics:true%2Cmarketing:true%2Cmethod:%27explicit%27%2Cver:1%2Cutc:1672331618201%2Cregion:%27de%27}', domain: 'www.gog.com', path: '/'}]); // to not waste screen space when non-headless
@@ -61,12 +63,13 @@ try {
         await page.waitForTimeout(1000); // TODO wait for something else below?
       });
     } else {
+      console.log('Waiting for you to login in the browser.');
+      notify('gog: no longer signed in and not enough options set for automatic login.');
       if (cfg.headless) {
         console.log('Please run `node gog show` to login in the opened browser.');
         await context.close(); // not needed?
         process.exit(1);
       }
-      console.log('Waiting for you to login in the browser.');
     }
     // await page.waitForNavigation(); // TODO was blocking
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
@@ -111,6 +114,7 @@ try {
       }
     }
     db.data[user][title].status ||= status;
+    notify_games.push({ title, url, status });
 
     console.log("Unsubscribe from 'Promotions and hot deals' newsletter");
     await page.goto('https://www.gog.com/en/account/settings/subscriptions');
@@ -118,7 +122,13 @@ try {
   }
 } catch (error) {
   console.error(error); // .toString()?
+  if (!error.message.contains('Target closed')) // e.g. when killed by Ctrl-C
+    notify(`prime-gaming failed: ${error.message}`);
 } finally {
   await db.write(); // write out json db
+  if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed; TODO don't notify if killed?
+    const list = notify_games.map(g => `- <a href="${g.url}">${g.title}</a> (${g.status})<br>`);
+    notify(`gog:<br>${list}`);
+  }
 }
 await context.close();
