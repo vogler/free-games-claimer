@@ -12,6 +12,8 @@ Claims free games periodically on
 
 Pull requests welcome :)
 
+![Telegram Screenshot](https://user-images.githubusercontent.com/493741/214667078-eb5c1877-2bdd-40c1-b94e-4a50d6852c06.png)
+
 _Works on Windows/macOS/Linux._
 
 Raspberry Pi (3, 4, Zero 2): Raspbian won't work since it's 32-bit, but Raspberry Pi OS (64-bit) or Ubuntu will.
