@@ -1,4 +1,9 @@
+<p align="center">
+<img alt="logo-free-games-claimer" src="https://user-images.githubusercontent.com/493741/214588518-a4c89998-127e-4a8c-9b1e-ee4a9d075715.png" />
+</p>
+
 # free-games-claimer
+
 Claims free games periodically on
 - <img src="https://upload.wikimedia.org/wikipedia/commons/3/31/Epic_Games_logo.svg" width="32"/> [Epic Games Store](https://www.epicgames.com/store/free-games)
 - <img src="https://seeklogo.com/images/P/prime-gaming-logo-61A701B3F5-seeklogo.com.png" width="32"/> [Amazon Prime Gaming](https://gaming.amazon.com)
@@ -158,3 +163,9 @@ Added options via env vars, configurable in `data/config.env`.
   
 Added OTP generation via otplib for automatic login, even with 2FA.
 </details>
+
+---
+
+Logo with smaller aspect ratio (for Telegram bot etc.):
+
+![logo-fgc](https://user-images.githubusercontent.com/493741/214589922-093d6557-6393-421c-b577-da58ff3671bc.png)
