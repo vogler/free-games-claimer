@@ -60,8 +60,12 @@ try {
       await page.fill('[name=password]', password);
       await page.check('[name=rememberMe]');
       await page.click('input[type="submit"]');
-      page.waitForNavigation({ url: '**/ap/signin**'}).then(async () => { // TODO check for wrong credentials
-        console.error(await page.locator('.a-alert-content').first().innerText());
+      page.waitForNavigation({ url: '**/ap/signin**'}).then(async () => { // check for wrong credentials
+        const error = await page.locator('.a-alert-content').first().innerText();
+        console.error(error);
+        notify(`prime-gaming: login: ${error}`);
+        await context.close(); // finishes potential recording
+        process.exit(1);
       });
       // handle MFA, but don't await it
       page.waitForNavigation({ url: '**/ap/mfa**'}).then(async () => {
@@ -76,7 +80,7 @@ try {
       notify('prime-gaming: no longer signed in and not enough options set for automatic login.');
       if (cfg.headless) {
         console.log('Please run `node prime-gaming show` to login in the opened browser.');
-        await context.close(); // not needed?
+        await context.close(); // finishes potential recording
         process.exit(1);
       }
     }
