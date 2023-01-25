@@ -9,7 +9,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD true
 
-# Install up-to-date node & npm, deps for virtual screen & noVNC, browser.
+# Install up-to-date node & npm, deps for virtual screen & noVNC, browser, pip for apprise.
 # Playwright needs --with-deps for firefox.
 RUN apt-get update \
     && apt-get install -y curl \
@@ -22,6 +22,7 @@ RUN apt-get update \
       tini \
       novnc websockify \
       dos2unix \
+      python3-pip \
     && npx playwright install --with-deps firefox \
     && apt-get clean \
     && rm -rf \
@@ -32,6 +33,7 @@ RUN apt-get update \
       /var/tmp/*
 
 RUN ln -s /usr/share/novnc/vnc_auto.html /usr/share/novnc/index.html
+RUN pip install apprise
 
 WORKDIR /fgc
 COPY package*.json ./

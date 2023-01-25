@@ -2,7 +2,7 @@ import { firefox } from 'playwright'; // stealth plugin needs no outdated playwr
 import { authenticator } from 'otplib';
 import path from 'path';
 import { existsSync, writeFileSync } from 'fs';
-import { dirs, jsonDb, datetime, stealth, filenamify } from './util.js';
+import { dirs, jsonDb, datetime, stealth, filenamify, notify } from './util.js';
 import { cfg } from './config.js';
 
 import prompts from 'prompts'; // alternatives: enquirer, inquirer
@@ -59,6 +59,8 @@ if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
 // console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 
+const notify_games = [];
+
 try {
   await context.addCookies([{name: 'OptanonAlertBoxClosed', value: new Date(Date.now() - 5*24*60*60*1000).toISOString(), domain: '.epicgames.com', path: '/'}]); // Accept cookies to get rid of banner to save space on screen. Set accept time to 5 days ago.
 
@@ -82,6 +84,7 @@ try {
       await page.click('button[type="submit"]');
       page.waitForSelector('#h_captcha_challenge_login_prod iframe').then(() => {
         console.log('Got a captcha! You may have to solve it in the browser if the NopeCHA extension fails to do so.');
+        notify('epic-games: got captcha during login. Please check.');
       }).catch(_ => { });
       // handle MFA, but don't await it
       page.waitForNavigation({ url: '**/id/login/mfa**'}).then(async () => {
@@ -93,6 +96,7 @@ try {
       }).catch(_ => { });
     } else {
       console.log('Waiting for you to login in the browser.');
+      notify('epic-games: no longer signed in and not enough options set for automatic login.');
     }
     await page.waitForNavigation({ url: URL_CLAIM });
     context.setDefaultTimeout(cfg.timeout);
@@ -127,6 +131,8 @@ try {
     const game_id = page.url().split('/').pop();
     db.data[user][game_id] ||= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
     console.log('Current free game:', title);
+    const notify_game = {title, url, status: 'failed'};
+    notify_games.push(notify_game); // status is updated below
 
     if (btnText.toLowerCase() == 'in library') {
       console.log('  Already in library! Nothing to claim.');
@@ -148,6 +154,7 @@ try {
       // skip game if unavailable in region, https://github.com/vogler/free-games-claimer/issues/46 TODO check games for account's region
       if (await iframe.locator(':has-text("unavailable in your region")').count() > 0) {
         console.error('  This product is unavailable in your region!');
+        db.data[user][game_id].status = notify_game.status = 'unavailable-in-region';
         continue;
       }
       await iframe.locator('button:has-text("Place Order")').click();
@@ -169,7 +176,7 @@ try {
         }).catch(_ => { }); // may time out if not shown
         await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again = no-op
         db.data[user][game_id].status = 'claimed';
-        db.data[user][game_id].time = datetime(); // claimed time overwrites failed time
+        db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
         console.log('  Claimed successfully!');
         context.setDefaultTimeout(cfg.timeout);
       } catch (e) {
@@ -183,11 +190,18 @@ try {
       const p = path.resolve(dirs.screenshots, 'epic-games', `${game_id}.png`);
       if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
     }
+    notify_game.status = db.data[user][game_id].status;
   }
 } catch (error) {
   console.error(error); // .toString()?
+  if (error.message && !error.message.contains('Target closed')) // e.g. when killed by Ctrl-C
+    notify(`epic-games failed: ${error.message}`);
 } finally {
   await db.write(); // write out json db
+  if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed; TODO don't notify if killed?
+    const list = notify_games.map(g => `- <a href="${g.url}">${g.title}</a> (${g.status})<br>`);
+    notify(`epic-games:<br>${list}`);
+  }
 }
 await writeFileSync(path.resolve(dirs.browser, 'cookies.json'), JSON.stringify(await context.cookies()));
 await context.close();

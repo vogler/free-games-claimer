@@ -30,6 +30,7 @@ Data is stored in the volume `fgc`.
 1. [Install Node.js](https://nodejs.org/en/download)
 2. Clone/download this repository and `cd` into it in a terminal
 3. Run `npm install && npx playwright install firefox`
+4. Run `pip install apprise` to install [apprise](https://github.com/caronc/apprise) if you want notifications
 
 This downloads Firefox to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
 If you are missing some dependencies for the browser on your system, you can use `sudo npx playwright install firefox --with-deps`.
@@ -63,22 +64,29 @@ Available options/variables and their default values:
 | WIDTH         	| 1280    	| Width of the opened browser (and screen vor VNC in Docker).            	|
 | HEIGHT        	| 1280    	| Height of the opened browser (and screen vor VNC in Docker).           	|
 | VNC_PASSWORD  	|         	| VNC password for Docker. No password used by default!                  	|
+| NOTIFY        	|         	| Notification services to use (Pushover, Slack, Telegram...), see below.	|
 | EMAIL         	|         	| Default email for any login.                                           	|
 | PASSWORD      	|         	| Default password for any login.                                        	|
 | EG_EMAIL      	|         	| Epic Games email for login. Overrides EMAIL.                           	|
 | EG_PASSWORD   	|         	| Epic Games password for login. Overrides PASSWORD.                     	|
-| EG_OTPKEY   	  |         	| Epic Games MFA OTP key.                     	|
+| EG_OTPKEY   	  |         	| Epic Games MFA OTP key.                                               	|
 | PG_EMAIL      	|         	| Prime Gaming email for login. Overrides EMAIL.                         	|
 | PG_PASSWORD   	|         	| Prime Gaming password for login. Overrides PASSWORD.                   	|
-| PG_OTPKEY   	  |         	| Prime Gaming MFA OTP key.                     	|
-| GOG_EMAIL      	|         	| GOG email for login. Overrides EMAIL.                         	|
-| GOG_PASSWORD   	|         	| GOG password for login. Overrides PASSWORD.                   	|
+| PG_OTPKEY   	  |         	| Prime Gaming MFA OTP key.                                             	|
+| GOG_EMAIL      	|         	| GOG email for login. Overrides EMAIL.                                 	|
+| GOG_PASSWORD   	|         	| GOG password for login. Overrides PASSWORD.                           	|
 
 See `config.js` for all options.
 
 #### Other ways to set options
 On Linux/macOS you can prefix the variables you want to set, for example `EMAIL=foo@bar.baz SHOW=1 node epic-games` will show the browser and skip asking you for your login email.
 For Docker you can pass variables using `-e VAR=VAL`, for example `docker run -e EMAIL=foo@bar.baz ...` or using `--env-file` (see [docs](https://docs.docker.com/engine/reference/commandline/run/#set-environment-variables--e---env---env-file)). If you are using [docker compose](https://docs.docker.com/compose/environment-variables/), you can put them in the `environment:` section.
+
+### Notifications
+The scripts will try to send notifications for successfully claimed games and any errors like needing to log in or encountered captchas (should not happen).
+
+[apprise](https://github.com/caronc/apprise) is used for notifications and offers many services including Pushover, Slack, Telegram, SMS, Email, desktop and custom notifications.
+You just need to set `NOTIFY` to the notifications services you want to use, e.g. `NOTIFY='mailto://myemail:mypass@gmail.com' 'pbul://o.gn5kj6nfhv736I7jC3cj3QLRiyhgl98b'` - refer to their list of services and [examples](https://github.com/caronc/apprise#command-line-usage).
 
 ### Automatic login, two-factor authentication
 If you set the options for email, password and OTP key, there will be no prompts and logins should happen automatically. This is optional since all stores should stay logged in since cookies are refreshed.
@@ -160,12 +168,12 @@ v1.0 Standalone scripts node epic-games and node prime-gaming using Chromium.
 Changed to Firefox for all scripts since Chromium led to captchas. Claiming then also worked in headless mode without Docker.
 
 Added options via env vars, configurable in `data/config.env`.
-  
+
 Added OTP generation via otplib for automatic login, even with 2FA.
 </details>
 
 ---
 
-Logo with smaller aspect ratio (for Telegram bot etc.):
+Logo with smaller aspect ratio (for Telegram bot etc.): 👾 - [emojipedia](https://emojipedia.org/alien-monster/)
 
 ![logo-fgc](https://user-images.githubusercontent.com/493741/214589922-093d6557-6393-421c-b577-da58ff3671bc.png)
