@@ -127,7 +127,7 @@ try {
 } finally {
   await db.write(); // write out json db
   if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed; TODO don't notify if killed?
-    const list = notify_games.map(g => `- <a href="${g.url}">${g.title}</a> (${g.status})<br>`);
+    const list = notify_games.map(g => `- <a href="${g.url}">${g.title}</a> (${g.status})`).join('<br>');
     notify(`gog:<br>${list}`);
   }
 }

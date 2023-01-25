@@ -182,7 +182,7 @@ try {
 } finally {
   await db.write(); // write out json db
   if (notify_games.length) { // list should only include claimed games
-    const list = notify_games.map(g => `- <a href="${g.url}">${g.title}</a> (${g.status})<br>`);
+    const list = notify_games.map(g => `- <a href="${g.url}">${g.title}</a> (${g.status})`).join('<br>');
     notify(`prime-gaming:<br>${list}`);
   }
 }
