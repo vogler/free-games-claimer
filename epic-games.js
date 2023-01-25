@@ -194,7 +194,7 @@ try {
   }
 } catch (error) {
   console.error(error); // .toString()?
-  if (!error.message.contains('Target closed')) // e.g. when killed by Ctrl-C
+  if (error.message && !error.message.contains('Target closed')) // e.g. when killed by Ctrl-C
     notify(`epic-games failed: ${error.message}`);
 } finally {
   await db.write(); // write out json db
