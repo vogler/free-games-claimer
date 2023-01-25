@@ -1,7 +1,7 @@
 import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import { authenticator } from 'otplib';
 import path from 'path';
-import { dirs, jsonDb, datetime, stealth, filenamify, notify } from './util.js';
+import { dirs, jsonDb, datetime, stealth, filenamify, notify, html_game_list } from './util.js';
 import { cfg } from './config.js';
 
 import prompts from 'prompts'; // alternatives: enquirer, inquirer
@@ -139,7 +139,7 @@ try {
     console.log('  External store:', store);
     const url = page.url().split('?')[0];
     db.data[user][title] ||= { title, time: datetime(), url, store };
-    const notify_game = {title, url, status: `failed - link ${store}`};
+    const notify_game = { title, url, status: `failed - link ${store}` };
     notify_games.push(notify_game); // status is updated below
     if (await page.locator('div:has-text("Link game account")').count()) {
       console.error('  Account linking is required to claim this offer!');
@@ -182,8 +182,7 @@ try {
 } finally {
   await db.write(); // write out json db
   if (notify_games.length) { // list should only include claimed games
-    const list = notify_games.map(g => `- <a href="${g.url}">${g.title}</a> (${g.status})`).join('<br>');
-    notify(`prime-gaming:<br>${list}`);
+    notify(`prime-gaming:<br>${html_game_list(notify_games)}`);
   }
 }
 await context.close();

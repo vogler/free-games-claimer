@@ -2,7 +2,7 @@ import { firefox } from 'playwright'; // stealth plugin needs no outdated playwr
 import { authenticator } from 'otplib';
 import path from 'path';
 import { existsSync, writeFileSync } from 'fs';
-import { dirs, jsonDb, datetime, stealth, filenamify, notify } from './util.js';
+import { dirs, jsonDb, datetime, stealth, filenamify, notify, html_game_list } from './util.js';
 import { cfg } from './config.js';
 
 import prompts from 'prompts'; // alternatives: enquirer, inquirer
@@ -131,7 +131,7 @@ try {
     const game_id = page.url().split('/').pop();
     db.data[user][game_id] ||= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
     console.log('Current free game:', title);
-    const notify_game = {title, url, status: 'failed'};
+    const notify_game = { title, url, status: 'failed' };
     notify_games.push(notify_game); // status is updated below
 
     if (btnText.toLowerCase() == 'in library') {
@@ -199,8 +199,7 @@ try {
 } finally {
   await db.write(); // write out json db
   if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed; TODO don't notify if killed?
-    const list = notify_games.map(g => `- <a href="${g.url}">${g.title}</a> (${g.status})`).join('<br>');
-    notify(`epic-games:<br>${list}`);
+    notify(`epic-games:<br>${html_game_list(notify_games)}`);
   }
 }
 await writeFileSync(path.resolve(dirs.browser, 'cookies.json'), JSON.stringify(await context.cookies()));

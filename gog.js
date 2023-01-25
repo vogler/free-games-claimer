@@ -1,6 +1,6 @@
 import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
-import { dirs, jsonDb, datetime, filenamify, notify } from './util.js';
+import { dirs, jsonDb, datetime, filenamify, notify, html_game_list } from './util.js';
 import { cfg } from './config.js';
 
 import prompts from 'prompts'; // alternatives: enquirer, inquirer
@@ -127,8 +127,7 @@ try {
 } finally {
   await db.write(); // write out json db
   if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed; TODO don't notify if killed?
-    const list = notify_games.map(g => `- <a href="${g.url}">${g.title}</a> (${g.status})`).join('<br>');
-    notify(`gog:<br>${list}`);
+    notify(`gog:<br>${html_game_list(notify_games)}`);
   }
 }
 await context.close();
