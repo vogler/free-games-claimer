@@ -23,7 +23,7 @@ RUN apt-get update \
       novnc websockify \
       dos2unix \
       python3-pip \
-    && npx playwright install --with-deps firefox \
+    && npx playwright@1.29 install --with-deps firefox \
     && apt-get clean \
     && rm -rf \
       /tmp/* \
