@@ -63,4 +63,4 @@ ENV SHOW 1
 # Script to setup display server & VNC is always executed.
 ENTRYPOINT ["docker-entrypoint.sh"]
 # Default command to run. This is replaced by appending own command, e.g. `docker run ... node prime-gaming` to only run this script.
-CMD node epic-games; node prime-gaming
+CMD node epic-games; node prime-gaming; node gog
