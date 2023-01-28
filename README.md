@@ -112,7 +112,7 @@ Run `node prime-gaming` (locally or in Docker).
 Claiming the Amazon Games works out-of-the-box, however, for games on external stores you need to either link your account or redeem a key.
 
 - Stores that require account linking: Epic Games, Battle.net.
-- Stores that require redeeming a key: Origin, GOG.com, Legacy Games.
+- Stores that require redeeming a key: Origin, GOG.com, Microsoft Games, Legacy Games.
   
   Keys and URLs are printed to the console, included in notifications and saved in `data/prime-gaming.json`. A screenshot of the page with the key is also saved to `data/screenshots`.
   [TODO](https://github.com/vogler/free-games-claimer/issues/5): ~~redeem keys on external stores.~~
