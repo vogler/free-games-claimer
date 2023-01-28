@@ -18,7 +18,7 @@ _Works on Windows/macOS/Linux._
 
 Raspberry Pi (3, 4, Zero 2): Raspbian won't work since it's 32-bit, but Raspberry Pi OS (64-bit) or Ubuntu will.
 
-## Setup
+## How to run
 [Install Docker](https://docs.docker.com/get-docker/) and use
 ```
 docker run --rm -it -p 6080:6080 -v fgc:/fgc/data --pull=always ghcr.io/vogler/free-games-claimer
@@ -53,10 +53,10 @@ There will be prompts in the terminal asking you to enter email, password, and a
 
 After login, the script will continue claiming the current games. If it still waits after you are already logged in, you can restart it (and open an issue). If you run the scripts regularly, you should not have to login again.
 
-### Options
-Options are set via [environment variables](https://kinsta.com/knowledgebase/what-is-an-environment-variable/) which can be set in many ways and allow for flexible configuration.
+### Configuration / Options
+Options are set via [environment variables](https://kinsta.com/knowledgebase/what-is-an-environment-variable/) which allow for flexible configuration.
 
-TODO: On the first run, the script will guide you through configuration and save all settings to `data/config.env`. You can edit this file directly or run `node fgc config` to run the configuration assistant again.
+TODO: ~~On the first run, the script will guide you through configuration and save all settings to `data/config.env`. You can edit this file directly or run `node fgc config` to run the configuration assistant again.~~
 
 Available options/variables and their default values:
 
@@ -80,8 +80,11 @@ Available options/variables and their default values:
 
 See `config.js` for all options.
 
-#### Other ways to set options
-On Linux/macOS you can prefix the variables you want to set, for example `EMAIL=foo@bar.baz SHOW=1 node epic-games` will show the browser and skip asking you for your login email.
+#### How to set options
+You can put options in `data/config.env` which will be loaded by [dotenv](https://github.com/motdotla/dotenv).
+
+On Linux/macOS you can also prefix the variables you want to set, for example `EMAIL=foo@bar.baz SHOW=1 node epic-games` will show the browser and skip asking you for your login email.
+
 For Docker you can pass variables using `-e VAR=VAL`, for example `docker run -e EMAIL=foo@bar.baz ...` or using `--env-file` (see [docs](https://docs.docker.com/engine/reference/commandline/run/#set-environment-variables--e---env---env-file)). If you are using [docker compose](https://docs.docker.com/compose/environment-variables/), you can put them in the `environment:` section.
 
 ### Notifications
@@ -106,26 +109,31 @@ Run `node epic-games` (locally or in Docker).
 ### Amazon Prime Gaming
 Run `node prime-gaming` (locally or in Docker).
 
-Claiming the Amazon Games works, external Epic Games also work if the account is linked.
-Keys for {Origin, GOG.com, Legacy Games} are printed to the console and need to be redeemed manually at the URL printed to the terminal ([issue](https://github.com/vogler/free-games-claimer/issues/5)).
-A screenshot of the page with the code is saved to `data/screenshots` as well.
+Claiming the Amazon Games works out-of-the-box, however, for games on external stores you need to either link your account or redeem a key.
+
+- Stores that require account linking: Epic Games, Battle.net.
+- Stores that require redeeming a key: Origin, GOG.com, Legacy Games.
+  
+  Keys and URLs are printed to the console, included in notifications and saved in `data/prime-gaming.json`. A screenshot of the page with the key is also saved to `data/screenshots`.
+  [TODO](https://github.com/vogler/free-games-claimer/issues/5): ~~redeem keys on external stores.~~
 
 ### Run periodically
 #### How often?
 Epic Games usually has two free games *every week*, before Christmas every day.
 Prime Gaming has new games *every month* or more often during Prime days.
+GOG usually has one new game every couples of weeks.
 
-It is save to run both scripts every day.
+It is save to run the scripts every day.
 
 #### How to schedule?
 The container/scripts will claim currently available games and then exit.
-If you want it to run regularly, you have to schedule the runs yourself.
-
-TODO: add some server-mode where the script just keeps running and claims games e.g. every day.
+If you want it to run regularly, you have to schedule the runs yourself:
 
 - Linux/macOS: `crontab -e`
 - macOS: [launchd](https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often)
 - Windows: [task scheduler](https://active-directory-wp.com/docs/Usage/How_to_add_a_cron_job_on_Windows/Scheduled_tasks_and_cron_jobs_on_Windows/index.html), [other options](https://stackoverflow.com/questions/132971/what-is-the-windows-version-of-cron)
+
+TODO: ~~add some server-mode where the script just keeps running and claims games e.g. every day.~~
 
 ### Problems?
 
@@ -172,6 +180,8 @@ Changed to Firefox for all scripts since Chromium led to captchas. Claiming then
 Added options via env vars, configurable in `data/config.env`.
 
 Added OTP generation via otplib for automatic login, even with 2FA.
+
+Added notifications via [apprise](https://github.com/caronc/apprise).
 </details>
 
 ---
