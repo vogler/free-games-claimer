@@ -136,6 +136,7 @@ try {
 
     if (btnText.toLowerCase() == 'in library') {
       console.log('  Already in library! Nothing to claim.');
+      notify_game.status = 'existed';
       db.data[user][game_id].status ||= 'existed'; // does not overwrite claimed or failed
       if (db.data[user][game_id].status == 'failed') db.data[user][game_id].status = 'manual'; // was failed but now it's claimed
     } else { // GET
@@ -186,11 +187,11 @@ try {
         await page.screenshot({ path: p, fullPage: true });
         db.data[user][game_id].status = 'failed';
       }
+      notify_game.status = db.data[user][game_id].status; // claimed or failed
 
       const p = path.resolve(dirs.screenshots, 'epic-games', `${game_id}.png`);
       if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
     }
-    notify_game.status = db.data[user][game_id].status;
   }
 } catch (error) {
   console.error(error); // .toString()?
