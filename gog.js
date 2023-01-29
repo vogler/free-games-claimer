@@ -37,14 +37,15 @@ try {
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // default 'load' takes forever
 
   // page.click('#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll').catch(_ => { }); // does not work reliably, solved by setting CookieConsent above
-  // await Promise.any([page.waitForSelector('a:has-text("Sign in")', {}), page.waitForSelector('#menuUsername')]);
-  while (await page.locator('a:has-text("Sign in")').first().isVisible()) {
+  const signIn = page.locator('a:has-text("Sign in")').first();
+  await Promise.any([signIn.waitFor(), page.waitForSelector('#menuUsername')]);
+  while (await signIn.isVisible()) {
     console.error('Not signed in anymore.');
-    await page.click('a:has-text("Sign in")');
+    await signIn.click();
     // it then creates an iframe for the login
     await page.waitForSelector('#GalaxyAccountsFrameContainer iframe'); // TODO needed?
     const iframe = page.frameLocator('#GalaxyAccountsFrameContainer iframe');
-    if (!cfg.debug) context.setDefaultTimeout(0); // give user time to log in without timeout
+    context.setDefaultTimeout(0); // give user time to log in without timeout
     console.info('Press ESC to skip if you want to login in the browser (not possible in headless mode).');
     const email = cfg.gog_email || await prompt({message: 'Enter email'});
     const password = cfg.gog_password || await prompt({type: 'password', message: 'Enter password'});
@@ -53,6 +54,7 @@ try {
       await iframe.locator('#login_username').fill(email);
       await iframe.locator('#login_password').fill(password);
       await iframe.locator('#login_login').click();
+      await page.waitForSelector('#menuUsername')
       // handle MFA, but don't await it
       iframe.locator('form[name=second_step_authentication]').waitFor().then(async () => {
         console.log('Two-Step Verification - Enter security code');
@@ -61,7 +63,7 @@ try {
         await iframe.locator('#second_step_authentication_token_letter_1').type(otp.toString(), {delay: 10});
         await iframe.locator('#second_step_authentication_send').click();
         await page.waitForTimeout(1000); // TODO wait for something else below?
-      });
+      }).catch(_ => { });
     } else {
       console.log('Waiting for you to login in the browser.');
       notify('gog: no longer signed in and not enough options set for automatic login.');
@@ -72,7 +74,7 @@ try {
       }
     }
     // await page.waitForNavigation(); // TODO was blocking
-    if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
+    context.setDefaultTimeout(cfg.timeout);
   }
   const user = await page.locator('#menuUsername').first().textContent(); // innerText is uppercase due to styling!
   console.log(`Signed in as '${user}'`);
@@ -88,8 +90,10 @@ try {
     const url = `https://gog.com${slug}`;
     console.log(`Current free game: ${title} - ${url}`);
     db.data[user][title] ||= { title, time: datetime(), url };
+    if (cfg.dryrun) process.exit(1);
     const p = path.resolve(dirs.screenshots, 'gog', `${filenamify(title)}.png`);
     await banner.screenshot({ path: p }); // overwrites every time - only keep first?
+
     // await banner.getByRole('button', { name: 'Add to library' }).click();
     // instead of clicking the button, we visit the auto-claim URL which gives as a JSON response which is easier than checking the state of a button
     await page.goto('https://www.gog.com/giveaway/claim');
@@ -122,7 +126,7 @@ try {
   }
 } catch (error) {
   console.error(error); // .toString()?
-  if (error.message && !error.message.includes('Target closed')) // e.g. when killed by Ctrl-C
+  if (error.message && !error.message.includes('Target closed') && !error.message.includes('Browser closed')) // e.g. when killed by Ctrl-C
     notify(`gog failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
