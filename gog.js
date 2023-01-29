@@ -122,8 +122,8 @@ try {
   }
 } catch (error) {
   console.error(error); // .toString()?
-  if (!error.message.contains('Target closed')) // e.g. when killed by Ctrl-C
-    notify(`prime-gaming failed: ${error.message}`);
+  if (error.message && !error.message.includes('Target closed')) // e.g. when killed by Ctrl-C
+    notify(`gog failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
   if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed; TODO don't notify if killed?

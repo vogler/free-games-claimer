@@ -177,8 +177,8 @@ try {
   await page.locator(games_sel).screenshot({ path: p });
 } catch (error) {
   console.error(error); // .toString()?
-  if (error.message && !error.message.contains('Target closed')) // e.g. when killed by Ctrl-C
-    notify(`prime-gaming failed: ${error.message}`);
+  if (error.message && !error.message.includes('Target closed')) // e.g. when killed by Ctrl-C
+    notify(`prime-gaming failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
   if (notify_games.length) { // list should only include claimed games
