@@ -46,7 +46,8 @@ try {
     await page.waitForSelector('#GalaxyAccountsFrameContainer iframe'); // TODO needed?
     const iframe = page.frameLocator('#GalaxyAccountsFrameContainer iframe');
     context.setDefaultTimeout(0); // give user time to log in without timeout
-    console.info('Press ESC to skip if you want to login in the browser (not possible in headless mode).');
+    if (cfg.gog_email && cfg.gog_password) console.info('Using email and password from environment.');
+    else console.info('Press ESC to skip if you want to login in the browser (not possible in headless mode).');
     const email = cfg.gog_email || await prompt({message: 'Enter email'});
     const password = cfg.gog_password || await prompt({type: 'password', message: 'Enter password'});
     if (email && password) {

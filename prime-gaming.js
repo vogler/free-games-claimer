@@ -52,7 +52,8 @@ try {
     console.error('Not signed in anymore.');
     await page.click('button:has-text("Sign in")');
     if (!cfg.debug) context.setDefaultTimeout(0); // give user time to log in without timeout
-    console.info('Press ESC to skip if you want to login in the browser (not possible in default headless mode).');
+    if (cfg.pg_email && cfg.pg_password) console.info('Using email and password from environment.');
+    else console.info('Press ESC to skip if you want to login in the browser (not possible in default headless mode).');
     const email = cfg.pg_email || await prompt({message: 'Enter email'});
     const password = cfg.pg_password || await prompt({type: 'password', message: 'Enter password'});
     if (email && password) {

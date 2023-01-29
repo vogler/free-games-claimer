@@ -74,7 +74,8 @@ try {
     context.setDefaultTimeout(0); // give user time to log in without timeout
     await page.goto(URL_LOGIN, { waitUntil: 'domcontentloaded' });
 
-    console.info('Press ESC to skip if you want to login in the browser.');
+    if (cfg.eg_email && cfg.eg_password) console.info('Using email and password from environment.');
+    else console.info('Press ESC to skip if you want to login in the browser.');
     const email = cfg.eg_email || await prompt({message: 'Enter email'});
     const password = cfg.eg_password || await prompt({type: 'password', message: 'Enter password'});
     if (email && password) {
