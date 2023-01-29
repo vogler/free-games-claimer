@@ -55,7 +55,6 @@ try {
       await iframe.locator('#login_username').fill(email);
       await iframe.locator('#login_password').fill(password);
       await iframe.locator('#login_login').click();
-      await page.waitForSelector('#menuUsername')
       // handle MFA, but don't await it
       iframe.locator('form[name=second_step_authentication]').waitFor().then(async () => {
         console.log('Two-Step Verification - Enter security code');
@@ -63,14 +62,22 @@ try {
         const otp = await prompt({type: 'text', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 4 || 'The code must be 4 digits!'}); // can't use type: 'number' since it strips away leading zeros and codes sometimes have them
         await iframe.locator('#second_step_authentication_token_letter_1').type(otp.toString(), {delay: 10});
         await iframe.locator('#second_step_authentication_send').click();
-        await page.waitForTimeout(1000); // TODO wait for something else below?
+        await page.waitForTimeout(1000); // TODO still needed with wait for username below?
       }).catch(_ => { });
+      // iframe.locator('iframe[title=reCAPTCHA]').waitFor().then(() => {
+      // iframe.locator('.g-recaptcha').waitFor().then(() => {
+      iframe.locator('text=Invalid captcha').waitFor().then(() => {
+        console.error('Got a captcha during login (likely due to too many attempts)! You may solve it in the browser, get a new IP or try again in a few hours.');
+        notify('gog: got captcha during login. Please check.');
+        // TODO solve reCAPTCHA?
+      }).catch(_ => { });
+      await page.waitForSelector('#menuUsername')
     } else {
       console.log('Waiting for you to login in the browser.');
       notify('gog: no longer signed in and not enough options set for automatic login.');
       if (cfg.headless) {
-        console.log('Please run `node gog show` to login in the opened browser.');
-        await context.close(); // not needed?
+        console.log('Run `SHOW=1 node gog` to login in the opened browser.');
+        await context.close();
         process.exit(1);
       }
     }

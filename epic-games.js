@@ -84,7 +84,7 @@ try {
       await page.fill('#password', password);
       await page.click('button[type="submit"]');
       page.waitForSelector('#h_captcha_challenge_login_prod iframe').then(() => {
-        console.log('Got a captcha! You may have to solve it in the browser if the NopeCHA extension fails to do so.');
+        console.error('Got a captcha during login (likely due to too many attempts)! You may solve it in the browser, get a new IP or try again in a few hours.');
         notify('epic-games: got captcha during login. Please check.');
       }).catch(_ => { });
       // handle MFA, but don't await it
