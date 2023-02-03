@@ -12,6 +12,8 @@ export const dirs = {
   screenshots: dataDir('screenshots'),
 };
 
+
+// json database
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
 export const jsonDb = async file => {
@@ -20,13 +22,16 @@ export const jsonDb = async file => {
   return db;
 };
 
+
 // date and time as UTC (no timezone offset) in nicely readable and sortable format, e.g., 2022-10-06 12:05:27.313
 export const datetime = (d = new Date()) => d.toISOString().replace('T', ' ').replace('Z', '');
 // same as datetime() but for local timezone, e.g., UTC + 2h for the above in DE
 export const datetimeLocal = (d = new Date()) => datetime(new Date(d.getTime() - new Date().getTimezoneOffset() * 60000));
 export const filenamify = s => s.replaceAll(':', '.').replace(/[^a-z0-9 _\-.]/gi, '_'); // alternative: https://www.npmjs.com/package/filenamify - On Unix-like systems, / is reserved. On Windows, <>:"/\|?* along with trailing periods are reserved.
 
+
 // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
+// gets userAgent and then removes "Headless" from it
 const newStealthContext = async (browser, contextOptions = {}, debug = false) => {
   if (!debug) { // only need to fix userAgent in headless mode
     const dummyContext = await browser.newContext();
@@ -76,6 +81,13 @@ export const stealth = async (context) => {
     await context.addInitScript(evasion.cb, evasion.a);
   }
 };
+
+
+import prompts from 'prompts'; // alternatives: enquirer, inquirer
+// import enquirer from 'enquirer'; const { prompt } = enquirer;
+// single prompt that just returns the non-empty value instead of an object - why name things if there's just one?
+export const prompt = async o => (await prompts({name: 'name', type: 'text', message: 'Enter value', validate: s => s.length, ...o})).name;
+
 
 // notifications via apprise CLI
 import { exec } from 'child_process';

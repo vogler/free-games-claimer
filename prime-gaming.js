@@ -1,13 +1,8 @@
 import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import { authenticator } from 'otplib';
 import path from 'path';
-import { dirs, jsonDb, datetime, stealth, filenamify, notify, html_game_list } from './util.js';
+import { dirs, jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list } from './util.js';
 import { cfg } from './config.js';
-
-import prompts from 'prompts'; // alternatives: enquirer, inquirer
-// import enquirer from 'enquirer'; const { prompt } = enquirer;
-// single prompt that just returns the non-empty value instead of an object - why name things if there's just one?
-const prompt = async o => (await prompts({name: 'name', type: 'text', message: 'Enter value', validate: s => s.length, ...o})).name;
 
 // const URL_LOGIN = 'https://www.amazon.de/ap/signin'; // wrong. needs some session args to be valid?
 const URL_CLAIM = 'https://gaming.amazon.com/home';
