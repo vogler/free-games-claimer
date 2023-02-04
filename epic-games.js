@@ -83,7 +83,7 @@ try {
         notify('epic-games: got captcha during login. Please check.');
       }).catch(_ => { });
       // handle MFA, but don't await it
-      page.waitForNavigation({ url: '**/id/login/mfa**'}).then(async () => {
+      page.waitForURL('**/id/login/mfa**').then(async () => {
         console.log('Enter the security code to continue - This appears to be a new device, browser or location. A security code has been sent to your email address at ...');
         // TODO locator for text (email or app?)
         const otp = cfg.eg_otpkey && authenticator.generate(cfg.eg_otpkey) || await prompt({type: 'text', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 6 || 'The code must be 6 digits!'}); // can't use type: 'number' since it strips away leading zeros and codes sometimes have them
@@ -94,7 +94,7 @@ try {
       console.log('Waiting for you to login in the browser.');
       notify('epic-games: no longer signed in and not enough options set for automatic login.');
     }
-    await page.waitForNavigation({ url: URL_CLAIM });
+    await page.waitForURL(URL_CLAIM);
     context.setDefaultTimeout(cfg.timeout);
   }
   const user = await page.locator('#user span').first().innerHTML();

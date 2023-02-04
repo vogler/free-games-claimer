@@ -76,7 +76,6 @@ try {
         process.exit(1);
       }
     }
-    // await page.waitForNavigation(); // TODO was blocking
     context.setDefaultTimeout(cfg.timeout);
   }
   const user = await page.locator('#menuUsername').first().textContent(); // innerText is uppercase due to styling!
