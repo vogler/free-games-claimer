@@ -23,7 +23,7 @@ RUN apt-get update \
       novnc websockify \
       dos2unix \
       python3-pip \
-    && npx playwright@1.29 install --with-deps firefox \
+    && npx playwright install-deps firefox \
     && apt-get clean \
     && rm -rf \
       /tmp/* \
@@ -38,7 +38,8 @@ RUN pip install apprise
 WORKDIR /fgc
 COPY package*.json ./
 
-RUN npm install
+# If firefox is installed (~/.cache/ms-playwright/firefox-*) before `npm install` it may be a newer version than in package.json and playwright will not find it; system deps are installed sep. via apt above to avoid having to pin the version there.
+RUN npm install && npx playwright install firefox
 
 COPY . .
 
