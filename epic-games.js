@@ -72,7 +72,7 @@ try {
     if (cfg.eg_email && cfg.eg_password) console.info('Using email and password from environment.');
     else console.info('Press ESC to skip if you want to login in the browser.');
     const email = cfg.eg_email || await prompt({message: 'Enter email'});
-    const password = cfg.eg_password || await prompt({type: 'password', message: 'Enter password'});
+    const password = email && (cfg.eg_password || await prompt({type: 'password', message: 'Enter password'}));
     if (email && password) {
       await page.click('text=Sign in with Epic Games');
       await page.fill('#email', email);

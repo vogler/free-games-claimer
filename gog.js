@@ -44,7 +44,7 @@ try {
     if (cfg.gog_email && cfg.gog_password) console.info('Using email and password from environment.');
     else console.info('Press ESC to skip if you want to login in the browser (not possible in headless mode).');
     const email = cfg.gog_email || await prompt({message: 'Enter email'});
-    const password = cfg.gog_password || await prompt({type: 'password', message: 'Enter password'});
+    const password = email && (cfg.gog_password || await prompt({type: 'password', message: 'Enter password'}));
     if (email && password) {
       iframe.locator('a[href="/logout"]').click().catch(_ => { }); // Click 'Change account' (email from previous login is set in some cookie)
       await iframe.locator('#login_username').fill(email);

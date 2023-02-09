@@ -50,7 +50,7 @@ try {
     if (cfg.pg_email && cfg.pg_password) console.info('Using email and password from environment.');
     else console.info('Press ESC to skip if you want to login in the browser (not possible in default headless mode).');
     const email = cfg.pg_email || await prompt({message: 'Enter email'});
-    const password = cfg.pg_password || await prompt({type: 'password', message: 'Enter password'});
+    const password = email && (cfg.pg_password || await prompt({type: 'password', message: 'Enter password'}));
     if (email && password) {
       await page.fill('[name=email]', email);
       await page.fill('[name=password]', password);
