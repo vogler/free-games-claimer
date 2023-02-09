@@ -19,11 +19,11 @@ _Works on Windows/macOS/Linux._
 Raspberry Pi (3, 4, Zero 2): Raspbian won't work since it's 32-bit, but Raspberry Pi OS (64-bit) or Ubuntu will.
 
 ## How to run
-[Install Docker](https://docs.docker.com/get-docker/) and use
+Easy option: [install Docker](https://docs.docker.com/get-docker/) (or [podman](https://podman-desktop.io/)) and run this command in a terminal (Windows: `cmd`, `.bat` file):
 ```
 docker run --rm -it -p 6080:6080 -v fgc:/fgc/data --pull=always ghcr.io/vogler/free-games-claimer
 ```
-which will run `node epic-games; node prime-gaming; node gog`. If you only want to claim games for one of the stores, you can override the default command by appending e.g. `node epic-games` at the end of the `docker run` command.
+This will run `node epic-games; node prime-gaming; node gog` - if you only want to claim games for one of the stores, you can override the default command by appending e.g. `node epic-games` at the end of the `docker run` command.
 Data (including json files with claimed games, codes to redeem, screenshots) is stored in the Docker volume `fgc`.
 
 <details>
