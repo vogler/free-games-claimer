@@ -122,9 +122,11 @@ try {
     db.data[user][title].status ||= status;
     notify_games.push({ title, url, status });
 
-    console.log("Unsubscribe from 'Promotions and hot deals' newsletter");
-    await page.goto('https://www.gog.com/en/account/settings/subscriptions');
-    await page.locator('li:has-text("Promotions and hot deals") label').uncheck();
+    if (status == 'claimed') { // TODO check if this is enough or if newsleter is enabled if 'existed'
+      console.log("Unsubscribe from 'Promotions and hot deals' newsletter");
+      await page.goto('https://www.gog.com/en/account/settings/subscriptions');
+      await page.locator('li:has-text("Promotions and hot deals") label').uncheck();
+    }
   }
 } catch (error) {
   console.error(error); // .toString()?
