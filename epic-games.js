@@ -92,7 +92,7 @@ try {
   db.data[user] ||= {};
 
   // Detect free games
-  const game_loc = await page.locator('a:has(span:text-is("Free Now"))');
+  const game_loc = page.locator('a:has(span:text-is("Free Now"))');
   await game_loc.last().waitFor();
   // clicking on `game_sel` sometimes led to a 404, see https://github.com/vogler/free-games-claimer/issues/25
   // debug showed that in those cases the href was still correct, so we `goto` the urls instead of clicking.
@@ -188,5 +188,5 @@ try {
     notify(`epic-games:<br>${html_game_list(notify_games)}`);
   }
 }
-await writeFileSync(path.resolve(dirs.browser, 'cookies.json'), JSON.stringify(await context.cookies()));
+writeFileSync(path.resolve(dirs.browser, 'cookies.json'), JSON.stringify(await context.cookies()));
 await context.close();
