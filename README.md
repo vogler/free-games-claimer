@@ -132,6 +132,7 @@ If you want it to run regularly, you have to schedule the runs yourself:
 - Linux/macOS: `crontab -e` ([example](https://github.com/vogler/free-games-claimer/discussions/56))
 - macOS: [launchd](https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often)
 - Windows: [task scheduler](https://active-directory-wp.com/docs/Usage/How_to_add_a_cron_job_on_Windows/Scheduled_tasks_and_cron_jobs_on_Windows/index.html), [other options](https://stackoverflow.com/questions/132971/what-is-the-windows-version-of-cron)
+- any OS: use a process manager like [pm2](https://pm2.keymetrics.io/docs/usage/restart-strategies/)
 
 TODO: ~~add some server-mode where the script just keeps running and claims games e.g. every day.~~
 
