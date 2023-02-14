@@ -1,1 +1,0 @@
-(()=>{let e;function t(){var e=navigator.language.split("-")[0];for(const t of document.querySelectorAll('script[src*=".hcaptcha.com/1/api.js"]')){const r=new URL(t.src);"en"!==(r.searchParams.get("hl")||e)&&(r.searchParams.set("hl","en"),t.src=r.toString())}}e=new MutationObserver(t),setTimeout(()=>{t(),e.observe(document.head,{childList:!0})},0)})();

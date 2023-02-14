@@ -14,7 +14,7 @@ const db = await jsonDb('epic-games.json');
 db.data ||= {};
 
 // https://www.nopecha.com extension source from https://github.com/NopeCHA/NopeCHA/releases/tag/0.1.16
-const ext = path.resolve('nopecha'); // used in Chromium, currently not needed in Firefox
+// const ext = path.resolve('nopecha'); // used in Chromium, currently not needed in Firefox
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(dirs.browser, {
@@ -153,7 +153,8 @@ try {
 
         const captcha = iframe.locator('#h_captcha_challenge_checkout_free_prod iframe');
         captcha.waitFor().then(async () => { // don't await, since element may not be shown
-          console.info('  Got hcaptcha challenge! NopeCHA extension will likely solve it.')
+          // console.info('  Got hcaptcha challenge! NopeCHA extension will likely solve it.')
+          console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.')
           // await page.waitForTimeout(2000);
           // const p = path.resolve(dirs.screenshots, 'epic-games', 'captcha', `${filenamify(datetime())}.png`);
           // await captcha.screenshot({ path: p });
@@ -167,7 +168,8 @@ try {
         context.setDefaultTimeout(cfg.timeout);
       } catch (e) {
         console.log(e);
-        console.error('  Failed to claim! Try again if NopeCHA timed out. Click the extension to see if you ran out of credits (refill after 24h). To avoid captchas try to get a new IP or set a cookie from https://www.hcaptcha.com/accessibility');
+        // console.error('  Failed to claim! Try again if NopeCHA timed out. Click the extension to see if you ran out of credits (refill after 24h). To avoid captchas try to get a new IP or set a cookie from https://www.hcaptcha.com/accessibility');
+        console.error('  Failed to claim! To avoid captchas try to get a new IP address.');
         const p = path.resolve(dirs.screenshots, 'epic-games', 'failed', `${game_id}_${filenamify(datetime())}.png`);
         await page.screenshot({ path: p, fullPage: true });
         db.data[user][game_id].status = 'failed';
