@@ -58,7 +58,8 @@ try {
       await page.click('input[type="submit"]');
       page.waitForURL('**/ap/signin**').then(async () => { // check for wrong credentials
         const error = await page.locator('.a-alert-content').first().innerText();
-        console.error(error);
+        if (!error.trim.length) return;
+        console.error('Login error:', error);
         notify(`prime-gaming: login: ${error}`);
         await context.close(); // finishes potential recording
         process.exit(1);
@@ -75,7 +76,7 @@ try {
       console.log('Waiting for you to login in the browser.');
       notify('prime-gaming: no longer signed in and not enough options set for automatic login.');
       if (cfg.headless) {
-        console.log('Please run `node prime-gaming show` to login in the opened browser.');
+        console.log('Please run `SHOW=1 node prime-gaming` to login in the opened browser.');
         await context.close(); // finishes potential recording
         process.exit(1);
       }
@@ -171,7 +172,7 @@ try {
   // await page.screenshot({ path: p, fullPage: true });
   await page.locator(games_sel).screenshot({ path: p });
 } catch (error) {
-  console.error(error); // .toString()?
+  console.error('Catch error:', error); // .toString()?
   if (error.message && !error.message.includes('Target closed')) // e.g. when killed by Ctrl-C
     notify(`prime-gaming failed: ${error.message.split('\n')[0]}`);
 } finally {
