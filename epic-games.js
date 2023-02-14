@@ -12,16 +12,6 @@ console.log(datetime(), 'started checking epic-games');
 
 const db = await jsonDb('epic-games.json');
 db.data ||= {};
-const migrateDb = (user) => {
-  if (user in db.data || !('claimed' in db.data)) return;
-  db.data[user] = {};
-  for (const e of db.data.claimed) {
-    const k = e.url.split('/').pop();
-    db.data[user][k] = e;
-  }
-  delete db.data.claimed;
-  delete db.data.runs;
-}
 
 // https://www.nopecha.com extension source from https://github.com/NopeCHA/NopeCHA/releases/tag/0.1.16
 const ext = path.resolve('nopecha'); // used in Chromium, currently not needed in Firefox
@@ -99,7 +89,6 @@ try {
   }
   const user = await page.locator('#user span').first().innerHTML();
   console.log(`Signed in as ${user}`);
-  migrateDb(user); // TODO remove this after some time since it will run fine without and people can still use this commit to adjust their data epic-games.json
   db.data[user] ||= {};
 
   // Detect free games

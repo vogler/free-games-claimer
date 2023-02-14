@@ -11,15 +11,6 @@ console.log(datetime(), 'started checking prime-gaming');
 
 const db = await jsonDb('prime-gaming.json');
 db.data ||= {};
-const migrateDb = (user) => {
-  if (user in db.data || !('claimed' in db.data)) return;
-  db.data[user] = {};
-  for (const e of db.data.claimed) {
-    db.data[user][e.title] = e;
-  }
-  delete db.data.claimed;
-  delete db.data.runs;
-}
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(dirs.browser, {
@@ -89,7 +80,6 @@ try {
   // await page.click('button[aria-label="User dropdown and more options"]');
   // const twitch = await page.locator('[data-a-target="TwitchDisplayName"]').first().innerText();
   // console.log(`Twitch user name is ${twitch}`);
-  migrateDb(user); // TODO remove this after some time since it will run fine without and people can still use this commit to adjust their data/prime-gaming.json
   db.data[user] ||= {};
 
   await page.click('button[data-type="Game"]');
