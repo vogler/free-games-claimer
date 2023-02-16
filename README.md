@@ -67,6 +67,7 @@ Available options/variables and their default values:
 | HEIGHT        	| 1280    	| Height of the opened browser (and screen vor VNC in Docker).           	|
 | VNC_PASSWORD  	|         	| VNC password for Docker. No password used by default!                  	|
 | NOTIFY        	|         	| Notification services to use (Pushover, Slack, Telegram...), see below.	|
+| BROWSER_DIR   	| data/browser	| Directory for browser profile, e.g. for multiple accounts.         	|
 | EMAIL         	|         	| Default email for any login.                                           	|
 | PASSWORD      	|         	| Default password for any login.                                        	|
 | EG_EMAIL      	|         	| Epic Games email for login. Overrides EMAIL.                           	|

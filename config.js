@@ -1,4 +1,6 @@
 import * as dotenv from 'dotenv';
+import { dataDir } from './util.js';
+
 dotenv.config({ path: 'data/config.env' }); // loads env vars from file - will not set vars that are already set, i.e., can overwrite values from file by prefixing, e.g., VAR=VAL node ...
 
 // Options - also see table in README.md
@@ -12,6 +14,12 @@ export const cfg = {
   timeout: (Number(process.env.TIMEOUT) || 20) * 1000, // 20s, default for playwright is 30s
   novnc_port: process.env.NOVNC_PORT, // running in docker if set
   notify: process.env.NOTIFY, // apprise notification services
+  get dir() { // avoids ReferenceError: Cannot access 'dataDir' before initialization
+    return {
+      browser: process.env.BROWSER_DIR || dataDir('browser'), // for multiple accounts or testing
+      screenshots: process.env.SCREENSHOTS_DIR || dataDir('screenshots'), // if not wanted: /dev/null
+    }
+  },
   // auth epic-games
   eg_email: process.env.EG_EMAIL || process.env.EMAIL,
   eg_password: process.env.EG_PASSWORD || process.env.PASSWORD,

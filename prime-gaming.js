@@ -1,7 +1,7 @@
 import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import { authenticator } from 'otplib';
 import path from 'path';
-import { dirs, jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list } from './util.js';
+import { jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list } from './util.js';
 import { cfg } from './config.js';
 
 // const URL_LOGIN = 'https://www.amazon.de/ap/signin'; // wrong. needs some session args to be valid?
@@ -13,7 +13,7 @@ const db = await jsonDb('prime-gaming.json');
 db.data ||= {};
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await firefox.launchPersistentContext(dirs.browser, {
+const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
@@ -98,7 +98,7 @@ try {
     if (cfg.dryrun) continue;
     // const img = await (await card.$('img.tw-image')).getAttribute('src');
     // console.log('Image:', img);
-    const p = path.resolve(dirs.screenshots, 'prime-gaming', 'internal', `${filenamify(title)}.png`);
+    const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', 'internal', `${filenamify(title)}.png`);
     await card.screenshot({ path: p });
     await (await card.$('button:has-text("Claim game")')).click();
     db.data[user][title] ||= { title, time: datetime(), store: 'internal' };
@@ -150,7 +150,7 @@ try {
         notify_game.status = `claimed on ${store}`;
       }
       // save screenshot of potential code just in case
-      const p = path.resolve(dirs.screenshots, 'prime-gaming', 'external', `${filenamify(title)}.png`);
+      const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', 'external', `${filenamify(title)}.png`);
       await page.screenshot({ path: p, fullPage: true });
       // console.info('  Saved a screenshot of page to', p);
     }
@@ -158,7 +158,7 @@ try {
     await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
     await page.click('button[data-type="Game"]');
   } while (n);
-  const p = path.resolve(dirs.screenshots, 'prime-gaming', `${filenamify(datetime())}.png`);
+  const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', `${filenamify(datetime())}.png`);
   // await page.screenshot({ path: p, fullPage: true });
   await page.locator(games_sel).screenshot({ path: p });
 } catch (error) {

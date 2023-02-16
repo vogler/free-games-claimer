@@ -2,7 +2,7 @@ import { firefox } from 'playwright'; // stealth plugin needs no outdated playwr
 import { authenticator } from 'otplib';
 import path from 'path';
 import { existsSync, writeFileSync } from 'fs';
-import { dirs, jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list } from './util.js';
+import { jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list } from './util.js';
 import { cfg } from './config.js';
 
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
@@ -17,7 +17,7 @@ db.data ||= {};
 // const ext = path.resolve('nopecha'); // used in Chromium, currently not needed in Firefox
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await firefox.launchPersistentContext(dirs.browser, {
+const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   // chrome will not work in linux arm64, only chromium
   // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
   headless: cfg.headless,
@@ -156,7 +156,7 @@ try {
           // console.info('  Got hcaptcha challenge! NopeCHA extension will likely solve it.')
           console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.')
           // await page.waitForTimeout(2000);
-          // const p = path.resolve(dirs.screenshots, 'epic-games', 'captcha', `${filenamify(datetime())}.png`);
+          // const p = path.resolve(cfg.dir.screenshots, 'epic-games', 'captcha', `${filenamify(datetime())}.png`);
           // await captcha.screenshot({ path: p });
           // console.info('  Saved a screenshot of hcaptcha challenge to', p);
           // console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
@@ -170,13 +170,13 @@ try {
         console.log(e);
         // console.error('  Failed to claim! Try again if NopeCHA timed out. Click the extension to see if you ran out of credits (refill after 24h). To avoid captchas try to get a new IP or set a cookie from https://www.hcaptcha.com/accessibility');
         console.error('  Failed to claim! To avoid captchas try to get a new IP address.');
-        const p = path.resolve(dirs.screenshots, 'epic-games', 'failed', `${game_id}_${filenamify(datetime())}.png`);
+        const p = path.resolve(cfg.dir.screenshots, 'epic-games', 'failed', `${game_id}_${filenamify(datetime())}.png`);
         await page.screenshot({ path: p, fullPage: true });
         db.data[user][game_id].status = 'failed';
       }
       notify_game.status = db.data[user][game_id].status; // claimed or failed
 
-      const p = path.resolve(dirs.screenshots, 'epic-games', `${game_id}.png`);
+      const p = path.resolve(cfg.dir.screenshots, 'epic-games', `${game_id}.png`);
       if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
     }
   }
@@ -190,5 +190,5 @@ try {
     notify(`epic-games:<br>${html_game_list(notify_games)}`);
   }
 }
-writeFileSync(path.resolve(dirs.browser, 'cookies.json'), JSON.stringify(await context.cookies()));
+writeFileSync(path.resolve(cfg.dir.browser, 'cookies.json'), JSON.stringify(await context.cookies()));
 await context.close();

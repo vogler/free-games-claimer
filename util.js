@@ -5,13 +5,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // explicit object instead of Object.fromEntries since the built-in type would loose the keys, better type: https://dev.to/svehla/typescript-object-fromentries-389c
-const dataDir = s => path.resolve(__dirname, 'data', s);
-export const dirs = {
-  data: dataDir('.'),
-  browser: dataDir('browser'),
-  screenshots: dataDir('screenshots'),
-};
-
+export const dataDir = s => path.resolve(__dirname, 'data', s);
 
 // json database
 import { Low } from 'lowdb';

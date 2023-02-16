@@ -1,6 +1,6 @@
 import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
-import { dirs, jsonDb, datetime, filenamify, prompt, notify, html_game_list } from './util.js';
+import { jsonDb, datetime, filenamify, prompt, notify, html_game_list } from './util.js';
 import { cfg } from './config.js';
 
 const URL_CLAIM = 'https://www.gog.com/en';
@@ -11,7 +11,7 @@ const db = await jsonDb('gog.json');
 db.data ||= {};
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await firefox.launchPersistentContext(dirs.browser, {
+const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
   locale: "en-US", // ignore OS locale to be sure to have english text for locators -> done via /en in URL
@@ -93,7 +93,7 @@ try {
     console.log(`Current free game: ${title} - ${url}`);
     db.data[user][title] ||= { title, time: datetime(), url };
     if (cfg.dryrun) process.exit(1);
-    const p = path.resolve(dirs.screenshots, 'gog', `${filenamify(title)}.png`);
+    const p = path.resolve(cfg.dir.screenshots, 'gog', `${filenamify(title)}.png`);
     await banner.screenshot({ path: p }); // overwrites every time - only keep first?
 
     // await banner.getByRole('button', { name: 'Add to library' }).click();
