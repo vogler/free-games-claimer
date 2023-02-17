@@ -63,8 +63,8 @@ Available options/variables and their default values:
 | Option        	| Default 	| Description                                                            	|
 |---------------	|---------	|------------------------------------------------------------------------	|
 | SHOW          	| 1       	| Show browser if 1. Default for Docker, not shown when running outside. 	|
-| WIDTH         	| 1280    	| Width of the opened browser (and screen vor VNC in Docker).            	|
-| HEIGHT        	| 1280    	| Height of the opened browser (and screen vor VNC in Docker).           	|
+| WIDTH         	| 1280    	| Width of the opened browser (and of screen for VNC in Docker).         	|
+| HEIGHT        	| 1280    	| Height of the opened browser (and of screen for VNC in Docker).        	|
 | VNC_PASSWORD  	|         	| VNC password for Docker. No password used by default!                  	|
 | NOTIFY        	|         	| Notification services to use (Pushover, Slack, Telegram...), see below.	|
 | BROWSER_DIR   	| data/browser	| Directory for browser profile, e.g. for multiple accounts.         	|
@@ -82,11 +82,15 @@ Available options/variables and their default values:
 See `config.js` for all options.
 
 #### How to set options
-You can put options in `data/config.env` which will be loaded by [dotenv](https://github.com/motdotla/dotenv).
+You can add options directly in the command or put them in a file to load.
 
-On Linux/macOS you can also prefix the variables you want to set, for example `EMAIL=foo@bar.baz SHOW=1 node epic-games` will show the browser and skip asking you for your login email.
+##### Docker
+You can pass variables using `-e VAR=VAL`, for example `docker run -e EMAIL=foo@bar.baz -e NOTIFY='tgram://...' ...` or using `--env-file fgc.env` where `fgc.env` is a file on your host system (see [docs](https://docs.docker.com/engine/reference/commandline/run/#env)). You can also `docker cp` your configuration file to `/fgc/data/config.env` in the `fgc` volume to store it with the rest of the data instead of on the host ([example](https://github.com/moby/moby/issues/25245#issuecomment-365980572)).
+If you are using [docker compose](https://docs.docker.com/compose/environment-variables/) (or Portainer etc.), you can put options in the `environment:` section.
 
-For Docker you can pass variables using `-e VAR=VAL`, for example `docker run -e EMAIL=foo@bar.baz ...` or using `--env-file` (see [docs](https://docs.docker.com/engine/reference/commandline/run/#set-environment-variables--e---env---env-file)). If you are using [docker compose](https://docs.docker.com/compose/environment-variables/), you can put them in the `environment:` section.
+##### Without Docker
+On Linux/macOS you can prefix the variables you want to set, for example `EMAIL=foo@bar.baz SHOW=1 node epic-games` will show the browser and skip asking you for your login email.
+You can also put options in `data/config.env` which will be loaded by [dotenv](https://github.com/motdotla/dotenv).
 
 ### Notifications
 The scripts will try to send notifications for successfully claimed games and any errors like needing to log in or encountered captchas (should not happen).
