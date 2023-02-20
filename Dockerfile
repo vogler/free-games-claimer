@@ -12,19 +12,19 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD true
 # Install up-to-date node & npm, deps for virtual screen & noVNC, browser, pip for apprise.
 # Playwright needs --with-deps for firefox.
 RUN apt-get update \
-    && apt-get install -y curl \
+    && apt-get install --no-install-recommends --no-install-suggests -y curl ca-certificates \
     && curl -fsSL https://deb.nodesource.com/setup_19.x | bash - \
-    && apt-get install -y nodejs \
     && apt-get install --no-install-recommends --no-install-suggests -y \
+      nodejs \
       xvfb \
-      ca-certificates \
       x11vnc \
       tini \
       novnc websockify \
       dos2unix \
       python3-pip \
     && npx playwright install-deps firefox \
-    && apt-get clean \
+    && apt-get autoclean -y \
+    && apt-get autoremove -y \
     && rm -rf \
       /tmp/* \
       /usr/share/doc/* \
