@@ -22,7 +22,19 @@ RUN apt-get update \
       novnc websockify \
       dos2unix \
       python3-pip \
-    && npx playwright install-deps firefox \
+    # && npx playwright install-deps firefox \
+    && apt-get install --no-install-recommends -y \
+      libgtk-3-0 \
+      libasound2 \
+      libxcomposite1 \
+      libpangocairo-1.0-0 \
+      libpango-1.0-0 \
+      libatk1.0-0 \
+      libcairo-gobject2 \
+      libcairo2 \
+      libgdk-pixbuf-2.0-0 \
+      libdbus-glib-1-2 \
+      libxcursor1 \
     && apt-get autoclean -y \
     && apt-get autoremove -y \
     && rm -rf \
