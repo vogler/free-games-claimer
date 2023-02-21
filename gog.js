@@ -10,6 +10,12 @@ console.log(datetime(), 'started checking gog');
 const db = await jsonDb('gog.json');
 db.data ||= {};
 
+let exit = false;
+process.on('SIGINT', () => { // e.g. when killed by Ctrl-C
+  console.log('\nInterrupted by SIGINT. Exit! Exception shows where the script was:\n');
+  exit = true;
+});
+
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
@@ -132,11 +138,11 @@ try {
 } catch (error) {
   console.error(error); // .toString()?
   process.exitCode = 1;
-  if (error.message && !error.message.includes('Target closed') && !error.message.includes('Browser closed')) // e.g. when killed by Ctrl-C
+  if (error.message && !exit)
     notify(`gog failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
-  if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed; TODO don't notify if killed?
+  if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed
     notify(`gog:<br>${html_game_list(notify_games)}`);
   }
 }
