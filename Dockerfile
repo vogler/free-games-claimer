@@ -7,10 +7,8 @@ FROM ubuntu:jammy
 # https://github.com/hadolint/hadolint/wiki/DL4006
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD true
 
-# Install up-to-date node & npm, deps for virtual screen & noVNC, browser, pip for apprise.
-# Playwright needs --with-deps for firefox.
+# Install up-to-date node & npm, deps for virtual screen & noVNC, firefox, pip for apprise.
 RUN apt-get update \
     && apt-get install --no-install-recommends -y curl ca-certificates \
     && curl -fsSL https://deb.nodesource.com/setup_19.x | bash - \
@@ -50,8 +48,11 @@ RUN pip install apprise
 WORKDIR /fgc
 COPY package*.json ./
 
-# If firefox is installed (~/.cache/ms-playwright/firefox-*) before `npm install` it may be a newer version than in package.json and playwright will not find it; system deps are installed sep. via apt above to avoid having to pin the version there.
-RUN npm install && npx playwright install firefox
+# Playwright installs patched firefox to ~/.cache/ms-playwright/firefox-*
+# Requires some system deps to run (see install-deps above).
+RUN npm install
+# Old: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD + install firefox (had to be done after `npm install` to get the correct version). Now: playwright-firefox as npm dep and `npm install` will only install that.
+# RUN npx playwright install firefox
 
 COPY . .
 

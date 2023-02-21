@@ -1,4 +1,4 @@
-import { firefox } from 'playwright'; // stealth plugin needs no outdated playwright-extra
+import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
 import { authenticator } from 'otplib';
 import path from 'path';
 import { jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list } from './util.js';

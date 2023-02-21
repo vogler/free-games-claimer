@@ -31,10 +31,10 @@ Data (including json files with claimed games, codes to redeem, screenshots) is 
 
 1. [Install Node.js](https://nodejs.org/en/download)
 2. Clone/download this repository and `cd` into it in a terminal
-3. Run `npm install && npx playwright install firefox`
+3. Run `npm install`
 4. Run `pip install apprise` to install [apprise](https://github.com/caronc/apprise) if you want notifications
 
-This downloads Firefox to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
+During `npm install` Playwright will download its Firefox to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
 If you are missing some dependencies for the browser on your system, you can use `sudo npx playwright install firefox --with-deps`.
 
 If you don't want to use Docker for quasi-headless mode, you could run inside a virtual machine, on a server, or you wake your PC at night to avoid being interrupted.
