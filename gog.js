@@ -40,9 +40,10 @@ try {
     // it then creates an iframe for the login
     await page.waitForSelector('#GalaxyAccountsFrameContainer iframe'); // TODO needed?
     const iframe = page.frameLocator('#GalaxyAccountsFrameContainer iframe');
-    context.setDefaultTimeout(0); // give user time to log in without timeout
+    if (!cfg.debug) context.setDefaultTimeout(cfg.login_timeout); // give user some extra time to log in
+    console.info(`Login timeout is ${cfg.login_timeout/1000} seconds!`);
     if (cfg.gog_email && cfg.gog_password) console.info('Using email and password from environment.');
-    else console.info('Press ESC to skip if you want to login in the browser (not possible in headless mode).');
+    else console.info('Press ESC to skip the prompts if you want to login in the browser (not possible in headless mode).');
     const email = cfg.gog_email || await prompt({message: 'Enter email'});
     const password = email && (cfg.gog_password || await prompt({type: 'password', message: 'Enter password'}));
     if (email && password) {
@@ -76,7 +77,7 @@ try {
         process.exit(1);
       }
     }
-    context.setDefaultTimeout(cfg.timeout);
+    if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
   const user = await page.locator('#menuUsername').first().textContent(); // innerText is uppercase due to styling!
   console.log(`Signed in as '${user}'`);

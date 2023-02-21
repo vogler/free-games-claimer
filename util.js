@@ -17,6 +17,7 @@ export const jsonDb = async file => {
 };
 
 
+export const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 // date and time as UTC (no timezone offset) in nicely readable and sortable format, e.g., 2022-10-06 12:05:27.313
 export const datetime = (d = new Date()) => d.toISOString().replace('T', ' ').replace('Z', '');
 // same as datetime() but for local timezone, e.g., UTC + 2h for the above in DE
