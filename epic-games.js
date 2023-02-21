@@ -56,11 +56,11 @@ try {
   while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
     console.error('Not signed in anymore. Please login in the browser or here in the terminal.');
     if (cfg.novnc_port) console.info(`Open http://localhost:${cfg.novnc_port} to login inside the docker container.`);
-    context.setDefaultTimeout(0); // give user time to log in without timeout
+    if (!cfg.debug) context.setDefaultTimeout(cfg.login_timeout); // give user some extra time to log in
+    console.info(`Login timeout is ${cfg.login_timeout/1000} seconds!`);
     await page.goto(URL_LOGIN, { waitUntil: 'domcontentloaded' });
-
     if (cfg.eg_email && cfg.eg_password) console.info('Using email and password from environment.');
-    else console.info('Press ESC to skip if you want to login in the browser.');
+    else console.info('Press ESC to skip the prompts if you want to login in the browser (not possible in headless mode).');
     const email = cfg.eg_email || await prompt({message: 'Enter email'});
     const password = email && (cfg.eg_password || await prompt({type: 'password', message: 'Enter password'}));
     if (email && password) {
@@ -85,7 +85,7 @@ try {
       notify('epic-games: no longer signed in and not enough options set for automatic login.');
     }
     await page.waitForURL(URL_CLAIM);
-    context.setDefaultTimeout(cfg.timeout);
+    if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
   const user = await page.locator('#user span').first().innerHTML();
   console.log(`Signed in as ${user}`);

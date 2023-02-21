@@ -37,9 +37,10 @@ try {
   while (await page.locator('button:has-text("Sign in")').count() > 0) {
     console.error('Not signed in anymore.');
     await page.click('button:has-text("Sign in")');
-    if (!cfg.debug) context.setDefaultTimeout(0); // give user time to log in without timeout
+    if (!cfg.debug) context.setDefaultTimeout(cfg.login_timeout); // give user some extra time to log in
+    console.info(`Login timeout is ${cfg.login_timeout/1000} seconds!`);
     if (cfg.pg_email && cfg.pg_password) console.info('Using email and password from environment.');
-    else console.info('Press ESC to skip if you want to login in the browser (not possible in default headless mode).');
+    else console.info('Press ESC to skip the prompts if you want to login in the browser (not possible in headless mode).');
     const email = cfg.pg_email || await prompt({message: 'Enter email'});
     const password = email && (cfg.pg_password || await prompt({type: 'password', message: 'Enter password'}));
     if (email && password) {
@@ -67,7 +68,7 @@ try {
       console.log('Waiting for you to login in the browser.');
       notify('prime-gaming: no longer signed in and not enough options set for automatic login.');
       if (cfg.headless) {
-        console.log('Please run `SHOW=1 node prime-gaming` to login in the opened browser.');
+        console.log('Run `SHOW=1 node prime-gaming` to login in the opened browser.');
         await context.close(); // finishes potential recording
         process.exit(1);
       }

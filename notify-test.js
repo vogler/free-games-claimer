@@ -1,6 +1,4 @@
-import { html_game_list, notify } from "./util.js";
-
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+import { delay, html_game_list, notify } from "./util.js";
 
 const URL_CLAIM = 'https://gaming.amazon.com/home'; // dummy URL
 

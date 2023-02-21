@@ -17,6 +17,7 @@ export const jsonDb = async file => {
 };
 
 
+export const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 // date and time as UTC (no timezone offset) in nicely readable and sortable format, e.g., 2022-10-06 12:05:27.313
 export const datetime = (d = new Date()) => d.toISOString().replace('T', ' ').replace('Z', '');
 // same as datetime() but for local timezone, e.g., UTC + 2h for the above in DE
@@ -76,12 +77,19 @@ export const stealth = async (context) => {
   }
 };
 
-
-import prompts from 'prompts'; // alternatives: enquirer, inquirer
-// import enquirer from 'enquirer'; const { prompt } = enquirer;
-// single prompt that just returns the non-empty value instead of an object - why name things if there's just one?
-export const prompt = async o => (await prompts({name: 'name', type: 'text', message: 'Enter value', validate: s => s.length, ...o})).name;
-
+// used prompts before, but couldn't cancel prompt
+// alternative inquirer is big (node_modules 29MB, enquirer 9.7MB, prompts 9.8MB, none 9.4MB) and slower
+import Enquirer from 'enquirer'; const enquirer = new Enquirer();
+const timeoutPlugin = timeout => enquirer => { // cancel prompt after timeout ms
+  enquirer.on('prompt', prompt => {
+    const t = setTimeout(() => { prompt.hint = () => 'timeout'; prompt.cancel(); }, timeout);
+    prompt.on('submit', _ => clearTimeout(t));
+    prompt.on('cancel', _ => clearTimeout(t));
+  });
+}
+enquirer.use(timeoutPlugin(cfg.login_timeout)); // TODO may not want to have this timeout for all prompts; better extend Prompt and add a timeout prompt option
+// single prompt that just returns the non-empty value instead of an object
+export const prompt = o => enquirer.prompt({name: 'name', type: 'input', message: 'Enter value', ...o}).then(r => r.name).catch(_ => {});
 
 // notifications via apprise CLI
 import { exec } from 'child_process';
