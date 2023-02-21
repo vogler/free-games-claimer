@@ -1,7 +1,7 @@
 {
   "name": "free-games-claimer",
-  "version": "1.0.0",
-  "description": "Claims free games on the Epic Games Store and Amazon Prime Gaming.",
+  "version": "1.4.0",
+  "description": "Automatically claims free games on the Epic Games Store, Amazon Prime Gaming and GOG.",
   "homepage": "https://github.com/vogler/free-games-claimer",
   "main": "index.js",
   "scripts": {
