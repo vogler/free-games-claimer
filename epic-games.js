@@ -182,6 +182,7 @@ try {
   }
 } catch (error) {
   console.error(error); // .toString()?
+  process.exitCode = 1;
   if (error.message && !error.message.includes('Target closed')) // e.g. when killed by Ctrl-C
     notify(`epic-games failed: ${error.message.split('\n')[0]}`);
 } finally {

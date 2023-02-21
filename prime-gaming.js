@@ -162,7 +162,8 @@ try {
   // await page.screenshot({ path: p, fullPage: true });
   await page.locator(games_sel).screenshot({ path: p });
 } catch (error) {
-  console.error('Catch error:', error); // .toString()?
+  console.error(error); // .toString()?
+  process.exitCode = 1;
   if (error.message && !error.message.includes('Target closed')) // e.g. when killed by Ctrl-C
     notify(`prime-gaming failed: ${error.message.split('\n')[0]}`);
 } finally {

@@ -130,6 +130,7 @@ try {
   }
 } catch (error) {
   console.error(error); // .toString()?
+  process.exitCode = 1;
   if (error.message && !error.message.includes('Target closed') && !error.message.includes('Browser closed')) // e.g. when killed by Ctrl-C
     notify(`gog failed: ${error.message.split('\n')[0]}`);
 } finally {
