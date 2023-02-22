@@ -24,6 +24,10 @@ export const datetime = (d = new Date()) => d.toISOString().replace('T', ' ').re
 export const datetimeLocal = (d = new Date()) => datetime(new Date(d.getTime() - new Date().getTimezoneOffset() * 60000));
 export const filenamify = s => s.replaceAll(':', '.').replace(/[^a-z0-9 _\-.]/gi, '_'); // alternative: https://www.npmjs.com/package/filenamify - On Unix-like systems, / is reserved. On Windows, <>:"/\|?* along with trailing periods are reserved.
 
+export const handleSIGINT = () => process.on('SIGINT', () => { // e.g. when killed by Ctrl-C
+  console.error('\nInterrupted by SIGINT. Exit!'); // Exception shows where the script was:\n'); // killed before catch in docker...
+  process.exitCode = 130; // 128+SIGINT to indicate to parent that process was killed
+});
 
 // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
 // gets userAgent and then removes "Headless" from it

@@ -1,7 +1,7 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
 import { authenticator } from 'otplib';
 import path from 'path';
-import { jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list } from './util.js';
+import { jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
 import { cfg } from './config.js';
 
 // const URL_LOGIN = 'https://www.amazon.de/ap/signin'; // wrong. needs some session args to be valid?
@@ -12,11 +12,7 @@ console.log(datetime(), 'started checking prime-gaming');
 const db = await jsonDb('prime-gaming.json');
 db.data ||= {};
 
-let exit = false;
-process.on('SIGINT', () => { // e.g. when killed by Ctrl-C
-  console.log('\nInterrupted by SIGINT. Exit! Exception shows where the script was:\n');
-  exit = true;
-});
+handleSIGINT();
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(cfg.dir.browser, {
@@ -170,8 +166,8 @@ try {
   await page.locator(games_sel).screenshot({ path: p });
 } catch (error) {
   console.error(error); // .toString()?
-  process.exitCode = 1;
-  if (error.message && !exit)
+  process.exitCode ||= 1;
+  if (error.message && process.exitCode != 130)
     notify(`prime-gaming failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db

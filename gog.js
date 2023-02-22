@@ -1,6 +1,6 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
 import path from 'path';
-import { jsonDb, datetime, filenamify, prompt, notify, html_game_list } from './util.js';
+import { jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
 import { cfg } from './config.js';
 
 const URL_CLAIM = 'https://www.gog.com/en';
@@ -10,11 +10,7 @@ console.log(datetime(), 'started checking gog');
 const db = await jsonDb('gog.json');
 db.data ||= {};
 
-let exit = false;
-process.on('SIGINT', () => { // e.g. when killed by Ctrl-C
-  console.log('\nInterrupted by SIGINT. Exit! Exception shows where the script was:\n');
-  exit = true;
-});
+handleSIGINT();
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(cfg.dir.browser, {
@@ -138,8 +134,8 @@ try {
   }
 } catch (error) {
   console.error(error); // .toString()?
-  process.exitCode = 1;
-  if (error.message && !exit)
+  process.exitCode ||= 1;
+  if (error.message && process.exitCode != 130)
     notify(`gog failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
