@@ -11,7 +11,7 @@ export const cfg = {
   get headless() { return !this.debug && !this.show },
   width: Number(process.env.WIDTH) || 1280, // width of the opened browser
   height: Number(process.env.HEIGHT) || 1280, // height of the opened browser
-  timeout: (Number(process.env.TIMEOUT) || 20) * 1000, // 20s, default for playwright is 30s
+  timeout: (Number(process.env.TIMEOUT) || 60) * 1000, // default timeout for playwright is 30s
   login_timeout: (Number(process.env.LOGIN_TIMEOUT) || 180) * 1000, // higher timeout for login, will wait twice: prompt + wait for manual login
   novnc_port: process.env.NOVNC_PORT, // running in docker if set
   notify: process.env.NOTIFY, // apprise notification services

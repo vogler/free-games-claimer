@@ -68,6 +68,7 @@ Available options/variables and their default values:
 | VNC_PASSWORD  	|         	| VNC password for Docker. No password used by default!                  	|
 | NOTIFY        	|         	| Notification services to use (Pushover, Slack, Telegram...), see below.	|
 | BROWSER_DIR   	| data/browser	| Directory for browser profile, e.g. for multiple accounts.         	|
+| TIMEOUT       	| 60      	| Timeout for any page action. Should be fine even on slow machines.     	|
 | LOGIN_TIMEOUT 	| 180     	| Timeout for login in seconds. Will wait twice (prompt + manual login). 	|
 | EMAIL         	|         	| Default email for any login.                                           	|
 | PASSWORD      	|         	| Default password for any login.                                        	|
