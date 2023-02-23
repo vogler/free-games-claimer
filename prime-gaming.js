@@ -178,8 +178,6 @@ try {
               redeem_action = 'redeemed?';
               console.log('  Redeemed successfully? Please report your Response from above (if it is new) in https://github.com/vogler/free-games-claimer/issues/5');
             }
-            await page2.pause();
-            await page2.close();
           } else if (store == 'microsoft games') {
             console.error(`  Redeem on ${store} not yet implemented!`);
             if (page2.url().startsWith('https://login.')) {
@@ -197,6 +195,7 @@ try {
                 redeem_action = 'redeem (not found)';
                 console.error('  Code was not found!');
               } else { // TODO find out other responses
+                await page2.click('#nextButton');
                 redeem_action = 'redeemed?';
                 console.log('  Redeemed successfully? Please report your Response from above (if it is new) in https://github.com/vogler/free-games-claimer/issues/5');
               }
@@ -204,6 +203,8 @@ try {
           } else if (store == 'legacy games') {
             console.error(`  Redeem on ${store} not yet implemented!`);
           }
+          await page2.pause();
+          await page2.close();
         }
         notify_game.status = `<a href="${redeem[store]}">${redeem_action}</a> ${code} on ${store}`;
       } else {
