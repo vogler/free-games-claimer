@@ -101,7 +101,8 @@ import { cfg } from './config.js';
 
 export const notify = (html) => {
   if (!cfg.notify) return;
-  exec(`apprise ${cfg.notify} -i html -b '${html}'`, (error, stdout, stderr) => {
+  const title = cfg.notify_title ? `-t ${cfg.notify_title}` : '';
+  exec(`apprise ${cfg.notify} -i html ${title} -b '${html}'`, (error, stdout, stderr) => {
     if (error) {
         console.log(`error: ${error.message}`);
         if (error.message.includes('command not found')) {

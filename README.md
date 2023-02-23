@@ -67,6 +67,7 @@ Available options/variables and their default values:
 | HEIGHT        	| 1280    	| Height of the opened browser (and of screen for VNC in Docker).        	|
 | VNC_PASSWORD  	|         	| VNC password for Docker. No password used by default!                  	|
 | NOTIFY        	|         	| Notification services to use (Pushover, Slack, Telegram...), see below.	|
+| NOTIFY_TITLE  	|         	| Optional title for notifications, e.g. for Pushover.                   	|
 | BROWSER_DIR   	| data/browser	| Directory for browser profile, e.g. for multiple accounts.         	|
 | TIMEOUT       	| 60      	| Timeout for any page action. Should be fine even on slow machines.     	|
 | LOGIN_TIMEOUT 	| 180     	| Timeout for login in seconds. Will wait twice (prompt + manual login). 	|

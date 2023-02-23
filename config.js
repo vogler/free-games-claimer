@@ -15,6 +15,7 @@ export const cfg = {
   login_timeout: (Number(process.env.LOGIN_TIMEOUT) || 180) * 1000, // higher timeout for login, will wait twice: prompt + wait for manual login
   novnc_port: process.env.NOVNC_PORT, // running in docker if set
   notify: process.env.NOTIFY, // apprise notification services
+  notify_title: process.env.NOTIFY_TITLE, // apprise notification title
   get dir() { // avoids ReferenceError: Cannot access 'dataDir' before initialization
     return {
       browser: process.env.BROWSER_DIR || dataDir('browser'), // for multiple accounts or testing
