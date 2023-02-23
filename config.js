@@ -35,5 +35,5 @@ export const cfg = {
   // OTP only via GOG_EMAIL, can't add app...
 
   // experimmental - likely to change
-  pg_redeem: process.env.PG_REDEEM, // prime-gaming: redeem keys on external stores
+  pg_redeem: process.env.PG_REDEEM == '1', // prime-gaming: redeem keys on external stores
 };
