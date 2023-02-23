@@ -72,7 +72,7 @@ try {
       await page.waitForSelector('#menuUsername')
     } else {
       console.log('Waiting for you to login in the browser.');
-      notify('gog: no longer signed in and not enough options set for automatic login.');
+      await notify('gog: no longer signed in and not enough options set for automatic login.');
       if (cfg.headless) {
         console.log('Run `SHOW=1 node gog` to login in the opened browser.');
         await context.close();

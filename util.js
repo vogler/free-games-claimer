@@ -99,8 +99,8 @@ export const prompt = o => enquirer.prompt({name: 'name', type: 'input', message
 import { exec } from 'child_process';
 import { cfg } from './config.js';
 
-export const notify = (html) => {
-  if (!cfg.notify) return;
+export const notify = (html) => new Promise((resolve, reject) => {
+  if (!cfg.notify) return resolve();
   const title = cfg.notify_title ? `-t ${cfg.notify_title}` : '';
   exec(`apprise ${cfg.notify} -i html ${title} -b '${html}'`, (error, stdout, stderr) => {
     if (error) {
@@ -108,12 +108,13 @@ export const notify = (html) => {
         if (error.message.includes('command not found')) {
           console.info('Run `pip install apprise`. See https://github.com/vogler/free-games-claimer#notifications');
         }
-        return;
+        return resolve();
     }
     if (stderr) console.error(`stderr: ${stderr}`);
     if (stdout) console.log(`stdout: ${stdout}`);
+    resolve();
   });
-}
+});
 
 export const escapeHtml = (unsafe) => unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 

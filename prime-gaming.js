@@ -54,7 +54,7 @@ try {
         const error = await page.locator('.a-alert-content').first().innerText();
         if (!error.trim.length) return;
         console.error('Login error:', error);
-        notify(`prime-gaming: login: ${error}`);
+        await notify(`prime-gaming: login: ${error}`);
         await context.close(); // finishes potential recording
         process.exit(1);
       });
@@ -68,7 +68,7 @@ try {
       }).catch(_ => { });
     } else {
       console.log('Waiting for you to login in the browser.');
-      notify('prime-gaming: no longer signed in and not enough options set for automatic login.');
+      await notify('prime-gaming: no longer signed in and not enough options set for automatic login.');
       if (cfg.headless) {
         console.log('Run `SHOW=1 node prime-gaming` to login in the opened browser.');
         await context.close(); // finishes potential recording

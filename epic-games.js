@@ -84,7 +84,7 @@ try {
       }).catch(_ => { });
     } else {
       console.log('Waiting for you to login in the browser.');
-      notify('epic-games: no longer signed in and not enough options set for automatic login.');
+      await notify('epic-games: no longer signed in and not enough options set for automatic login.');
       if (cfg.headless) {
         console.log('Run `SHOW=1 node epic-games` to login in the opened browser.');
         await context.close(); // finishes potential recording
