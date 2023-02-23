@@ -23,7 +23,7 @@ Easy option: [install Docker](https://docs.docker.com/get-docker/) (or [podman](
 ```
 docker run --rm -it -p 6080:6080 -v fgc:/fgc/data --pull=always ghcr.io/vogler/free-games-claimer
 ```
-This will run `node epic-games; node prime-gaming; node gog` - if you only want to claim games for one of the stores, you can override the default command by appending e.g. `node epic-games` at the end of the `docker run` command.
+This will run `node epic-games; node prime-gaming; node gog` - if you only want to claim games for one of the stores, you can override the default command by appending e.g. `node epic-games` at the end of the `docker run` command, or if you want several `bash -c "node epic-games.js; node gog.js"`.
 Data (including json files with claimed games, codes to redeem, screenshots) is stored in the Docker volume `fgc`.
 
 <details>
