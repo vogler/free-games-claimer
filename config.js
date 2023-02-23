@@ -33,4 +33,7 @@ export const cfg = {
   gog_email: process.env.GOG_EMAIL || process.env.EMAIL,
   gog_password: process.env.GOG_PASSWORD || process.env.PASSWORD,
   // OTP only via GOG_EMAIL, can't add app...
+
+  // experimmental - likely to change
+  pg_redeem: process.env.PG_REDEEM, // prime-gaming: redeem keys on external stores
 };

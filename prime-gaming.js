@@ -137,8 +137,8 @@ try {
       const redeem = {
         // 'origin': 'https://www.origin.com/redeem', // TODO still needed or now only via account linking?
         'gog.com': 'https://www.gog.com/redeem',
-        'legacy games': 'https://www.legacygames.com/primedeal',
         'microsoft games': 'https://redeem.microsoft.com',
+        'legacy games': 'https://www.legacygames.com/primedeal',
       };
       if (store in redeem) { // did not work for linked origin: && !await page.locator('div:has-text("Successfully Claimed")').count()
         const code = await page.inputValue('input[type="text"]');
@@ -148,7 +148,64 @@ try {
         }
         console.log('  URL to redeem game:', redeem[store]);
         db.data[user][title].code = code;
-        notify_game.status = `<a href="${redeem[store]}">redeem</a> ${code} on ${store}`;
+        let redeem_action = 'redeem';
+        if (cfg.pg_redeem) { // try to redeem keys on external stores
+          console.log(`  Trying to redeem ${code} on ${store} (need to be logged in)!`);
+          const page2 = await context.newPage();
+          await page2.goto(redeem[store], { waitUntil: 'domcontentloaded' });
+          if (store == 'gog.com') {
+            // await page.goto(`https://redeem.gog.com/v1/bonusCodes/${code}`); // {"reason":"Invalid or no captcha"}
+            await page2.fill('#codeInput', code);
+            const r = page2.waitForResponse(r => r.url().startsWith('https://redeem.gog.com/'));
+            await page2.click('[type="submit"]');
+            // console.log(await page2.locator('.warning-message').innerText());
+            const rt = await (await r).text();
+            console.debug(`  Response: ${rt}`);
+            // {"reason":"Invalid or no captcha"}
+            // {"reason":"code_used"}
+            // {"reason":"code_not_found"}
+            const reason = JSON.parse(rt).reason;
+            if (reason.includes('captcha')) {
+              redeem_action = 'redeem (got captcha)';
+              console.error('  Got captcha; could not redeem!');
+            } else if (reason == 'code_used') {
+              redeem_action = 'already redeemed';
+              console.log('  Code was already used!');
+            } else if (reason == 'code_not_found') {
+              redeem_action = 'redeem (not found)';
+              console.error('  Code was not found!');
+            } else { // TODO not logged in? need valid unused code to test.
+              redeem_action = 'redeemed?';
+              console.log('  Redeemed successfully? Please report your Response from above (if it is new) in https://github.com/vogler/free-games-claimer/issues/5');
+            }
+            await page2.pause();
+            await page2.close();
+          } else if (store == 'microsoft games') {
+            console.error(`  Redeem on ${store} not yet implemented!`);
+            if (page2.url().startsWith('https://login.')) {
+              console.error('  Not logged in! Use the browser to login manually.');
+              redeem_action = 'redeem (login)';
+            } else {
+              const r = page2.waitForResponse(r => r.url().startsWith('https://purchase.mp.microsoft.com/'));
+              await page2.fill('[name=tokenString]', code);
+              // console.log(await page2.locator('.redeem_code_error').innerText());
+              const rt = await (await r).text();
+              console.debug(`  Response: ${rt}`);
+              // {"code":"NotFound","data":[],"details":[],"innererror":{"code":"TokenNotFound",...
+              const reason = JSON.parse(rt).code;
+              if (reason == 'NotFound') {
+                redeem_action = 'redeem (not found)';
+                console.error('  Code was not found!');
+              } else { // TODO find out other responses
+                redeem_action = 'redeemed?';
+                console.log('  Redeemed successfully? Please report your Response from above (if it is new) in https://github.com/vogler/free-games-claimer/issues/5');
+              }
+            }
+          } else if (store == 'legacy games') {
+            console.error(`  Redeem on ${store} not yet implemented!`);
+          }
+        }
+        notify_game.status = `<a href="${redeem[store]}">${redeem_action}</a> ${code} on ${store}`;
       } else {
         notify_game.status = `claimed on ${store}`;
       }
