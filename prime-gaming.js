@@ -85,6 +85,12 @@ try {
   // console.log(`Twitch user name is ${twitch}`);
   db.data[user] ||= {};
 
+  if (await page.getByRole('button', { name: 'Try Prime' }).count()) {
+    console.error('User is currently not an Amazon Prime member, so no games to claim. Exit!');
+    await context.close();
+    process.exit(1);
+  }
+
   await page.click('button[data-type="Game"]');
   const games_sel = 'div[data-a-target="offer-list-FGWP_FULL"]';
   await page.waitForSelector(games_sel);
