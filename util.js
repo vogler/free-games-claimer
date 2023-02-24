@@ -83,6 +83,7 @@ export const stealth = async (context) => {
 
 // used prompts before, but couldn't cancel prompt
 // alternative inquirer is big (node_modules 29MB, enquirer 9.7MB, prompts 9.8MB, none 9.4MB) and slower
+// open issue: prevents handleSIGINT() to work if prompt is cancelled with Ctrl-C instead of Escape: https://github.com/enquirer/enquirer/issues/372
 import Enquirer from 'enquirer'; const enquirer = new Enquirer();
 const timeoutPlugin = timeout => enquirer => { // cancel prompt after timeout ms
   enquirer.on('prompt', prompt => {
