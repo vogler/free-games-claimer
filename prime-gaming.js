@@ -118,7 +118,7 @@ try {
     if (!card) break;
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
-    if (cfg.dryrun) continue;
+    if (cfg.dryrun) break; // TODO change back to continue, but need different iteration scheme
     await (await card.$('text=Claim')).click(); // goes to URL of game, no need to wait
     await Promise.any([page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")')]); // waits for navigation
     const store_text = await (await page.$('[data-a-target="hero-header-subtitle"]')).innerText();
