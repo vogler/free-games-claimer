@@ -134,10 +134,12 @@ try {
     console.log('  External store:', store);
     const url = page.url().split('?')[0];
     db.data[user][title] ||= { title, time: datetime(), url, store };
-    const notify_game = { title, url, status: `failed - link ${store}` };
+    const notify_game = { title, url };
     notify_games.push(notify_game); // status is updated below
     if (await page.locator('div:has-text("Link game account")').count()) {
       console.error('  Account linking is required to claim this offer!');
+      notify_game.status = `failed: need account linking for ${store}`;
+      db.data[user][title].status = 'failed: need account linking';
     } else {
       // print code if there is one
       const redeem = {
@@ -183,6 +185,7 @@ try {
             } else { // TODO not logged in? need valid unused code to test.
               redeem_action = 'redeemed?';
               console.log('  Redeemed successfully? Please report your Response from above (if it is new) in https://github.com/vogler/free-games-claimer/issues/5');
+              // db.data[user][title].status = 'claimed and redeemed';
             }
           } else if (store == 'microsoft games') {
             console.error(`  Redeem on ${store} not yet implemented!`);
@@ -204,6 +207,7 @@ try {
                 await page2.click('#nextButton');
                 redeem_action = 'redeemed?';
                 console.log('  Redeemed successfully? Please report your Response from above (if it is new) in https://github.com/vogler/free-games-claimer/issues/5');
+                // db.data[user][title].status = 'claimed and redeemed';
               }
             }
           } else if (store == 'legacy games') {
@@ -215,6 +219,7 @@ try {
         notify_game.status = `<a href="${redeem[store]}">${redeem_action}</a> ${code} on ${store}`;
       } else {
         notify_game.status = `claimed on ${store}`;
+        db.data[user][title].status = 'claimed';
       }
       // save screenshot of potential code just in case
       const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', 'external', `${filenamify(title)}.png`);
