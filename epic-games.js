@@ -133,7 +133,7 @@ try {
       if (db.data[user][game_id].status == 'failed') db.data[user][game_id].status = 'manual'; // was failed but now it's claimed
     } else { // GET
       console.log('  Not in library yet! Click GET.');
-      await page.click('[data-testid="purchase-cta-button"]');
+      await page.click('[data-testid="purchase-cta-button"]', { delay: 11 }); // got stuck here without delay (or mouse move), see #75, 1ms was also enough
 
       // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoided by Windows userAgent?
       page.click('button:has-text("Continue")').catch(_ => { }); // needed since change from Chromium to Firefox?
