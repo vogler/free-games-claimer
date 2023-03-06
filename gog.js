@@ -27,6 +27,7 @@ const page = context.pages().length ? context.pages()[0] : await context.newPage
 // console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 
 const notify_games = [];
+let user;
 
 try {
   await context.addCookies([{name: 'CookieConsent', value: '{stamp:%274oR8MJL+bxVlG6g+kl2we5+suMJ+Tv7I4C5d4k+YY4vrnhCD+P23RQ==%27%2Cnecessary:true%2Cpreferences:true%2Cstatistics:true%2Cmarketing:true%2Cmethod:%27explicit%27%2Cver:1%2Cutc:1672331618201%2Cregion:%27de%27}', domain: 'www.gog.com', path: '/'}]); // to not waste screen space when non-headless
@@ -82,7 +83,7 @@ try {
     await page.waitForSelector('#menuUsername');
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
-  const user = await page.locator('#menuUsername').first().textContent(); // innerText is uppercase due to styling!
+  user = await page.locator('#menuUsername').first().textContent(); // innerText is uppercase due to styling!
   console.log(`Signed in as '${user}'`);
   db.data[user] ||= {};
 
@@ -140,7 +141,7 @@ try {
 } finally {
   await db.write(); // write out json db
   if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed
-    notify(`gog:<br>${html_game_list(notify_games)}`);
+    notify(`gog (${user}):<br>${html_game_list(notify_games)}`);
   }
 }
 await context.close();

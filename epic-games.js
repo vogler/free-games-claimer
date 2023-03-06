@@ -47,6 +47,7 @@ const page = context.pages().length ? context.pages()[0] : await context.newPage
 // console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 
 const notify_games = [];
+let user;
 
 try {
   await context.addCookies([{name: 'OptanonAlertBoxClosed', value: new Date(Date.now() - 5*24*60*60*1000).toISOString(), domain: '.epicgames.com', path: '/'}]); // Accept cookies to get rid of banner to save space on screen. Set accept time to 5 days ago.
@@ -94,7 +95,7 @@ try {
     await page.waitForURL(URL_CLAIM);
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
-  const user = await page.locator('#user span').first().innerHTML();
+  user = await page.locator('#user span').first().innerHTML();
   console.log(`Signed in as ${user}`);
   db.data[user] ||= {};
 
@@ -195,7 +196,7 @@ try {
 } finally {
   await db.write(); // write out json db
   if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed
-    notify(`epic-games:<br>${html_game_list(notify_games)}`);
+    notify(`epic-games (${user}):<br>${html_game_list(notify_games)}`);
   }
 }
 if (cfg.debug) writeFileSync(path.resolve(cfg.dir.browser, 'cookies.json'), JSON.stringify(await context.cookies()));

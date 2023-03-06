@@ -30,6 +30,7 @@ const page = context.pages().length ? context.pages()[0] : await context.newPage
 // console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 
 const notify_games = [];
+let user;
 
 try {
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // default 'load' takes forever
@@ -78,7 +79,7 @@ try {
     await page.waitForURL('https://gaming.amazon.com/home?signedIn=true');
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
-  const user = await page.locator('[data-a-target="user-dropdown-first-name-text"]').first().innerText();
+  user = await page.locator('[data-a-target="user-dropdown-first-name-text"]').first().innerText();
   console.log(`Signed in as ${user}`);
   // await page.click('button[aria-label="User dropdown and more options"]');
   // const twitch = await page.locator('[data-a-target="TwitchDisplayName"]').first().innerText();
@@ -241,7 +242,7 @@ try {
 } finally {
   await db.write(); // write out json db
   if (notify_games.length) { // list should only include claimed games
-    notify(`prime-gaming:<br>${html_game_list(notify_games)}`);
+    notify(`prime-gaming (${user}):<br>${html_game_list(notify_games)}`);
   }
 }
 await context.close();
