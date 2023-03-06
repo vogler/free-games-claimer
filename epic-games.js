@@ -150,7 +150,7 @@ try {
         db.data[user][game_id].status = notify_game.status = 'unavailable-in-region';
         continue;
       }
-      await iframe.locator('button:has-text("Place Order")').click();
+      await iframe.locator('button:has-text("Place Order")').click({ delay: 11 });
 
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
       const btnAgree = iframe.locator('button:has-text("I Agree")');
