@@ -155,7 +155,7 @@ try {
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
       const btnAgree = iframe.locator('button:has-text("I Agree")');
       try {
-        context.setDefaultTimeout(100 * 1000); // give time to solve captcha, iframe goes blank after 60s?
+        // context.setDefaultTimeout(100 * 1000); // give time to solve captcha, iframe goes blank after 60s?
         await Promise.any([btnAgree.click(), page.waitForSelector('text=Thank you for buying').then(_ => { })]); // EU: wait for agree button, non-EU: potentially done
 
         const captcha = iframe.locator('#h_captcha_challenge_checkout_free_prod iframe');
@@ -172,7 +172,7 @@ try {
         db.data[user][game_id].status = 'claimed';
         db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
         console.log('  Claimed successfully!');
-        context.setDefaultTimeout(cfg.timeout);
+        // context.setDefaultTimeout(cfg.timeout);
       } catch (e) {
         console.log(e);
         // console.error('  Failed to claim! Try again if NopeCHA timed out. Click the extension to see if you ran out of credits (refill after 24h). To avoid captchas try to get a new IP or set a cookie from https://www.hcaptcha.com/accessibility');
