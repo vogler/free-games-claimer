@@ -79,7 +79,8 @@ Available options/variables and their default values:
 | PG_EMAIL      	|         	| Prime Gaming email for login. Overrides EMAIL.                         	|
 | PG_PASSWORD   	|         	| Prime Gaming password for login. Overrides PASSWORD.                   	|
 | PG_OTPKEY     	|         	| Prime Gaming MFA OTP key.                                              	|
-| PG_REDEEM     	| 0       	| Prime Gaming: try to redeem keys on external stores (experimental).    	|
+| PG_REDEEM     	| 0       	| Prime Gaming: try to redeem keys on external stores ([experimental](https://github.com/vogler/free-games-claimer/issues/5)).    	|
+| PG_CLAIMDLC   	| 0       	| Prime Gaming: try to claim DLCs ([experimental](https://github.com/vogler/free-games-claimer/issues/55)).    	|
 | GOG_EMAIL     	|         	| GOG email for login. Overrides EMAIL.                                  	|
 | GOG_PASSWORD  	|         	| GOG password for login. Overrides PASSWORD.                            	|
 
