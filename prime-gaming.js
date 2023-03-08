@@ -106,14 +106,13 @@ try {
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
     if (cfg.dryrun) continue;
+    await (await card.$('button:has-text("Claim game")')).click();
+    db.data[user][title] ||= { title, time: datetime(), store: 'internal' };
+    notify_games.push({ title, status: 'claimed', url: URL_CLAIM });
     // const img = await (await card.$('img.tw-image')).getAttribute('src');
     // console.log('Image:', img);
     const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', 'internal', `${filenamify(title)}.png`);
     await card.screenshot({ path: p });
-    await (await card.$('button:has-text("Claim game")')).click();
-    db.data[user][title] ||= { title, time: datetime(), store: 'internal' };
-    notify_games.push({ title, status: 'claimed', url: URL_CLAIM });
-    // await page.pause();
   }
   // claim games in external/linked stores. Linked: origin.com, epicgames.com; Redeem-key: gog.com, legacygames.com, microsoft
   let n;
@@ -232,8 +231,12 @@ try {
     await page.click('button[data-type="Game"]');
   } while (n);
   const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', `${filenamify(datetime())}.png`);
-  // await page.screenshot({ path: p, fullPage: true });
-  if (!cfg.dryrun) await page.locator(games_sel).screenshot({ path: p });
+  // await page.screenshot({ path: p, fullPage: true }); // fullPage does not make a difference since scroll not on body but on some element
+  await page.keyboard.press('End'); // scroll to bottom to show all games
+  await page.waitForTimeout(1000); // wait for fade in animation
+  const viewportSize = page.viewportSize(); // current viewport size
+  await page.setViewportSize({...viewportSize, height: 3000}); // increase height, otherwise element screenshot is cut off at the top and bottom
+  if (notify_games.length) await page.locator(games_sel).screenshot({ path: p }); // screenshot of all claimed games
 
   if (cfg.pg_claimdlc) {
     console.log('Trying to claim in-game content...');
