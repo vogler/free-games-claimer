@@ -114,7 +114,7 @@ try {
     if (response == '{}') {
       status = 'claimed';
       console.log('  Claimed successfully!');
-      } else {
+    } else {
       const message = JSON.parse(response).message;
       if (message == 'Already claimed') {
         status = 'existed'; // same status text as for epic-games
