@@ -127,7 +127,7 @@ try {
     db.data[user][title].status ||= status;
     notify_games.push({ title, url, status });
 
-    if (status == 'claimed') { // TODO check if this is enough or if newsleter is enabled if 'existed'
+    if (status == 'claimed') {
       console.log("Unsubscribe from 'Promotions and hot deals' newsletter");
       await page.goto('https://www.gog.com/en/account/settings/subscriptions');
       await page.locator('li:has-text("Promotions and hot deals") label').uncheck();
