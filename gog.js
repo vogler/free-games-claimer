@@ -98,6 +98,7 @@ try {
     console.log(`Current free game: ${title} - ${url}`);
     db.data[user][title] ||= { title, time: datetime(), url };
     if (cfg.dryrun) process.exit(1);
+    await page.locator('#giveaway:not(.is-loading)').waitFor(); // otherwise screenshot is sometimes with loading indicator instead of game title
     const p = path.resolve(cfg.dir.screenshots, 'gog', `${filenamify(title)}.png`);
     await banner.screenshot({ path: p }); // overwrites every time - only keep first?
 
