@@ -139,8 +139,12 @@ try {
       // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoided by Windows userAgent?
       page.click('button:has-text("Continue")').catch(_ => { }); // needed since change from Chromium to Firefox?
 
-      if (cfg.dryrun) continue;
-      if (cfg.debug) await page.pause();
+      // Accept End User License Agreement (only needed once)
+      page.locator('input#agree').waitFor().then(async () => {
+        console.log('Accept End User License Agreement (only needed once)');
+        await page.locator('input#agree').check();
+        await page.locator('button:has-text("Accept")').click();
+      }).catch(_ => { });
 
       // it then creates an iframe for the purchase
       await page.waitForSelector('#webPurchaseContainer iframe'); // TODO needed?
@@ -151,6 +155,10 @@ try {
         db.data[user][game_id].status = notify_game.status = 'unavailable-in-region';
         continue;
       }
+
+      if (cfg.dryrun) continue;
+      if (cfg.debug) await page.pause();
+
       await iframe.locator('button:has-text("Place Order")').click({ delay: 11 });
 
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
