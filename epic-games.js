@@ -159,6 +159,7 @@ try {
       if (cfg.dryrun) continue;
       if (cfg.debug) await page.pause();
 
+      await page.waitForTimeout(2000);
       await iframe.locator('button:has-text("Place Order")').click({ delay: 11 });
 
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
