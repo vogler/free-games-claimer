@@ -164,10 +164,9 @@ try {
 
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
       const btnAgree = iframe.locator('button:has-text("I Agree")');
+      btnAgree.waitFor().then(() => btnAgree.click()).catch(_ => { }); // EU: wait for and click 'I Agree'
       try {
         // context.setDefaultTimeout(100 * 1000); // give time to solve captcha, iframe goes blank after 60s?
-        await Promise.any([btnAgree.click(), page.waitForSelector('text=Thank you for buying').then(_ => { })]); // EU: wait for agree button, non-EU: potentially done
-
         const captcha = iframe.locator('#h_captcha_challenge_checkout_free_prod iframe');
         captcha.waitFor().then(async () => { // don't await, since element may not be shown
           // console.info('  Got hcaptcha challenge! NopeCHA extension will likely solve it.')
@@ -178,7 +177,7 @@ try {
           // console.info('  Saved a screenshot of hcaptcha challenge to', p);
           // console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
         }).catch(_ => { }); // may time out if not shown
-        await page.waitForSelector('text=Thank you for buying'); // EU: wait, non-EU: wait again = no-op
+        await page.waitForSelector('text=Thank you for buying');
         db.data[user][game_id].status = 'claimed';
         db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
         console.log('  Claimed successfully!');
