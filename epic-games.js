@@ -156,8 +156,17 @@ try {
         continue;
       }
 
-      if (cfg.dryrun) continue;
+      iframe.locator('.payment-pin-code').waitFor().then(async () => {
+        if (!cfg.eg_parentalpin) {
+          console.error('  EG_PARENTALPIN not set. Need to enter Parental Control PIN manually.');
+          notify('epic-games: EG_PARENTALPIN not set. Need to enter Parental Control PIN manually.');
+        }
+        await iframe.locator('input.payment-pin-code__input').first().type(cfg.eg_parentalpin);
+        await iframe.locator('button:has-text("Continue")').click({ delay: 11 });
+      }).catch(_ => { });
+
       if (cfg.debug) await page.pause();
+      if (cfg.dryrun) continue;
 
       await page.waitForTimeout(2000);
       await iframe.locator('button:has-text("Place Order")').click({ delay: 11 });
