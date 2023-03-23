@@ -131,7 +131,11 @@ try {
       console.log('  Already in library! Nothing to claim.');
       notify_game.status = 'existed';
       db.data[user][game_id].status ||= 'existed'; // does not overwrite claimed or failed
-      if (db.data[user][game_id].status == 'failed') db.data[user][game_id].status = 'manual'; // was failed but now it's claimed
+      if (db.data[user][game_id].status.startsWith('failed')) db.data[user][game_id].status = 'manual'; // was failed but now it's claimed
+    } else if (btnText.toLowerCase() == 'requires base game') {
+      console.log('  Requires base game! Nothing to claim.');
+      notify_game.status = 'requires base game';
+      db.data[user][game_id].status ||= 'failed:requires-base-game';
     } else { // GET
       console.log('  Not in library yet! Click GET.');
       await page.click('[data-testid="purchase-cta-button"]', { delay: 11 }); // got stuck here without delay (or mouse move), see #75, 1ms was also enough
@@ -212,7 +216,7 @@ try {
     notify(`epic-games failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
-  if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed
+  if (notify_games.filter(g => g.status != 'existed' && g.status != 'failed:requires-base-game').length) { // don't notify if all were already claimed
     notify(`epic-games (${user}):<br>${html_game_list(notify_games)}`);
   }
 }
