@@ -34,6 +34,7 @@ export const cfg = {
   // auth gog
   gog_email: process.env.GOG_EMAIL || process.env.EMAIL,
   gog_password: process.env.GOG_PASSWORD || process.env.PASSWORD,
+  gog_newsletter: process.env.GOG_NEWSLETTER == '1', // do not unsubscribe from newsletter after claiming a game
   // OTP only via GOG_EMAIL, can't add app...
 
   // experimmental - likely to change

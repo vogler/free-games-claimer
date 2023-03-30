@@ -84,6 +84,7 @@ Available options/variables and their default values:
 | PG_CLAIMDLC   	| 0       	| Prime Gaming: try to claim DLCs ([experimental](https://github.com/vogler/free-games-claimer/issues/55)).    	|
 | GOG_EMAIL     	|         	| GOG email for login. Overrides EMAIL.                                  	|
 | GOG_PASSWORD  	|         	| GOG password for login. Overrides PASSWORD.                            	|
+| GOG_NEWSLETTER	| 0       	| Do not unsubscribe from newsletter after claiming a game if 1.         	|
 
 See `config.js` for all options.
 
