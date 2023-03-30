@@ -216,7 +216,7 @@ try {
     notify(`epic-games failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
-  if (notify_games.filter(g => g.status != 'existed' && g.status != 'failed:requires-base-game').length) { // don't notify if all were already claimed
+  if (notify_games.filter(g => g.status != 'existed' && g.status != 'requires base game').length) { // don't notify if all were already claimed
     notify(`epic-games (${user}):<br>${html_game_list(notify_games)}`);
   }
 }
