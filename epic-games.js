@@ -136,6 +136,10 @@ try {
       console.log('  Requires base game! Nothing to claim.');
       notify_game.status = 'requires base game';
       db.data[user][game_id].status ||= 'failed:requires-base-game';
+      // TODO claim base game if it is free
+      const baseUrl = 'https://store.epicgames.com' + await page.locator('a:has-text("Overview")').getAttribute('href');
+      console.log('  Base game:', baseUrl);
+      // await page.click('a:has-text("Overview")');
     } else { // GET
       console.log('  Not in library yet! Click GET.');
       await page.click('[data-testid="purchase-cta-button"]', { delay: 11 }); // got stuck here without delay (or mouse move), see #75, 1ms was also enough
