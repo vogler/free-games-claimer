@@ -16,7 +16,7 @@ Pull requests welcome :)
 
 _Works on Windows/macOS/Linux._
 
-Raspberry Pi (3, 4, Zero 2): Raspbian won't work since it's 32-bit, but Raspberry Pi OS (64-bit) or Ubuntu will.
+Raspberry Pi (3, 4, Zero 2): [requires 64-bit OS](https://github.com/vogler/free-games-claimer/issues/3) like Raspberry Pi OS or Ubuntu (Raspbian won't work since it's 32-bit).
 
 ## How to run
 Easy option: [install Docker](https://docs.docker.com/get-docker/) (or [podman](https://podman-desktop.io/)) and run this command in a terminal (Windows: `cmd`, `.bat` file):
