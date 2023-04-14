@@ -211,6 +211,15 @@ try {
               }
             }
           } else if (store == 'legacy games') {
+            console.error(`  Redeem on ${store} not yet tested!`);
+            await page2.fill('[name=coupon_code]', code);
+            await page2.fill('[name=email]', cfg.pg_email); // TODO option for sep. email?
+            await page2.fill('[name=email_validate]', cfg.pg_email);
+            await page2.uncheck('[name=newsletter_sub]');
+            await page2.click('[type="submit"]');
+            redeem_action = 'redeemed?';
+            console.log('  Redeemed successfully? Please report problems in https://github.com/vogler/free-games-claimer/issues/5');
+          } else {
             console.error(`  Redeem on ${store} not yet implemented!`);
           }
           await page2.pause();
