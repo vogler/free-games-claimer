@@ -173,7 +173,7 @@ try {
             // {"reason":"code_used"}
             // {"reason":"code_not_found"}
             const reason = JSON.parse(rt).reason;
-            if (reason.includes('captcha')) {
+            if (reason && reason.includes('captcha')) {
               redeem_action = 'redeem (got captcha)';
               console.error('  Got captcha; could not redeem!');
             } else if (reason == 'code_used') {
