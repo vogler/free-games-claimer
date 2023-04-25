@@ -197,6 +197,8 @@ Added OTP generation via otplib for automatic login, even with 2FA.
 Added notifications via [apprise](https://github.com/caronc/apprise).
 </details>
 
+[![Star History Chart](https://api.star-history.com/svg?repos=vogler/free-games-claimer&type=Date)](https://star-history.com/#vogler/free-games-claimer&Date)
+
 ---
 
 Logo with smaller aspect ratio (for Telegram bot etc.): 👾 - [emojipedia](https://emojipedia.org/alien-monster/)
