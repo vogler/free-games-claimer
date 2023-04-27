@@ -175,7 +175,10 @@ try {
       }).catch(_ => { });
 
       if (cfg.debug) await page.pause();
-      if (cfg.dryrun) continue;
+      if (cfg.dryrun) {
+        console.log('  DRYRUN=1 -> Skip order!');
+        continue;
+      }
 
       // Playwright clicked before button was ready to handle event, https://github.com/vogler/free-games-claimer/issues/84#issuecomment-1474346591
       await iframe.locator('button:has-text("Place Order"):not(:has(.payment-loading--loading))').click({ delay: 11 });
