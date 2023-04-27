@@ -191,6 +191,9 @@ try {
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
       const btnAgree = page.locator('button:has-text("I Agree")');
       btnAgree.waitFor().then(() => btnAgree.click()).catch(_ => { }); // EU: wait for and click 'I Agree'
+
+      // May fail if game is already claimed with text 'Sorry, there is an error with your cart and we cannot complete the purchase. Please close this window and check your cart list.'
+
       try {
         // context.setDefaultTimeout(100 * 1000); // give time to solve captcha, iframe goes blank after 60s?
         const captcha = page.locator('#h_captcha_challenge_checkout_free_prod iframe');
