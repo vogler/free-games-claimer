@@ -86,77 +86,100 @@ try {
   db.data[user] ||= {};
 
   page.locator('button:has-text("Accept All Cookies")').click().catch(_ => { });
+
+  const ids = [];
   for (const p of await page.locator('article.asset').all()) {
     const link = p.locator('h3 a');
     const title = await link.innerText();
     const url = 'https://www.unrealengine.com' + await link.getAttribute('href');
-    console.log(title, url);
-    const id = page.url().split('/').pop();
-    db.data[user][id] ||= { title, time: datetime(), url }; // this will be set on the initial run only!
+    console.log([title, url]);
+    const id = url.split('/').pop();
+    db.data[user][id] ||= { title, time: datetime(), url, status: 'failed' }; // this will be set on the initial run only!
     const notify_game = { title, url, status: 'failed' };
     notify_games.push(notify_game); // status is updated below
-    if (await p.locator('.btn .in-cart').count()){
-      console.log('  already in cart');
+    // if (await p.locator('.btn .add-review-btn').count()) { // did not work
+    if((await p.getAttribute('class')).includes('asset--owned')) {
+      console.log('  ↳ Already claimed');
+      if (db.data[user][id].status != 'claimed') {
+        db.data[user][id].status = 'existed';
+        notify_game.status = 'existed';
+      }
+      continue;
+    }
+    if (await p.locator('.btn .in-cart').count()) {
+      console.log('  ↳ Already in cart');
       continue;
     }
     await p.locator('.btn .add').click();
-    console.log('  added to cart');
+    console.log('  ↳ Added to cart');
+    ids.push(id);
   }
-  const price = (await page.locator('.shopping-cart .total .price').innerText()).split(' ');
-  console.log('price: ', price[1], 'instead of', price[0]);
-  if (price[1] != '0') {
-    console.error('Price is not 0! Exit!');
-    process.exit(1);
+  if (!ids.length) {
+    console.log('Nothing to claim');
+  } else {
+    const price = (await page.locator('.shopping-cart .total .price').innerText()).split(' ');
+    console.log('Price: ', price[1], 'instead of', price[0]);
+    if (price[1] != '0') {
+      console.error('Price is not 0! Exit!');
+      process.exit(1);
+    }
+    // await page.pause();
+    console.log('Click shopping cart');
+    await page.locator('.shopping-cart').click();
+    // await page.waitForTimeout(2000);
+    await page.locator('button.checkout').click();
+    console.log('Click checkout');
+    // maybe: Accept End User License Agreement
+    page.locator('[name=accept-label]').check().then(() => {
+      console.log('Accept End User License Agreement');
+      page.locator('span:text-is("Accept")').click() // otherwise matches 'Accept All Cookies'
+    }).catch(_ => { });
+    await page.waitForSelector('#webPurchaseContainer iframe'); // TODO needed?
+    const iframe = page.frameLocator('#webPurchaseContainer iframe');
+
+    if (cfg.debug) await page.pause();
+    if (cfg.dryrun) {
+      console.log('DRYRUN=1 -> Skip order!');
+      throw new Error('DRYRUN=1');
+    }
+
+    console.log('Click Place Order');
+    // Playwright clicked before button was ready to handle event, https://github.com/vogler/free-games-claimer/issues/84#issuecomment-1474346591
+    await iframe.locator('button:has-text("Place Order"):not(:has(.payment-loading--loading))').click({ delay: 11 });
+
+    // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
+    const btnAgree = iframe.locator('button:has-text("I Agree")');
+    btnAgree.waitFor().then(() => btnAgree.click()).catch(_ => { }); // EU: wait for and click 'I Agree'
+    try {
+      // context.setDefaultTimeout(100 * 1000); // give time to solve captcha, iframe goes blank after 60s?
+      const captcha = iframe.locator('#h_captcha_challenge_checkout_free_prod iframe');
+      captcha.waitFor().then(async () => { // don't await, since element may not be shown
+        // console.info('  Got hcaptcha challenge! NopeCHA extension will likely solve it.')
+        console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.')
+      }).catch(_ => { }); // may time out if not shown
+      await page.waitForSelector('text=Thank you');
+      for (const id of ids) {
+        db.data[user][id].status = 'claimed';
+        db.data[user][id].time = datetime(); // claimed time overwrites failed/dryrun time
+      }
+      notify_games.forEach(g => g.status == 'failed' && (g.status = 'claimed'));
+      console.log('Claimed successfully!');
+      // context.setDefaultTimeout(cfg.timeout);
+    } catch (e) {
+      console.log(e);
+      // console.error('  Failed to claim! Try again if NopeCHA timed out. Click the extension to see if you ran out of credits (refill after 24h). To avoid captchas try to get a new IP or set a cookie from https://www.hcaptcha.com/accessibility');
+      console.error('  Failed to claim! To avoid captchas try to get a new IP address.');
+      const p = path.resolve(cfg.dir.screenshots, 'unrealengine', 'failed', `${filenamify(datetime())}.png`);
+      await page.screenshot({ path: p, fullPage: true });
+      // db.data[user][id].status = 'failed';
+      notify_games.forEach(g => g.status = 'failed');
+    }
+    // notify_game.status = db.data[user][game_id].status; // claimed or failed
+
+    const p = path.resolve(cfg.dir.screenshots, 'unrealengine', `${filenamify(datetime())}.png`);
+    if (notify_games.length) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
+    console.log('Done');
   }
-  // await page.pause();
-  console.log('Click shopping cart');
-  await page.locator('.shopping-cart').click();
-  // await page.waitForTimeout(2000);
-  await page.locator('button.checkout').click();
-  console.log('Click checkout');
-  // maybe: Accept End User License Agreement
-  page.locator('[name=accept-label]').check().then(() => {
-    console.log('Accept End User License Agreement');
-    page.locator('span:text-is("Accept")').click() // otherwise matches 'Accept All Cookies'
-  }).catch(_ => { });
-  // await page.waitForSelector('#webPurchaseContainer iframe'); // TODO needed?
-  const iframe = page.frameLocator('#webPurchaseContainer iframe');
-
-  if (cfg.debug) await page.pause();
-  if (cfg.dryrun) {
-    console.log('  DRYRUN=1 -> Skip order!');
-    process.exit();
-  }
-
-  await iframe.locator('button:has-text("Place Order")').click();
-  // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
-  const btnAgree = iframe.locator('button:has-text("I Agree")');
-  try {
-    context.setDefaultTimeout(100 * 1000); // give time to solve captcha, iframe goes blank after 60s?
-    await Promise.any([btnAgree.click(), page.waitForSelector('text=Thank you').then(_ => { })]); // EU: wait for agree button, non-EU: potentially done
-
-    const captcha = iframe.locator('#h_captcha_challenge_checkout_free_prod iframe');
-    captcha.waitFor().then(async () => { // don't await, since element may not be shown
-      console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.')
-    }).catch(_ => { }); // may time out if not shown
-    await page.waitForSelector('text=Thank you'); // EU: wait, non-EU: wait again = no-op
-    // db.data[user][id].status = 'claimed';
-    // db.data[user][id].time = datetime(); // claimed time overwrites failed/dryrun time
-    notify_games.forEach(g => g.status = 'claimed');
-    console.log('  Claimed successfully!');
-    context.setDefaultTimeout(cfg.timeout);
-  } catch (e) {
-    console.log(e);
-    console.error('  Failed to claim! To avoid captchas try to get a new IP address.');
-    // const p = path.resolve(cfg.dir.screenshots, 'unrealengine', 'failed', `${id}_${filenamify(datetime())}.png`);
-    // await page.screenshot({ path: p, fullPage: true });
-    // db.data[user][id].status = 'failed';
-    notify_games.forEach(g => g.status = 'failed');
-  }
-
-  const p = path.resolve(cfg.dir.screenshots, 'unrealengine', `${filenamify(datetime())}.png`);
-  if (notify_games.length) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
-  console.log('Done');
 } catch (error) {
   console.error(error); // .toString()?
   process.exitCode ||= 1;
