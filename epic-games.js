@@ -177,6 +177,7 @@ try {
       if (cfg.debug) await page.pause();
       if (cfg.dryrun) {
         console.log('  DRYRUN=1 -> Skip order!');
+        notify_game.status = 'skipped';
         continue;
       }
 
@@ -224,7 +225,7 @@ try {
     notify(`epic-games failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
-  if (notify_games.filter(g => g.status != 'existed' && g.status != 'requires base game').length) { // don't notify if all were already claimed
+  if (notify_games.filter(g => g.status == 'claimed' || g.status == 'failed').length) { // don't notify if all have status 'existed', 'manual', 'requires base game', 'unavailable-in-region', 'skipped'
     notify(`epic-games (${user}):<br>${html_game_list(notify_games)}`);
   }
 }
