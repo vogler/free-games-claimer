@@ -40,7 +40,8 @@ const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
   // userAgent for firefox: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:106.0) Gecko/20100101 Firefox/106.0
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
-  // recordVideo: { dir: 'data/videos/' }, // will record a .webm video for each page navigated
+  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
+  recordHar: cfg.record ? { path: `data/record/eg-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
   args: [ // https://peter.sh/experiments/chromium-command-line-switches
     // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.'
     // '--restore-last-session', // does not apply for crash/killed
@@ -58,6 +59,12 @@ if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
 const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
 // console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
+if (cfg.record && cfg.debug) {
+  // const filter = _ => true;
+  const filter = r => r.url().includes('store.epicgames.com');
+  page.on('request', request => filter(request) && console.log('>>', request.method(), request.url()));
+  page.on('response', response => filter(response) && console.log('<<', response.status(), response.url()));
+}
 
 const notify_games = [];
 let user;
@@ -182,6 +189,7 @@ try {
       if (cfg.debug) await page.pause();
       if (cfg.dryrun) {
         console.log('  DRYRUN=1 -> Skip order!');
+        notify_game.status = 'skipped';
         continue;
       }
 
@@ -232,7 +240,7 @@ try {
     notify(`epic-games failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
-  if (notify_games.filter(g => g.status != 'existed' && g.status != 'requires base game').length) { // don't notify if all were already claimed
+  if (notify_games.filter(g => g.status == 'claimed' || g.status == 'failed').length) { // don't notify if all have status 'existed', 'manual', 'requires base game', 'unavailable-in-region', 'skipped'
     notify(`epic-games (${user}):<br>${html_game_list(notify_games)}`);
   }
 }
