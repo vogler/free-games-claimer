@@ -96,7 +96,7 @@ try {
   const games_sel = 'div[data-a-target="offer-list-FGWP_FULL"]';
   await page.waitForSelector(games_sel);
   console.log('Number of already claimed games (total):', await page.locator(`${games_sel} p:has-text("Collected")`).count());
-  const game_sel = `${games_sel} [data-a-target="item-card"]:has-text("Claim game")`;
+  const game_sel = `${games_sel} [data-a-target="claim-prime-offer-card"]:has-text("Claim")`;
   console.log('Number of free unclaimed games (Prime Gaming):', await page.locator(game_sel).count());
   const games = await page.$$(game_sel);
   // for (let i=1; i<=n; i++) {
@@ -106,7 +106,7 @@ try {
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
     if (cfg.dryrun) continue;
-    await (await card.$('button:has-text("Claim game")')).click();
+    await (await card.$('button:has-text("Claim")')).click();
     db.data[user][title] ||= { title, time: datetime(), store: 'internal' };
     notify_games.push({ title, status: 'claimed', url: URL_CLAIM });
     // const img = await (await card.$('img.tw-image')).getAttribute('src');
@@ -116,7 +116,7 @@ try {
   }
   // claim games in external/linked stores. Linked: origin.com, epicgames.com; Redeem-key: gog.com, legacygames.com, microsoft
   let n;
-  const game_sel_ext = `${games_sel} [data-a-target="item-card"]:has(p:text-is("Claim"))`;
+  const game_sel_ext = `${games_sel} [data-a-target="learn-more-card"]:has(p:text-is("Claim"))`;
   do {
     n = await page.locator(game_sel_ext).count();
     console.log('Number of free unclaimed games (external stores):', n);
