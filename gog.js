@@ -84,7 +84,7 @@ try {
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
   user = await page.locator('#menuUsername').first().textContent(); // innerText is uppercase due to styling!
-  console.log(`Signed in as '${user}'`);
+  console.log(`Signed in as ${user}`);
   db.data[user] ||= {};
 
   const banner = page.locator('#giveaway');
