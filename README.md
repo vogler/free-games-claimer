@@ -77,6 +77,7 @@ Available options/variables and their default values:
 | EG_PASSWORD   	|         	| Epic Games password for login. Overrides PASSWORD.                     	|
 | EG_OTPKEY     	|         	| Epic Games MFA OTP key.                                                	|
 | EG_PARENTALPIN 	|         	| Epic Games Parental Controls PIN.                                      	|
+| EG_COUNTRY    	| US      	| Epic Games [country of account](https://www.epicgames.com/account/personal). Set to avoid unavailable-in-region.     	|
 | PG_EMAIL      	|         	| Prime Gaming email for login. Overrides EMAIL.                         	|
 | PG_PASSWORD   	|         	| Prime Gaming password for login. Overrides PASSWORD.                   	|
 | PG_OTPKEY     	|         	| Prime Gaming MFA OTP key.                                              	|

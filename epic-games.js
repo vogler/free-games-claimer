@@ -17,7 +17,7 @@ handleSIGINT();
 
 // get current promotionalOffers from json instead of checking the website
 // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // otherwise got UNABLE_TO_GET_ISSUER_CERT_LOCALLY
-const promoJson = await (await fetch('https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions')).json(); // ?locale=en-US
+const promoJson = await (await fetch(`https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?country=${cfg.eg_country}`)).json(); // ?locale=en-US
 const currentGames = promoJson.data.Catalog.searchStore.elements.filter(e => e.promotions?.promotionalOffers?.length);
 const gameURL = e => `https://store.epicgames.com/p/${e.catalogNs.mappings[0].pageSlug}`; // gameURL(e.urlSlug) is wrong and leads to 404!
 console.log('Free games:', currentGames.map(e => `${e.title} - ${gameURL(e)}`));
