@@ -155,6 +155,9 @@ try {
       // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoided by Windows userAgent?
       page.click('button:has-text("Continue")').catch(_ => { }); // needed since change from Chromium to Firefox?
 
+      // click 'Yes, buy now' if 'This edition contains something you already have. Still interested?'
+      page.click('button:has-text("Yes, buy now")').catch(_ => { });
+
       // Accept End User License Agreement (only needed once)
       page.locator('input#agree').waitFor().then(async () => {
         console.log('Accept End User License Agreement (only needed once)');
