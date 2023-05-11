@@ -193,6 +193,9 @@ try {
         continue;
       }
 
+      // After successful order using the `purchaseURL`-method, the page is just empty, without any 'Thanks for your order', so we wait for the response of their API. Note: no await, and start waiting before final click to 'Place Order'.
+      const r = page.waitForResponse(r => r.url().startsWith('https://payment-website-pci.ol.epicgames.com/purchase/confirm-order'));
+
       // Playwright clicked before button was ready to handle event, https://github.com/vogler/free-games-claimer/issues/84#issuecomment-1474346591
       await page.locator('button:has-text("Place Order"):not(:has(.payment-loading--loading))').click({ delay: 11 });
 
@@ -214,7 +217,14 @@ try {
           // console.info('  Saved a screenshot of hcaptcha challenge to', p);
           // console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
         }).catch(_ => { }); // may time out if not shown
-        await page.waitForSelector('text=Thanks for your order!');
+        // await page.waitForSelector('text=Thanks for your order!'); // not shown for order via `purchaseURL`
+        const rt = await (await r).text(); // TODO blocks if not claimed?
+        const rj = JSON.parse(rt);
+        if (rj?.receiptResponse?.orderStatus != 'COMPLETED') {
+          console.error('Unexpected confirm-order response. Message:', rj.message);
+          console.log(rj);
+          continue;
+        }
         db.data[user][game_id].status = 'claimed';
         db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
         console.log('  Claimed successfully!');
