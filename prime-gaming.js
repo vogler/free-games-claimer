@@ -93,20 +93,18 @@ try {
   }
 
   await page.click('button[data-type="Game"]');
-  const games_sel = 'div[data-a-target="offer-list-FGWP_FULL"]';
-  await page.waitForSelector(games_sel);
-  console.log('Number of already claimed games (total):', await page.locator(`${games_sel} p:has-text("Collected")`).count());
-  const game_sel = `${games_sel} [data-a-target="claim-prime-offer-card"]:has-text("Claim")`;
-  console.log('Number of free unclaimed games (Prime Gaming):', await page.locator(game_sel).count());
-  const games = await page.$$(game_sel);
-  // for (let i=1; i<=n; i++) {
-  for (const card of games) {
-    // const card = page.locator(`:nth-match(${game_sel}, ${i})`); // this will reevaluate after games are claimed and index will be wrong
-    // const title = await card.locator('h3').first().innerText();
-    const title = await (await card.$('.item-card-details__body__primary')).innerText();
+  const games = page.locator('div[data-a-target="offer-list-FGWP_FULL"]');
+  await games.waitFor();
+  console.log('Number of already claimed games (total):', await games.locator('p:has-text("Collected")').count());
+  const internal = await games.locator('[data-a-target="claim-prime-offer-card"]:has-text("Claim")').all();
+  const external = await games.locator('[data-a-target="learn-more-card"]:has(p:text-is("Claim"))').all();
+  console.log('Number of free unclaimed games (Prime Gaming):', internal.length);
+  // claim games in internal store
+  for (const card of internal) {
+    const title = await card.locator('.item-card-details__body__primary').innerText();
     console.log('Current free game:', title);
     if (cfg.dryrun) continue;
-    await (await card.$('button:has-text("Claim")')).click();
+    await card.locator('button:has-text("Claim")').click();
     db.data[user][title] ||= { title, time: datetime(), store: 'internal' };
     notify_games.push({ title, status: 'claimed', url: URL_CLAIM });
     // const img = await (await card.$('img.tw-image')).getAttribute('src');
@@ -114,18 +112,15 @@ try {
     const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', 'internal', `${filenamify(title)}.png`);
     await card.screenshot({ path: p });
   }
+  console.log('Number of free unclaimed games (external stores):', external.length);
   // claim games in external/linked stores. Linked: origin.com, epicgames.com; Redeem-key: gog.com, legacygames.com, microsoft
-  let n;
-  const game_sel_ext = `${games_sel} [data-a-target="learn-more-card"]:has(p:text-is("Claim"))`;
-  do {
-    n = await page.locator(game_sel_ext).count();
-    console.log('Number of free unclaimed games (external stores):', n);
-    const card = await page.$(game_sel_ext);
+  for (const card of external) {
     if (!card) break;
-    const title = await (await card.$('.item-card-details__body__primary')).innerText();
+    const title = await card.locator('.item-card-details__body__primary').innerText();
     console.log('Current free game:', title);
-    if (cfg.dryrun) break; // TODO change back to continue, but need different iteration scheme
-    await (await card.$('text=Claim')).click(); // goes to URL of game, no need to wait
+    if (cfg.debug) await page.pause();
+    if (cfg.dryrun) continue;
+    await card.locator('text=Claim').click(); // goes to URL of game, no need to wait
     await Promise.any([page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")')]); // waits for navigation
     const store_text = await (await page.$('[data-a-target="hero-header-subtitle"]')).innerText();
     // Full game for PC [and MAC] on: gog.com, Origin, Legacy Games, EPIC GAMES, Battle.net
@@ -238,23 +233,23 @@ try {
     // await page.pause();
     await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
     await page.click('button[data-type="Game"]');
-  } while (n);
+  }
   const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', `${filenamify(datetime())}.png`);
   // await page.screenshot({ path: p, fullPage: true }); // fullPage does not make a difference since scroll not on body but on some element
   await page.keyboard.press('End'); // scroll to bottom to show all games
   await page.waitForTimeout(1000); // wait for fade in animation
   const viewportSize = page.viewportSize(); // current viewport size
   await page.setViewportSize({...viewportSize, height: 3000}); // increase height, otherwise element screenshot is cut off at the top and bottom
-  if (notify_games.length) await page.locator(games_sel).screenshot({ path: p }); // screenshot of all claimed games
+  if (notify_games.length) await games.screenshot({ path: p }); // screenshot of all claimed games
 
   if (cfg.pg_claimdlc) {
     console.log('Trying to claim in-game content...');
     await page.click('button[data-type="InGameLoot"]');
-    const loot_sel = 'div[data-a-target="offer-list-IN_GAME_LOOT"]';
-    await page.waitForSelector(loot_sel);
-    console.log('Number of already claimed DLC:', await page.locator(`${loot_sel} p:has-text("Collected")`).count());
+    const loot = page.locator('div[data-a-target="offer-list-IN_GAME_LOOT"]');
+    await loot.waitFor();
+    console.log('Number of already claimed DLC:', await loot.locator('p:has-text("Collected")').count());
 
-    const cards = await page.locator(`${loot_sel} [data-a-target="item-card"]:has(p:text-is("Claim"))`).all();
+    const cards = await loot.locator('[data-a-target="item-card"]:has(p:text-is("Claim"))').all();
     console.log('Number of unclaimed DLC:', cards.length);
     const dlcs = await Promise.all(cards.map(async card => ({
       game: await card.locator('.item-card-details__body p').innerText(),
@@ -267,7 +262,7 @@ try {
       const title = `${dlc.game} - ${dlc.title}`;
       const url = dlc.url;
       console.log('Current DLC:', title);
-      // if (cfg.dryrun) continue;
+      if (cfg.dryrun) continue;
       db.data[user][title] ||= { title, time: datetime(), store: 'DLC', status: 'failed: need account linking' };
       const notify_game = { title, url };
       notify_games.push(notify_game); // status is updated below
