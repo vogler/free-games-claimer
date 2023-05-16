@@ -96,15 +96,15 @@ try {
   const games = page.locator('div[data-a-target="offer-list-FGWP_FULL"]');
   await games.waitFor();
   console.log('Number of already claimed games (total):', await games.locator('p:has-text("Collected")').count());
-  const internal = await games.locator('[data-a-target="claim-prime-offer-card"]:has-text("Claim")').all();
+  const internal = await games.locator('[data-a-target="claim-prime-offer-card"]:has-text("Claim")').elementHandles(); // can't use .all() here since the list of elements will change after click while we iterate over it
   const external = await games.locator('[data-a-target="learn-more-card"]:has(p:text-is("Claim"))').all();
   console.log('Number of free unclaimed games (Prime Gaming):', internal.length);
   // claim games in internal store
   for (const card of internal) {
-    const title = await card.locator('.item-card-details__body__primary').innerText();
+    const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
     if (cfg.dryrun) continue;
-    await card.locator('button:has-text("Claim")').click();
+    await (await card.$('button:has-text("Claim")')).click();
     db.data[user][title] ||= { title, time: datetime(), store: 'internal' };
     notify_games.push({ title, status: 'claimed', url: URL_CLAIM });
     // const img = await (await card.$('img.tw-image')).getAttribute('src');
