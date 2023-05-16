@@ -93,6 +93,8 @@ try {
   }
 
   await page.click('button[data-type="Game"]');
+  await page.keyboard.press('End'); // scroll to bottom to show all games
+  await page.waitForLoadState('networkidle'); // wait for all games to be loaded
   const games = page.locator('div[data-a-target="offer-list-FGWP_FULL"]');
   await games.waitFor();
   console.log('Number of already claimed games (total):', await games.locator('p:has-text("Collected")').count());
@@ -101,6 +103,7 @@ try {
   console.log('Number of free unclaimed games (Prime Gaming):', internal.length);
   // claim games in internal store
   for (const card of internal) {
+    await card.scrollIntoViewIfNeeded();
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
     if (cfg.dryrun) continue;
