@@ -259,7 +259,7 @@ try {
     const dlcs = await Promise.all(cards.map(async card => ({
       game: await card.locator('.item-card-details__body p').innerText(),
       title: await card.locator('.item-card-details__body__primary').innerText(),
-      url: 'https://gaming.amazon.com' + await card.locator('a').getAttribute('href'),
+      url: 'https://gaming.amazon.com' + await card.locator('a').first().getAttribute('href'),
     })));
     // console.log(dlcs);
 
