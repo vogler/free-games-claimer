@@ -93,6 +93,8 @@ try {
   }
 
   await page.click('button[data-type="Game"]');
+  await page.keyboard.press('End'); // scroll to bottom to show all games
+  await page.waitForLoadState('networkidle'); // wait for all games to be loaded
   const games_sel = 'div[data-a-target="offer-list-FGWP_FULL"]';
   await page.waitForSelector(games_sel);
   console.log('Number of already claimed games (total):', await page.locator(`${games_sel} p:has-text("Collected")`).count());
@@ -102,6 +104,7 @@ try {
   // for (let i=1; i<=n; i++) {
   for (const card of games) {
     // const card = page.locator(`:nth-match(${game_sel}, ${i})`); // this will reevaluate after games are claimed and index will be wrong
+    await card.scrollIntoViewIfNeeded();
     // const title = await card.locator('h3').first().innerText();
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
