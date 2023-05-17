@@ -19,6 +19,8 @@ const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
+  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
+  recordHar: cfg.record ? { path: `data/record/pg-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
 });
 
 // TODO test if needed
