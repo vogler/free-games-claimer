@@ -98,8 +98,9 @@ try {
   const games = page.locator('div[data-a-target="offer-list-FGWP_FULL"]');
   await games.waitFor();
   console.log('Number of already claimed games (total):', await games.locator('p:has-text("Collected")').count());
-  const internal = await games.locator('[data-a-target="claim-prime-offer-card"]:has-text("Claim")').elementHandles(); // can't use .all() here since the list of elements will change after click while we iterate over it
-  const external = await games.locator('[data-a-target="learn-more-card"]:has(p:text-is("Claim"))').all();
+  // can't use .all() since the list of elements via locator will change after click while we iterate over it
+  const internal = await games.locator('[data-a-target="claim-prime-offer-card"]:has-text("Claim")').elementHandles();
+  const external = await games.locator('[data-a-target="learn-more-card"]:has(p:text-is("Claim"))').elementHandles();
   console.log('Number of free unclaimed games (Prime Gaming):', internal.length);
   // claim games in internal store
   for (const card of internal) {
@@ -118,12 +119,12 @@ try {
   console.log('Number of free unclaimed games (external stores):', external.length);
   // claim games in external/linked stores. Linked: origin.com, epicgames.com; Redeem-key: gog.com, legacygames.com, microsoft
   for (const card of external) {
-    if (!card) break;
-    const title = await card.locator('.item-card-details__body__primary').innerText();
+    // if (!card) continue;
+    const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
     if (cfg.debug) await page.pause();
     if (cfg.dryrun) continue;
-    await card.locator('text=Claim').click(); // goes to URL of game, no need to wait
+    await (await card.$('text=Claim')).click(); // goes to URL of game, no need to wait
     await Promise.any([page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")')]); // waits for navigation
     const store_text = await (await page.$('[data-a-target="hero-header-subtitle"]')).innerText();
     // Full game for PC [and MAC] on: gog.com, Origin, Legacy Games, EPIC GAMES, Battle.net
