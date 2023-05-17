@@ -163,15 +163,16 @@ try {
           if (store == 'gog.com') {
             // await page.goto(`https://redeem.gog.com/v1/bonusCodes/${code}`); // {"reason":"Invalid or no captcha"}
             await page2.fill('#codeInput', code);
-            const r = page2.waitForResponse(r => r.url().startsWith('https://redeem.gog.com/'));
-            await page2.click('[type="submit"]');
-            // console.log(await page2.locator('.warning-message').innerText());
-            const rt = await (await r).text();
-            console.debug(`  Response: ${rt}`);
+            // wait for responses before clicking on Continue and then Redeem
+            // first there are requests with OPTIONS and GET to https://redeem.gog.com/v1/bonusCodes/XYZ?language=de-DE
+            const r1 = page2.waitForResponse(r => r.request().method() == 'GET' && r.url().startsWith('https://redeem.gog.com/'));
+            await page2.click('[type="submit"]'); // click Continue
+            // console.log(await page2.locator('.warning-message').innerText()); // does not exist if there is no warning
+            const r1t = await (await r1).text();
+            const reason = JSON.parse(r1t).reason;
             // {"reason":"Invalid or no captcha"}
             // {"reason":"code_used"}
             // {"reason":"code_not_found"}
-            const reason = JSON.parse(rt).reason;
             if (reason && reason.includes('captcha')) {
               redeem_action = 'redeem (got captcha)';
               console.error('  Got captcha; could not redeem!');
@@ -183,7 +184,20 @@ try {
               console.error('  Code was not found!');
             } else { // TODO not logged in? need valid unused code to test.
               redeem_action = 'redeemed?';
-              console.log('  Redeemed successfully? Please report your Response from above (if it is new) in https://github.com/vogler/free-games-claimer/issues/5');
+              console.log('  Redeemed successfully? Please report your Responses (if new) in https://github.com/vogler/free-games-claimer/issues/5');
+              console.debug(`  Response 1: ${r1t}`);
+              // then after the click on Redeem there is a POST request which should return {} if claimed successfully
+              const r2 = page2.waitForResponse(r => r.request().method() == 'POST' && r.url().startsWith('https://redeem.gog.com/'));
+              await page2.click('[type="submit"]'); // click Redeem
+              const r2t = await (await r2).text();
+              console.debug(`  Response 2: ${r2t}`);
+              if (r2t == '{}') {
+                  redeem_action = 'redeemed';
+                  console.log('  Redeemed successfully.');
+              } else {
+                redeem_action = 'redeemed?';
+                console.log('  Unknown Response 2 - please report in https://github.com/vogler/free-games-claimer/issues/5');
+              }
               // db.data[user][title].status = 'claimed and redeemed';
             }
           } else if (store == 'microsoft games') {
