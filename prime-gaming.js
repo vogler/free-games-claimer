@@ -253,13 +253,16 @@ try {
     await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
     await page.click('button[data-type="Game"]');
   }
-  const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', `${filenamify(datetime())}.png`);
-  // await page.screenshot({ path: p, fullPage: true }); // fullPage does not make a difference since scroll not on body but on some element
-  await page.keyboard.press('End'); // scroll to bottom to show all games
-  await page.waitForTimeout(1000); // wait for fade in animation
-  const viewportSize = page.viewportSize(); // current viewport size
-  await page.setViewportSize({...viewportSize, height: 3000}); // increase height, otherwise element screenshot is cut off at the top and bottom
-  if (notify_games.length) await games.screenshot({ path: p }); // screenshot of all claimed games
+
+  if (notify_games.length) {
+    const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', `${filenamify(datetime())}.png`);
+    // await page.screenshot({ path: p, fullPage: true }); // fullPage does not make a difference since scroll not on body but on some element
+    await page.keyboard.press('End'); // scroll to bottom to show all games
+    await page.waitForTimeout(1000); // wait for fade in animation
+    const viewportSize = page.viewportSize(); // current viewport size
+    await page.setViewportSize({...viewportSize, height: 3000}); // increase height, otherwise element screenshot is cut off at the top and bottom
+    await games.screenshot({ path: p }); // screenshot of all claimed games
+  }
 
   if (cfg.pg_claimdlc) {
     console.log('Trying to claim in-game content...');
