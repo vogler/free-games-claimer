@@ -196,11 +196,11 @@ try {
               if (r2t == '{}') {
                   redeem_action = 'redeemed';
                   console.log('  Redeemed successfully.');
+                  db.data[user][title].status = 'claimed and redeemed';
               } else {
                 redeem_action = 'redeemed?';
                 console.log('  Unknown Response 2 - please report in https://github.com/vogler/free-games-claimer/issues/5');
               }
-              // db.data[user][title].status = 'claimed and redeemed';
             }
           } else if (store == 'microsoft games') {
             console.error(`  Redeem on ${store} not yet implemented!`);
