@@ -141,6 +141,9 @@ try {
     const notify_game = { title, url, status: 'failed' };
     notify_games.push(notify_game); // status is updated below
 
+    const p = path.resolve(cfg.dir.screenshots, 'epic-games', `${game_id}.png`);
+    if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
+
     if (btnText.toLowerCase() == 'in library') {
       console.log('  Already in library! Nothing to claim.');
       notify_game.status = 'existed';
@@ -238,9 +241,6 @@ try {
         db.data[user][game_id].status = 'failed';
       }
       notify_game.status = db.data[user][game_id].status; // claimed or failed
-
-      const p = path.resolve(cfg.dir.screenshots, 'epic-games', `${game_id}.png`);
-      if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
     }
   }
 } catch (error) {
