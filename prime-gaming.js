@@ -264,6 +264,7 @@ try {
     await games.screenshot({ path: p }); // screenshot of all claimed games
   }
 
+  // https://github.com/vogler/free-games-claimer/issues/55
   if (cfg.pg_claimdlc) {
     console.log('Trying to claim in-game content...');
     await page.click('button[data-type="InGameLoot"]');
@@ -303,27 +304,32 @@ try {
       db.data[user][title] ||= { title, time: datetime(), store: 'DLC', status: 'failed: need account linking' };
       const notify_game = { title, url };
       notify_games.push(notify_game); // status is updated below
-      await page.goto(url, { waitUntil: 'domcontentloaded' });
-      // most games have a button 'Get in-game content'
-      // epic-games: Fall Guys: Claim now -> Continue -> Go to Epic Games (despite account linked and logged into epic-games) -> not tied to account but via some cookie?
-      await Promise.any([page.click('button:has-text("Get in-game content")'), page.click('button:has-text("Claim your gift")'), page.click('button:has-text("Claim now")').then(() => page.click('button:has-text("Continue")'))]);
-      page.click('button:has-text("Continue")').catch(_ => { });
-      const linkAccountModal = page.locator('[data-a-target="LinkAccountModal"]');
-      const linkAccountButton = linkAccountModal.locator('[data-a-target="LinkAccountButton"]');
-      if (await linkAccountButton.count()) {
-        console.error('  Missing account linking:', await linkAccountButton.innerText());
-      } else if(await page.locator('text=Link game account').count()) { // epic-games only?
-        console.error('  Missing account linking:', await page.locator('button[data-a-target="gms-cta"]').innerText());
-      } else {
-        const code = await page.inputValue('input[type="text"]');
-        console.log('  Code to redeem game:', code);
-        db.data[user][title].code = code;
-        db.data[user][title].status = 'claimed';
-        // notify_game.status = `<a href="${redeem[store]}">${redeem_action}</a> ${code} on ${store}`;
+      try {
+        await page.goto(url, { waitUntil: 'domcontentloaded' });
+        // most games have a button 'Get in-game content'
+        // epic-games: Fall Guys: Claim now -> Continue -> Go to Epic Games (despite account linked and logged into epic-games) -> not tied to account but via some cookie?
+        await Promise.any([page.click('button:has-text("Get in-game content")'), page.click('button:has-text("Claim your gift")'), page.click('button:has-text("Claim now")').then(() => page.click('button:has-text("Continue")'))]);
+        page.click('button:has-text("Continue")').catch(_ => { });
+        const linkAccountModal = page.locator('[data-a-target="LinkAccountModal"]');
+        const linkAccountButton = linkAccountModal.locator('[data-a-target="LinkAccountButton"]');
+        if (await linkAccountButton.count()) {
+          console.error('  Missing account linking:', await linkAccountButton.innerText());
+        } else if(await page.locator('text=Link game account').count()) { // epic-games only?
+          console.error('  Missing account linking:', await page.locator('button[data-a-target="gms-cta"]').innerText());
+        } else {
+          const code = await page.inputValue('input[type="text"]');
+          console.log('  Code to redeem game:', code);
+          db.data[user][title].code = code;
+          db.data[user][title].status = 'claimed';
+          // notify_game.status = `<a href="${redeem[store]}">${redeem_action}</a> ${code} on ${store}`;
+        }
+        // await page.pause();
+      } catch (error) {
+        console.error(error);
+      } finally {
+        await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
+        await page.click('button[data-type="InGameLoot"]');
       }
-      // await page.pause();
-      await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
-      await page.click('button[data-type="InGameLoot"]');
     }
   }
 } catch (error) {
