@@ -269,7 +269,21 @@ try {
     await page.click('button[data-type="InGameLoot"]');
     const loot = page.locator('div[data-a-target="offer-list-IN_GAME_LOOT"]');
     await loot.waitFor();
-    console.log('Number of already claimed DLC:', await loot.locator('p:has-text("Collected")').count());
+
+    process.stdout.write('Loading all DLCs on page...');
+    let n1 = 0;
+    let n2 = 0;
+    do {
+      n1 = n2;
+      n2 = await loot.locator('[data-a-target="item-card"]').count();
+      // console.log(n2);
+      process.stdout.write(` ${n2}`);
+      await page.keyboard.press('End'); // scroll to bottom to show all dlcs
+      await page.waitForLoadState('networkidle'); // did not wait for dlcs to be loaded
+      await page.waitForTimeout(1000);
+    } while (n2 > n1);
+
+    console.log('\nNumber of already claimed DLC:', await loot.locator('p:has-text("Collected")').count());
 
     const cards = await loot.locator('[data-a-target="item-card"]:has(p:text-is("Claim"))').all();
     console.log('Number of unclaimed DLC:', cards.length);
@@ -284,6 +298,7 @@ try {
       const title = `${dlc.game} - ${dlc.title}`;
       const url = dlc.url;
       console.log('Current DLC:', title);
+      if (cfg.debug) await page.pause();
       if (cfg.dryrun) continue;
       db.data[user][title] ||= { title, time: datetime(), store: 'DLC', status: 'failed: need account linking' };
       const notify_game = { title, url };
