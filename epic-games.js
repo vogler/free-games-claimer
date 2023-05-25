@@ -19,7 +19,7 @@ handleSIGINT();
 // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // otherwise got UNABLE_TO_GET_ISSUER_CERT_LOCALLY
 const promoJson = await (await fetch(`https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?country=${cfg.eg_country}`)).json(); // ?locale=en-US
 const currentGames = promoJson.data.Catalog.searchStore.elements.filter(e => e.promotions?.promotionalOffers?.length);
-const gameURL = e => `https://store.epicgames.com/p/${e.offerMappings[0].pageSlug}`; // e.urlSlug may be wrong and lead to 404, e.catalogNs.mappings[0].pageSlug leads to base game for add-ons!
+const gameURL = e => `https://store.epicgames.com/p/${e.productSlug || e.offerMappings[0].pageSlug}`; // e.urlSlug may be wrong and lead to 404, e.catalogNs.mappings[0].pageSlug leads to base game for add-ons!
 console.log('Free games:', currentGames.map(e => `${e.title} - ${gameURL(e)}`));
 
 // TODO check if there are new games to claim before launching browser? https://github.com/vogler/free-games-claimer/issues/29
