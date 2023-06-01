@@ -121,6 +121,7 @@ try {
   if (!ids.length) {
     console.log('Nothing to claim');
   } else {
+    await page.waitForTimeout(2000);
     const price = (await page.locator('.shopping-cart .total .price').innerText()).split(' ');
     console.log('Price: ', price[1], 'instead of', price[0]);
     if (price[1] != '0') {
