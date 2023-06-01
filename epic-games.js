@@ -161,6 +161,7 @@ try {
       console.log('  Not in library yet! Claim!');
       // go to purchase of unclaimed game - https://github.com/vogler/free-games-claimer/issues/127
       const purchaseURL = `https://store.epicgames.com/purchase?offers=1-${game.namespace}-${game.id}`;
+      console.log('  purchaseURL:', purchaseURL);
       await page.goto(purchaseURL);
 
       // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoided by Windows userAgent?
