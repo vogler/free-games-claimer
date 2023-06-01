@@ -125,7 +125,9 @@ try {
     const price = (await page.locator('.shopping-cart .total .price').innerText()).split(' ');
     console.log('Price: ', price[1], 'instead of', price[0]);
     if (price[1] != '0') {
-      console.error('Price is not 0! Exit!');
+      const err = 'Price is not 0! Exit! Please <a href="https://github.com/vogler/free-games-claimer/issues/44">report</a>.'
+      console.error(err);
+      notify('unrealengine: ' + err);
       process.exit(1);
     }
     // await page.pause();
