@@ -3,7 +3,7 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
 import { authenticator } from 'otplib';
 import path from 'path';
-import { existsSync, writeFileSync } from 'fs';
+import { writeFileSync } from 'fs';
 import { jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
 import { cfg } from './config.js';
 
@@ -43,7 +43,9 @@ try {
 
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto
 
-  while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
+  await page.waitForResponse(r => r.request().method() == 'POST' && r.url().startsWith('https://graphql.unrealengine.com/ue/graphql'));
+
+  while (await page.locator('.display-name').count() == 0) {
     console.error('Not signed in anymore. Please login in the browser or here in the terminal.');
     if (cfg.novnc_port) console.info(`Open http://localhost:${cfg.novnc_port} to login inside the docker container.`);
     if (!cfg.debug) context.setDefaultTimeout(cfg.login_timeout); // give user some extra time to log in
@@ -79,11 +81,11 @@ try {
         process.exit(1);
       }
     }
-    await page.waitForURL(URL_CLAIM);
+    await page.waitForURL('**unrealengine.com/marketplace/**');
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
   await page.waitForTimeout(1000);
-  user = await page.locator('.user-label').first().innerHTML();
+  user = await page.locator('.display-name').first().innerHTML();
   console.log(`Signed in as ${user}`);
   db.data[user] ||= {};
 
@@ -110,10 +112,10 @@ try {
     }
     if (await p.locator('.btn .in-cart').count()) {
       console.log('  ↳ Already in cart');
-      continue;
+    } else {
+      await p.locator('.btn .add').click();
+      console.log('  ↳ Added to cart');
     }
-    await p.locator('.btn .add').click();
-    console.log('  ↳ Added to cart');
     ids.push(id);
   }
   if (!ids.length) {
