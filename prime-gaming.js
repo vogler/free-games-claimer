@@ -102,7 +102,7 @@ try {
   console.log('Number of already claimed games (total):', await games.locator('p:has-text("Collected")').count());
   // can't use .all() since the list of elements via locator will change after click while we iterate over it
   const internal = await games.locator('[data-a-target="claim-prime-offer-card"]:has-text("Claim")').elementHandles();
-  const external = await games.locator('[data-a-target="learn-more-card"]:has(p:text-is("Claim"))').elementHandles();
+  const external = games.locator('[data-a-target="learn-more-card"]:has(p:text-is("Claim"))'); // using .elementHandles() here would lead to error due to page navigation: elementHandle.$: Protocol error (Page.adoptNode)
   console.log('Number of free unclaimed games (Prime Gaming):', internal.length);
   // claim games in internal store
   for (const card of internal) {
@@ -118,9 +118,9 @@ try {
     const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', 'internal', `${filenamify(title)}.png`);
     await card.screenshot({ path: p });
   }
-  console.log('Number of free unclaimed games (external stores):', external.length);
+  console.log('Number of free unclaimed games (external stores):', await external.count());
   // claim games in external/linked stores. Linked: origin.com, epicgames.com; Redeem-key: gog.com, legacygames.com, microsoft
-  for (const card of external) {
+  for (const card of await external.elementHandles()) { // TODO refactor (result of external locator changes with each iteration)
     // if (!card) continue;
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
