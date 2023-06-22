@@ -153,7 +153,7 @@ try {
         const code = await page.inputValue('input[type="text"]');
         console.log('  Code to redeem game:', code);
         if (store == 'legacy games') { // may be different URL like https://legacygames.com/primeday/puzzleoftheyear/
-          redeem[store] = await (await page.$('li:has-text("Click here") a')).getAttribute('href');
+          redeem[store] = await (await page.$('li:has-text("Click here") a')).getAttribute('href'); // full text: Click here to enter your redemption code.
         }
         console.log('  URL to redeem game:', redeem[store]);
         db.data[user][title].code = code;
@@ -254,7 +254,7 @@ try {
     await page.click('button[data-type="Game"]');
   }
 
-  if (notify_games.length) {
+  if (notify_games.length) { // make screenshot of all games if something was claimed
     const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', `${filenamify(datetime())}.png`);
     // await page.screenshot({ path: p, fullPage: true }); // fullPage does not make a difference since scroll not on body but on some element
     await page.keyboard.press('End'); // scroll to bottom to show all games
