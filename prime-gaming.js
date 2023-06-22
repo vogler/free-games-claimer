@@ -127,12 +127,28 @@ try {
     if (cfg.debug) await page.pause();
     if (cfg.dryrun) continue;
     await (await card.$('text=Claim')).click(); // goes to URL of game, no need to wait
-    await Promise.any([page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")')]); // waits for navigation
-    const store_text = await (await page.$('[data-a-target="hero-header-subtitle"]')).innerText();
-    // Full game for PC [and MAC] on: gog.com, Origin, Legacy Games, EPIC GAMES, Battle.net
-    // 3 Full PC Games on Legacy Games
-    const store = store_text.toLowerCase().replace(/.* on /, '');
+    await Promise.any([page.click('button:has-text("Get game")'), page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")')]); // waits for navigation
+
+    // TODO would be simpler than the below, but will block for linked stores without code
+    // const redeem_text = await page.textContent('text=/ code on /'); // FAQ: How do I redeem my code?
+    // console.log(' ', redeem_text);
+    //   // Before July 29, 2023, redeem your offer code on GOG.com.
+    //   // Before July 1, 2023, redeem your product code on Legacy Games.
+    // let store = redeem_text.toLowerCase().replace(/.* on /, '').slice(0, -1);
+
+    let store = '';
+    const store_text = await page.$('[data-a-target="hero-header-subtitle"]'); // worked fine for every store, but now no longer works for gog.com
+    if (store_text) { // legacy games, ?
+      const store_texts = await store_text.innerText();
+      // Full game for PC [and MAC] on: Legacy Games, Origin, EPIC GAMES, Battle.net; alt: 3 Full PC Games on Legacy Games
+      store = store_texts.toLowerCase().replace(/.* on /, '');
+    } else { // gog.com, ?
+      // $('[data-a-target="DescriptionItemDetails"]').innerText is e.g. 'Prey for PC on GOG.com.' but does not work for Legacy Games
+      const item_text = await page.innerText('[data-a-target="DescriptionItemDetails"]');
+      store = item_text.toLowerCase().replace(/.* on /, '').slice(0, -1);
+    }
     console.log('  External store:', store);
+
     const url = page.url().split('?')[0];
     db.data[user][title] ||= { title, time: datetime(), url, store };
     const notify_game = { title, url };
@@ -150,7 +166,7 @@ try {
         'legacy games': 'https://www.legacygames.com/primedeal',
       };
       if (store in redeem) { // did not work for linked origin: && !await page.locator('div:has-text("Successfully Claimed")').count()
-        const code = await page.inputValue('input[type="text"]');
+        const code = await Promise.any([page.inputValue('input[type="text"]'), page.textContent('[data-a-target="ClaimStateClaimCodeContent"]').then(s => s.replace('Your code: ', ''))]); // input: Legacy Games; text: gog.com
         console.log('  Code to redeem game:', code);
         if (store == 'legacy games') { // may be different URL like https://legacygames.com/primeday/puzzleoftheyear/
           redeem[store] = await (await page.$('li:has-text("Click here") a')).getAttribute('href'); // full text: Click here to enter your redemption code.
