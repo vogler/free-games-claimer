@@ -15,6 +15,19 @@ db.data ||= {};
 
 handleSIGINT();
 
+// get current promotionalOffers from json instead of checking the website
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // otherwise got UNABLE_TO_GET_ISSUER_CERT_LOCALLY
+const promoJson = await (await fetch(`https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?country=${cfg.eg_country}`)).json(); // ?locale=en-US
+const currentGames = promoJson.data.Catalog.searchStore.elements.filter(e => e.promotions?.promotionalOffers?.length);
+const gameURL = e => `https://store.epicgames.com/p/${e.productSlug || e.offerMappings[0].pageSlug}`; // e.urlSlug may be wrong and lead to 404, e.catalogNs.mappings[0].pageSlug leads to base game for add-ons!
+console.log('Free games:', currentGames.map(e => `${e.title} - ${gameURL(e)}`));
+
+// TODO check if there are new games to claim before launching browser? https://github.com/vogler/free-games-claimer/issues/29
+// Options:
+// 1. Check order history (https://www.epicgames.com/account/v2/payment/ajaxGetOrderHistory) - only contains the last 10 orders
+// 2. Check epic-games.json - would need to know the logged in user for `cfg.dir.browser`
+// However, this may not always speed up the process since a game may have already been claimed before.
+
 // https://www.nopecha.com extension source from https://github.com/NopeCHA/NopeCHA/releases/tag/0.1.16
 // const ext = path.resolve('nopecha'); // used in Chromium, currently not needed in Firefox
 
@@ -106,18 +119,10 @@ try {
   console.log(`Signed in as ${user}`);
   db.data[user] ||= {};
 
-  // Detect free games
-  const game_loc = page.locator('a:has(span:text-is("Free Now"))');
-  await game_loc.last().waitFor();
-  // clicking on `game_sel` sometimes led to a 404, see https://github.com/vogler/free-games-claimer/issues/25
-  // debug showed that in those cases the href was still correct, so we `goto` the urls instead of clicking.
-  // Alternative: parse the json loaded to build the page https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions
-    // filter data.Catalog.searchStore.elements for .promotions.promotionalOffers being set and build URL with .catalogNs.mappings[0].pageSlug or .urlSlug if not set to some wrong id like it was the case for spirit-of-the-north-f58a66 - this is also what's done here: https://github.com/claabs/epicgames-freegames-node/blob/938a9653ffd08b8284ea32cf01ac8727d25c5d4c/src/puppet/free-games.ts#L138-L213
-  const urlSlugs = await Promise.all((await game_loc.elementHandles()).map(a => a.getAttribute('href')));
-  const urls = urlSlugs.map(s => 'https://store.epicgames.com' + s);
-  console.log('Free games:', urls);
-
-  for (const url of urls) {
+  // This URL will order all free games, but it will fail if some games have already been claimed:
+  // const purchaseURL = 'https://store.epicgames.com/purchase?' + currentGames.map(e => `offers=1-${e.namespace}-${e.id}`).join('&');
+  for (const game of currentGames) {
+    const url = gameURL(game);
     await page.goto(url); // , { waitUntil: 'domcontentloaded' });
     const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText(); // barrier to block until page is loaded
 
@@ -128,12 +133,16 @@ try {
       await page.waitForTimeout(2000);
     }
 
-    const title = await page.locator('h1').first().innerText();
+    // const title = await page.locator('h1').first().innerText();
+    const title = game.title;
     const game_id = page.url().split('/').pop();
     db.data[user][game_id] ||= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
     console.log('Current free game:', title);
     const notify_game = { title, url, status: 'failed' };
     notify_games.push(notify_game); // status is updated below
+
+    const p = path.resolve(cfg.dir.screenshots, 'epic-games', `${game_id}.png`);
+    if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
 
     if (btnText.toLowerCase() == 'in library') {
       console.log('  Already in library! Nothing to claim.');
@@ -149,8 +158,11 @@ try {
       console.log('  Base game:', baseUrl);
       // await page.click('a:has-text("Overview")');
     } else { // GET
-      console.log('  Not in library yet! Click GET.');
-      await page.click('[data-testid="purchase-cta-button"]', { delay: 11 }); // got stuck here without delay (or mouse move), see #75, 1ms was also enough
+      console.log('  Not in library yet! Claim!');
+      // go to purchase of unclaimed game - https://github.com/vogler/free-games-claimer/issues/127
+      const purchaseURL = `https://store.epicgames.com/purchase?offers=1-${game.namespace}-${game.id}`;
+      console.log('  purchaseURL:', purchaseURL);
+      await page.goto(purchaseURL);
 
       // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoided by Windows userAgent?
       page.click('button:has-text("Continue")').catch(_ => { }); // needed since change from Chromium to Firefox?
@@ -165,23 +177,20 @@ try {
         await page.locator('button:has-text("Accept")').click();
       }).catch(_ => { });
 
-      // it then creates an iframe for the purchase
-      await page.waitForSelector('#webPurchaseContainer iframe'); // TODO needed?
-      const iframe = page.frameLocator('#webPurchaseContainer iframe');
       // skip game if unavailable in region, https://github.com/vogler/free-games-claimer/issues/46 TODO check games for account's region
-      if (await iframe.locator(':has-text("unavailable in your region")').count() > 0) {
+      if (await page.locator(':has-text("unavailable in your region")').count() > 0) {
         console.error('  This product is unavailable in your region!');
         db.data[user][game_id].status = notify_game.status = 'unavailable-in-region';
         continue;
       }
 
-      iframe.locator('.payment-pin-code').waitFor().then(async () => {
+      page.locator('.payment-pin-code').waitFor().then(async () => {
         if (!cfg.eg_parentalpin) {
           console.error('  EG_PARENTALPIN not set. Need to enter Parental Control PIN manually.');
           notify('epic-games: EG_PARENTALPIN not set. Need to enter Parental Control PIN manually.');
         }
-        await iframe.locator('input.payment-pin-code__input').first().type(cfg.eg_parentalpin);
-        await iframe.locator('button:has-text("Continue")').click({ delay: 11 });
+        await page.locator('input.payment-pin-code__input').first().type(cfg.eg_parentalpin);
+        await page.locator('button:has-text("Continue")').click({ delay: 11 });
       }).catch(_ => { });
 
       if (cfg.debug) await page.pause();
@@ -191,15 +200,21 @@ try {
         continue;
       }
 
+      // After successful order using the `purchaseURL`-method, the page is just empty, without any 'Thanks for your order', so we wait for the response of their API. Note: no await, and start waiting before final click to 'Place Order'.
+      const r = page.waitForResponse(r => r.url().startsWith('https://payment-website-pci.ol.epicgames.com/purchase/confirm-order'));
+
       // Playwright clicked before button was ready to handle event, https://github.com/vogler/free-games-claimer/issues/84#issuecomment-1474346591
-      await iframe.locator('button:has-text("Place Order"):not(:has(.payment-loading--loading))').click({ delay: 11 });
+      await page.locator('button:has-text("Place Order"):not(:has(.payment-loading--loading))').click({ delay: 11 });
 
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
-      const btnAgree = iframe.locator('button:has-text("I Agree")');
+      const btnAgree = page.locator('button:has-text("I Agree")');
       btnAgree.waitFor().then(() => btnAgree.click()).catch(_ => { }); // EU: wait for and click 'I Agree'
+
+      // May fail if game is already claimed with text 'Sorry, there is an error with your cart and we cannot complete the purchase. Please close this window and check your cart list.'
+
       try {
         // context.setDefaultTimeout(100 * 1000); // give time to solve captcha, iframe goes blank after 60s?
-        const captcha = iframe.locator('#h_captcha_challenge_checkout_free_prod iframe');
+        const captcha = page.locator('#h_captcha_challenge_checkout_free_prod iframe');
         captcha.waitFor().then(async () => { // don't await, since element may not be shown
           // console.info('  Got hcaptcha challenge! NopeCHA extension will likely solve it.')
           console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.')
@@ -209,7 +224,14 @@ try {
           // console.info('  Saved a screenshot of hcaptcha challenge to', p);
           // console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
         }).catch(_ => { }); // may time out if not shown
-        await page.waitForSelector('text=Thanks for your order!');
+        // await page.waitForSelector('text=Thanks for your order!'); // not shown for order via `purchaseURL`
+        const rt = await (await r).text(); // TODO blocks if not claimed?
+        const rj = JSON.parse(rt);
+        if (rj?.receiptResponse?.orderStatus != 'COMPLETED') {
+          console.error('Unexpected confirm-order response. Message:', rj.message);
+          console.log(rj);
+          continue;
+        }
         db.data[user][game_id].status = 'claimed';
         db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
         console.log('  Claimed successfully!');
@@ -223,9 +245,6 @@ try {
         db.data[user][game_id].status = 'failed';
       }
       notify_game.status = db.data[user][game_id].status; // claimed or failed
-
-      const p = path.resolve(cfg.dir.screenshots, 'epic-games', `${game_id}.png`);
-      if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
     }
   }
 } catch (error) {

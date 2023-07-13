@@ -28,6 +28,7 @@ export const cfg = {
   eg_password: process.env.EG_PASSWORD || process.env.PASSWORD,
   eg_otpkey: process.env.EG_OTPKEY,
   eg_parentalpin: process.env.EG_PARENTALPIN,
+  eg_country: process.env.EG_COUNTRY || 'US', // This should fit your account's country since sometimes there are replacements for games that are unavailable-in-region. See country/region under https://www.epicgames.com/account/personal and use its two-letter country code.
   // auth prime-gaming
   pg_email: process.env.PG_EMAIL || process.env.EMAIL,
   pg_password: process.env.PG_PASSWORD || process.env.PASSWORD,
