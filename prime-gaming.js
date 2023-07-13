@@ -254,7 +254,7 @@ try {
           } else {
             console.error(`  Redeem on ${store} not yet implemented!`);
           }
-          if (cfg.debug) await page.pause();
+          if (cfg.debug) await page2.pause();
           await page2.close();
         }
         notify_game.status = `<a href="${redeem[store]}">${redeem_action}</a> ${code} on ${store}`;
