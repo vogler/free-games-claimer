@@ -63,7 +63,7 @@ async function main() {
 }
 
 async function performLogin() {
-    await page.goto(URL_CLAIM, { waitUntil: "domcontentloaded" }); // default 'load' takes forever
+    await page.goto(URL_CLAIM, { waitUntil: "networkidle" }); // default 'load' takes forever
 
     const signInLocator = page.locator('span:has-text("Sign in")').first();
     const profileIconLocator = page.locator(".profile-icon").first();
@@ -233,13 +233,16 @@ async function redeemFreeGames() {
         const inLibrary = gameCard
             .locator('span:has-text("In library")')
             .first();
+        const purchased = gameCard
+            .locator('span:has-text("Purchased")')
+            .first();
         const addToLibrary = gameCard
             .locator('span:has-text("Add to Library")')
             .nth(1);
 
-        await Promise.any([addToLibrary.waitFor(), inLibrary.waitFor()]);
+        await Promise.any([addToLibrary.waitFor(), purchased.waitFor(), inLibrary.waitFor()]);
 
-        if (await inLibrary.isVisible()) {
+        if (await inLibrary.isVisible() || await purchased.isVisible()) {
             console.log("  Already in library! Nothing to claim.");
             notify_game.status = "existed";
             db.data[user][game_id].status ||= "existed"; // does not overwrite claimed or failed
