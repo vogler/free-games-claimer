@@ -139,7 +139,7 @@ async function signInToPSN() {
                     "playstation-plus: got captcha during login. Please check."
                 );
             })
-            .catch((_) => {});
+            .catch((_) => { });
 
         // handle MFA, but don't await it
         page.locator('input[title="Enter Code"]')
@@ -167,7 +167,7 @@ async function signInToPSN() {
                     .click(); // Trust this Browser
                 await page.click("button.primary-button");
             })
-            .catch((_) => {});
+            .catch((_) => { });
     } else {
         console.log("Waiting for you to login in the browser.");
         await notify(
@@ -206,9 +206,10 @@ async function redeemFreeGames() {
                 .locator(".cta__primary")
                 .getAttribute("href");
             // standardize URLs
-            return urlSlug.charAt(0) === "/"
-                ? `https://www.playstation.com${urlSlug}`
-                : urlSlug;
+            return (urlSlug.charAt(0) === "/"
+                ? `https://www.playstation.com${urlSlug}`   // base url may not be present, add it back
+                : urlSlug)
+                .split('#').shift();    // url may have anchor tag, remove it
         })
     );
     console.log("Free games:", monthlyGamesPageLinks);
