@@ -1,8 +1,9 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
 import { authenticator } from 'otplib';
-import path from 'path';
-import { jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
+import { resolve, jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
 import { cfg } from './config.js';
+
+const screenshot = (...a) => resolve(cfg.dir.screenshots, 'prime-gaming', ...a);
 
 // const URL_LOGIN = 'https://www.amazon.de/ap/signin'; // wrong. needs some session args to be valid?
 const URL_CLAIM = 'https://gaming.amazon.com/home';
@@ -116,8 +117,7 @@ try {
     notify_games.push({ title, status: 'claimed', url: URL_CLAIM });
     // const img = await (await card.$('img.tw-image')).getAttribute('src');
     // console.log('Image:', img);
-    const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', 'internal', `${filenamify(title)}.png`);
-    await card.screenshot({ path: p });
+    await card.screenshot({ path: screenshot('internal', `${filenamify(title)}.png`) });
   }
   console.log('Number of free unclaimed games (external stores):', await external.count());
   // claim games in external/linked stores. Linked: origin.com, epicgames.com; Redeem-key: gog.com, legacygames.com, microsoft
@@ -263,8 +263,7 @@ try {
         db.data[user][title].status = 'claimed';
       }
       // save screenshot of potential code just in case
-      const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', 'external', `${filenamify(title)}.png`);
-      await page.screenshot({ path: p, fullPage: true });
+      await page.screenshot({ path: screenshot('external', `${filenamify(title)}.png`), fullPage: true });
       // console.info('  Saved a screenshot of page to', p);
     }
     // await page.pause();
@@ -273,7 +272,7 @@ try {
   }
 
   if (notify_games.length) { // make screenshot of all games if something was claimed
-    const p = path.resolve(cfg.dir.screenshots, 'prime-gaming', `${filenamify(datetime())}.png`);
+    const p = screenshot(`${filenamify(datetime())}.png`);
     // await page.screenshot({ path: p, fullPage: true }); // fullPage does not make a difference since scroll not on body but on some element
     await page.keyboard.press('End'); // scroll to bottom to show all games
     await page.waitForTimeout(1000); // wait for fade in animation

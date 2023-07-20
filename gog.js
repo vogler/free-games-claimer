@@ -1,7 +1,8 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
-import path from 'path';
-import { jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
+import { resolve, jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
 import { cfg } from './config.js';
+
+const screenshot = (...a) => resolve(cfg.dir.screenshots, 'gog', ...a);
 
 const URL_CLAIM = 'https://www.gog.com/en';
 
@@ -99,8 +100,7 @@ try {
     db.data[user][title] ||= { title, time: datetime(), url };
     if (cfg.dryrun) process.exit(1);
     await page.locator('#giveaway:not(.is-loading)').waitFor(); // otherwise screenshot is sometimes with loading indicator instead of game title
-    const p = path.resolve(cfg.dir.screenshots, 'gog', `${filenamify(title)}.png`);
-    await banner.screenshot({ path: p }); // overwrites every time - only keep first?
+    await banner.screenshot({ path: screenshot(`${filenamify(title)}.png`) }); // overwrites every time - only keep first?
 
     // await banner.getByRole('button', { name: 'Add to library' }).click();
     // instead of clicking the button, we visit the auto-claim URL which gives as a JSON response which is easier than checking the state of a button

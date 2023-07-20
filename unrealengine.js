@@ -4,8 +4,10 @@ import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdate
 import { authenticator } from 'otplib';
 import path from 'path';
 import { writeFileSync } from 'fs';
-import { jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
+import { resolve, jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
 import { cfg } from './config.js';
+
+const screenshot = (...a) => resolve(cfg.dir.screenshots, 'unrealengine', ...a);
 
 const URL_CLAIM = 'https://www.unrealengine.com/marketplace/en-US/assets?count=20&sortBy=effectiveDate&sortDir=DESC&start=0&tag=4910';
 const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
@@ -176,15 +178,13 @@ try {
       console.log(e);
       // console.error('  Failed to claim! Try again if NopeCHA timed out. Click the extension to see if you ran out of credits (refill after 24h). To avoid captchas try to get a new IP or set a cookie from https://www.hcaptcha.com/accessibility');
       console.error('  Failed to claim! To avoid captchas try to get a new IP address.');
-      const p = path.resolve(cfg.dir.screenshots, 'unrealengine', 'failed', `${filenamify(datetime())}.png`);
-      await page.screenshot({ path: p, fullPage: true });
+      await page.screenshot({ path: screenshot('failed', `${filenamify(datetime())}.png`), fullPage: true });
       // db.data[user][id].status = 'failed';
       notify_games.forEach(g => g.status = 'failed');
     }
     // notify_game.status = db.data[user][game_id].status; // claimed or failed
 
-    const p = path.resolve(cfg.dir.screenshots, 'unrealengine', `${filenamify(datetime())}.png`);
-    if (notify_games.length) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
+    if (notify_games.length) await page.screenshot({ path: screenshot(`${filenamify(datetime())}.png`), fullPage: false }); // fullPage is quite long...
     console.log('Done');
   }
 } catch (error) {

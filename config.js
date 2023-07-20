@@ -20,7 +20,7 @@ export const cfg = {
   get dir() { // avoids ReferenceError: Cannot access 'dataDir' before initialization
     return {
       browser: process.env.BROWSER_DIR || dataDir('browser'), // for multiple accounts or testing
-      screenshots: process.env.SCREENSHOTS_DIR || dataDir('screenshots'), // if not wanted: /dev/null
+      screenshots: process.env.SCREENSHOTS_DIR || dataDir('screenshots'), // set to 0 to disable screenshots
     }
   },
   // auth epic-games
