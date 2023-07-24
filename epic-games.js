@@ -60,7 +60,7 @@ let user;
 
 try {
   await context.addCookies([{name: 'OptanonAlertBoxClosed', value: new Date(Date.now() - 5*24*60*60*1000).toISOString(), domain: '.epicgames.com', path: '/'}]); // Accept cookies to get rid of banner to save space on screen. Set accept time to 5 days ago.
-
+  await context.addCookies([{name: 'HasAcceptedAgeGates', value: "ESRB%3A9007199254740991", domain: '.epicgames.com', path: '/'}]); // Bypass mature content warning
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto
 
   // page.click('button:has-text("Accept All Cookies")').catch(_ => { }); // Not needed anymore since we set the cookie above. Clicking this did not always work since the message was animated in too slowly.
@@ -124,11 +124,12 @@ try {
     const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText(); // barrier to block until page is loaded
 
     // click Continue if 'This game contains mature content recommended only for ages 18+'
-    if (await page.locator('button:has-text("Continue")').count() > 0) {
+    // HasAcceptedAgeGates cookie gets rid of the need for this
+    /*if (await page.locator('button:has-text("Continue")').count() > 0) {
       console.log('  This game contains mature content recommended only for ages 18+');
       await page.click('button:has-text("Continue")', { delay: 111 });
       await page.waitForTimeout(2000);
-    }
+    }*/
 
     const title = await page.locator('h1').first().innerText();
     const game_id = page.url().split('/').pop();
