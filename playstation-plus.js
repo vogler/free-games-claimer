@@ -222,6 +222,7 @@ async function redeemFreeGames() {
         const gameCard = page.locator(".content-grid").first();
         await gameCard.waitFor();
         const title = await gameCard.locator("h1").first().innerText();
+
         const game_id = page
             .url()
             .split("/")
@@ -233,14 +234,14 @@ async function redeemFreeGames() {
         notify_games.push(notify_game); // status is updated below
 
         // SELECTORS
-        const inLibrary = gameCard
+        const inLibrary = page
             .locator('span:has-text("In library")')
             .first();
-        const purchased = gameCard
+        const purchased = page
             .locator('span:has-text("Purchased")')
             .first();
-        const addToLibrary = gameCard
-            .locator('span:has-text("Add to Library")')
+        const addToLibrary = page   // the base game may not be the free one, look for any edition
+            .locator('button[data-track-click="ctaWithPrice:addToLibrary"]')
             .nth(1);
 
         await Promise.any([addToLibrary.waitFor(), purchased.waitFor(), inLibrary.waitFor()]);
