@@ -7,6 +7,7 @@ import {
     jsonDb,
     notify,
     prompt,
+    retryOnError,
 } from "./util.js";
 import path from "path";
 import { existsSync, writeFileSync } from "fs";
@@ -63,7 +64,8 @@ async function main() {
 }
 
 async function performLogin() {
-    await page.goto(URL_CLAIM, { waitUntil: "networkidle" }); // default 'load' takes forever
+    // the page gets stuck sometimes and requires a reload
+    await retryOnError(() => page.goto(URL_CLAIM, { timeout: 20_000, waitUntil: "networkidle" }));
 
     const signInLocator = page.locator('span:has-text("Sign in")').first();
     const profileIconLocator = page.locator(".profile-icon").first();

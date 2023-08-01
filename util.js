@@ -18,6 +18,33 @@ export const jsonDb = async file => {
 
 
 export const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Retries a Promise a specified number of times on error.
+ *
+ * @param {function(): Promise<any>} promiseFn - A function that returns a Promise.
+ * @param {number} maxRetries - The maximum number of retries to attempt on error.
+ * @returns {Promise<any>} - A Promise that resolves with the result of the successful attempt or rejects with the last error if all retries fail.
+ */
+export const retryOnError = (promiseFn, maxRetries = 1) => {
+  return new Promise((resolve, reject) => {
+    const executePromise = async (remainingRetries) => {
+      try {
+        const result = await promiseFn();
+        resolve(result);
+      } catch (error) {
+        if (remainingRetries > 0) {
+          console.log(`Retrying... ${remainingRetries} retries left.`);
+          executePromise(remainingRetries - 1); // Retry the Promise with one less retry
+        } else {
+          reject(error); // No more retries left, reject with the last error
+        }
+      }
+    };
+
+    executePromise(maxRetries);
+  });
+};
 // date and time as UTC (no timezone offset) in nicely readable and sortable format, e.g., 2022-10-06 12:05:27.313
 export const datetimeUTC = (d = new Date()) => d.toISOString().replace('T', ' ').replace('Z', '');
 // same as datetimeUTC() but for local timezone, e.g., UTC + 2h for the above in DE
@@ -105,11 +132,11 @@ export const notify = (html) => new Promise((resolve, reject) => {
   const title = cfg.notify_title ? `-t ${cfg.notify_title}` : '';
   exec(`apprise ${cfg.notify} -i html '${title}' -b '${html}'`, (error, stdout, stderr) => {
     if (error) {
-        console.log(`error: ${error.message}`);
-        if (error.message.includes('command not found')) {
-          console.info('Run `pip install apprise`. See https://github.com/vogler/free-games-claimer#notifications');
-        }
-        return resolve();
+      console.log(`error: ${error.message}`);
+      if (error.message.includes('command not found')) {
+        console.info('Run `pip install apprise`. See https://github.com/vogler/free-games-claimer#notifications');
+      }
+      return resolve();
     }
     if (stderr) console.error(`stderr: ${stderr}`);
     if (stdout) console.log(`stdout: ${stdout}`);
