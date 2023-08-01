@@ -64,10 +64,10 @@ async function main() {
 }
 
 async function performLogin() {
-    // the page gets stuck sometimes and requires a reload
-    await retryOnError(() => page.goto(URL_CLAIM, { timeout: 20_000, waitUntil: "networkidle" }));
+   // the page gets stuck sometimes and requires a reload
+   await retryOnError(() => page.goto(URL_CLAIM, { timeout: 20_000, waitUntil: "domcontentloaded" }));
 
-    const signInLocator = page.locator('span:has-text("Sign in")').first();
+   const signInLocator = page.locator('button[data-track-click="web:select-sign-in-button"]').first();
     const profileIconLocator = page.locator(".profile-icon").first();
 
     const mainPageBaseUrl = "https://playstation.com";

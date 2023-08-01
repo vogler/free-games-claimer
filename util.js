@@ -34,7 +34,7 @@ export const retryOnError = (promiseFn, maxRetries = 1) => {
         resolve(result);
       } catch (error) {
         if (remainingRetries > 0) {
-          console.log(`Retrying... ${remainingRetries} retries left.`);
+          console.log(`Retrying... ${remainingRetries - 1} retries left.`);
           executePromise(remainingRetries - 1); // Retry the Promise with one less retry
         } else {
           reject(error); // No more retries left, reject with the last error
