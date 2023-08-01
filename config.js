@@ -37,6 +37,10 @@ export const cfg = {
   gog_password: process.env.GOG_PASSWORD || process.env.PASSWORD,
   gog_newsletter: process.env.GOG_NEWSLETTER == '1', // do not unsubscribe from newsletter after claiming a game
   // OTP only via GOG_EMAIL, can't add app...
+  // auth playstation-plus
+  psp_email: process.env.PSP_EMAIL || process.env.EMAIL,
+  psp_password: process.env.PSP_PASSWORD || process.env.PASSWORD,
+  psp_otpkey: process.env.PSP_OTPKEY,
 
   // experimmental - likely to change
   pg_redeem: process.env.PG_REDEEM == '1', // prime-gaming: redeem keys on external stores

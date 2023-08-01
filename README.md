@@ -10,6 +10,7 @@ Claims free games periodically on
 - <img src="https://static.wikia.nocookie.net/this-war-of-mine/images/1/1a/Logo_GoG.png/revision/latest?cb=20160711062658" width="32"/> [GOG](https://www.gog.com)
 - <img src="https://www.freepnglogos.com/uploads/xbox-logo-picture-png-14.png" width="32"/> [Xbox Live Games with Gold](https://www.xbox.com/en-US/live/gold#gameswithgold) - planned
 - <img src="https://cdn2.unrealengine.com/ue-logo-white-e34b6ba9383f.svg" width="32"/> [Unreal Engine (Assets)](https://www.unrealengine.com/marketplace/en-US/assets?count=20&sortBy=effectiveDate&sortDir=DESC&start=0&tag=4910) ([experimental](https://github.com/vogler/free-games-claimer/issues/44), same login as Epic Games)
+- <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/PlayStation_logo.svg/400px-PlayStation_logo.svg.png" width="32"/> [PlayStation Plus](https://www.playstation.com/en-us/ps-plus/whats-new/#monthly-games) ([experimental](https://github.com/vogler/free-games-claimer/issues/141))
 
 Pull requests welcome :)
 
@@ -24,7 +25,7 @@ Easy option: [install Docker](https://docs.docker.com/get-docker/) (or [podman](
 ```
 docker run --rm -it -p 6080:6080 -v fgc:/fgc/data --pull=always ghcr.io/vogler/free-games-claimer
 ```
-This will run `node epic-games; node prime-gaming; node gog` - if you only want to claim games for one of the stores, you can override the default command by appending e.g. `node epic-games` at the end of the `docker run` command, or if you want several `bash -c "node epic-games.js; node gog.js"`.
+This will run `node epic-games; node prime-gaming; node gog; node-playstation-plus;` - if you only want to claim games for one of the stores, you can override the default command by appending e.g. `node epic-games` at the end of the `docker run` command, or if you want several `bash -c "node epic-games.js; node gog.js"`.
 Data (including json files with claimed games, codes to redeem, screenshots) is stored in the Docker volume `fgc`.
 
 <details>
@@ -86,6 +87,9 @@ Available options/variables and their default values:
 | GOG_EMAIL     	|         	| GOG email for login. Overrides EMAIL.                                  	|
 | GOG_PASSWORD  	|         	| GOG password for login. Overrides PASSWORD.                            	|
 | GOG_NEWSLETTER	| 0       	| Do not unsubscribe from newsletter after claiming a game if 1.         	|
+| PSP_EMAIL      	|         	| PlayStation email for login. Overrides EMAIL.                         	|
+| PSP_PASSWORD   	|         	| PlayStation password for login. Overrides PASSWORD.                   	|
+| PSP_OTPKEY     	|         	| PlayStation MFA OTP key.                                               	|
 
 See `config.js` for all options.
 
@@ -113,6 +117,7 @@ To get the OTP key, it is easiest to follow the store's guide for adding an auth
 - **Epic Games**: visit [password & security](https://www.epicgames.com/account/password), enable 'third-party authenticator app', copy the 'Manual Entry Key' and use it to set `EG_OTPKEY`.
 - **Prime Gaming**: visit Amazon 'Your Account › Login & security', 2-step verification › Manage › Add new app › Can't scan the barcode, copy the bold key and use it to set `PG_OTPKEY`
 - **GOG**: only offers OTP via email
+- **PlayStation**: visit [account settings](https://id.sonyentertainmentnetwork.com/id/management_ca/?smcid=pdc%3Aen-us%3Aweb-toolbar-account%3Aaccount%20settings) > Security > 'edit' 2-Step Verification > Authenticator App > copy the key and use it to set `PSP_OTPKEY`.
 
 Beware that storing passwords and OTP keys as clear text may be a security risk. Use a unique/generated password! TODO: maybe at least offer to base64 encode for storage.
 
@@ -130,11 +135,15 @@ Claiming the Amazon Games works out-of-the-box, however, for games on external s
   Keys and URLs are printed to the console, included in notifications and saved in `data/prime-gaming.json`. A screenshot of the page with the key is also saved to `data/screenshots`.
   [TODO](https://github.com/vogler/free-games-claimer/issues/5): ~~redeem keys on external stores.~~
 
+### PlayStation Plus
+Run `node playstation-plus` (locally or in Docker).
+
 ### Run periodically
 #### How often?
 Epic Games usually has two free games *every week*, before Christmas every day.
 Prime Gaming has new games *every month* or more often during Prime days.
 GOG usually has one new game every couples of weeks.
+PlayStation Plus usually has two or three new games *every month*.
 
 It is save to run the scripts every day.
 
