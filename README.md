@@ -135,6 +135,7 @@ Claiming the Amazon Games works out-of-the-box, however, for games on external s
 Epic Games usually has two free games *every week*, before Christmas every day.
 Prime Gaming has new games *every month* or more often during Prime days.
 GOG usually has one new game every couples of weeks.
+Unreal Engine has new assets to claim *every first Tuesday of a month*.
 
 It is save to run the scripts every day.
 

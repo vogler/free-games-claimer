@@ -1,4 +1,5 @@
 // TODO This is mostly a copy of epic-games.js
+// New assets to claim every first Tuesday of a month.
 
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
 import { authenticator } from 'otplib';
