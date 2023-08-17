@@ -312,6 +312,7 @@ try {
     })));
     // console.log(dlcs);
 
+    const dlc_unlinked = {};
     for (const dlc of dlcs) {
       const title = `${dlc.game} - ${dlc.title}`;
       const url = dlc.url;
@@ -329,10 +330,18 @@ try {
         page.click('button:has-text("Continue")').catch(_ => { });
         const linkAccountModal = page.locator('[data-a-target="LinkAccountModal"]');
         const linkAccountButton = linkAccountModal.locator('[data-a-target="LinkAccountButton"]');
+        let unlinked_store;
         if (await linkAccountButton.count()) {
-          console.error('  Missing account linking:', await linkAccountButton.getAttribute('aria-label'), url);
+          unlinked_store = await linkAccountButton.getAttribute('aria-label');
+          unlinked_store = unlinked_store.match(/Link (.*) account/)[1];
         } else if(await page.locator('text=Link game account').count()) { // epic-games only?
-          console.error('  Missing account linking:', await page.locator('button[data-a-target="gms-cta"]').innerText(), url);
+          console.error('  Missing account linking (epic-games specific button?):', await page.locator('button[data-a-target="gms-cta"]').innerText()); // TODO needed?
+          unlinked_store = 'epic-games';
+        }
+        if (unlinked_store) {
+          console.error('  Missing account linking:', unlinked_store, url);
+          dlc_unlinked[unlinked_store] ??= [];
+          dlc_unlinked[unlinked_store].push(title);
         } else {
           const code = await page.inputValue('input[type="text"]');
           console.log('  Code to redeem game:', code);
@@ -348,6 +357,7 @@ try {
         await page.click('button[data-type="InGameLoot"]');
       }
     }
+    console.log('DLC: Unlinked accounts:', dlc_unlinked);
   }
 } catch (error) {
   console.error(error); // .toString()?
