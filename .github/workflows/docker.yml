@@ -5,9 +5,8 @@ on:
   # https://github.com/orgs/community/discussions/26276
   push: # on every branch, but not for PRs from forks?
     paths-ignore:
-      - ".github/**"
-      - ".gitignore"
       - "README.md"
+      - ".github/ISSUE_TEMPLATE/**"
   pull_request: # includes PRs from forks but only triggers on creation, not pushes?
     branches:
       - "main" # only PRs against main
