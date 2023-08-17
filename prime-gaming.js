@@ -330,7 +330,7 @@ try {
         const linkAccountModal = page.locator('[data-a-target="LinkAccountModal"]');
         const linkAccountButton = linkAccountModal.locator('[data-a-target="LinkAccountButton"]');
         if (await linkAccountButton.count()) {
-          console.error('  Missing account linking:', await linkAccountButton.innerText());
+          console.error('  Missing account linking:', await linkAccountButton.getAttribute('aria-label'));
         } else if(await page.locator('text=Link game account').count()) { // epic-games only?
           console.error('  Missing account linking:', await page.locator('button[data-a-target="gms-cta"]').innerText());
         } else {
