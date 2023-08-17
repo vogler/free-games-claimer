@@ -1,14 +1,16 @@
 name: Build and push Docker image (amd64, arm64 to hub.docker.com and ghcr.io)
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - "main"
+  workflow_dispatch: # allow manual trigger
+  # https://github.com/orgs/community/discussions/26276
+  push: # on every branch, but not for PRs from forks?
     paths-ignore:
       - ".github/**"
       - ".gitignore"
       - "README.md"
+  pull_request: # includes PRs from forks but only triggers on creation, not pushes?
+    branches:
+      - "main" # only PRs against main
 
 jobs:
   docker:
