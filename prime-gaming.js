@@ -332,7 +332,7 @@ try {
         if (await linkAccountButton.count()) {
           console.error('  Missing account linking:', await linkAccountButton.getAttribute('aria-label'), url);
         } else if(await page.locator('text=Link game account').count()) { // epic-games only?
-          console.error('  Missing account linking:', await page.locator('button[data-a-target="gms-cta"]').innerText());
+          console.error('  Missing account linking:', await page.locator('button[data-a-target="gms-cta"]').innerText(), url);
         } else {
           const code = await page.inputValue('input[type="text"]');
           console.log('  Code to redeem game:', code);
