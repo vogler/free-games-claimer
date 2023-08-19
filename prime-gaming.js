@@ -334,7 +334,7 @@ try {
           unlinked_store = await linkAccountButton.getAttribute('aria-label');
           console.debug('  LinkAccountButton label:', unlinked_store);
           const match = unlinked_store.match(/Link (.*) account/);
-          if (match.length == 2) unlinked_store = match[1];
+          if (match && match.length == 2) unlinked_store = match[1];
         } else if(await page.locator('text=Link game account').count()) { // epic-games only?
           console.error('  Missing account linking (epic-games specific button?):', await page.locator('button[data-a-target="gms-cta"]').innerText()); // TODO needed?
           unlinked_store = 'epic-games';
