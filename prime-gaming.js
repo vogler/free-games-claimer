@@ -328,12 +328,13 @@ try {
         // epic-games: Fall Guys: Claim now -> Continue -> Go to Epic Games (despite account linked and logged into epic-games) -> not tied to account but via some cookie?
         await Promise.any([page.click('button:has-text("Get in-game content")'), page.click('button:has-text("Claim your gift")'), page.click('button:has-text("Claim now")').then(() => page.click('button:has-text("Continue")'))]);
         page.click('button:has-text("Continue")').catch(_ => { });
-        const linkAccountModal = page.locator('[data-a-target="LinkAccountModal"]');
-        const linkAccountButton = linkAccountModal.locator('[data-a-target="LinkAccountButton"]');
+        const linkAccountButton = page.locator('[data-a-target="LinkAccountButton"]');
         let unlinked_store;
         if (await linkAccountButton.count()) {
           unlinked_store = await linkAccountButton.getAttribute('aria-label');
-          unlinked_store = unlinked_store.match(/Link (.*) account/)[1];
+          console.debug('  LinkAccountButton label:', unlinked_store);
+          const match = unlinked_store.match(/Link (.*) account/);
+          if (match.length == 2) unlinked_store = match[1];
         } else if(await page.locator('text=Link game account').count()) { // epic-games only?
           console.error('  Missing account linking (epic-games specific button?):', await page.locator('button[data-a-target="gms-cta"]').innerText()); // TODO needed?
           unlinked_store = 'epic-games';
