@@ -159,6 +159,7 @@ try {
       notify_game.status = `failed: need account linking for ${store}`;
       db.data[user][title].status = 'failed: need account linking';
     } else {
+      db.data[user][title].status = 'claimed';
       // print code if there is one
       const redeem = {
         // 'origin': 'https://www.origin.com/redeem', // TODO still needed or now only via account linking?
