@@ -104,7 +104,7 @@ try {
   console.log('Number of already claimed games (total):', await games.locator('p:has-text("Collected")').count());
   // can't use .all() since the list of elements via locator will change after click while we iterate over it
   const internal = await games.locator('.item-card__action:has([data-a-target="FGWPOffer"])').elementHandles();
-  const external = games.locator('.item-card__action:has([data-a-target="ExternalOfferClaim"])'); // using .elementHandles() here would lead to error due to page navigation: elementHandle.$: Protocol error (Page.adoptNode)
+  const external = await games.locator('.item-card__action:has([data-a-target="ExternalOfferClaim"])').all();
   console.log('Number of free unclaimed games (Prime Gaming):', internal.length);
   // claim games in internal store
   for (const card of internal) {
@@ -119,15 +119,21 @@ try {
     // console.log('Image:', img);
     await card.screenshot({ path: screenshot('internal', `${filenamify(title)}.png`) });
   }
-  console.log('Number of free unclaimed games (external stores):', await external.count());
+  console.log('Number of free unclaimed games (external stores):', external.length);
   // claim games in external/linked stores. Linked: origin.com, epicgames.com; Redeem-key: gog.com, legacygames.com, microsoft
-  for (const card of await external.elementHandles()) { // TODO refactor (result of external locator changes with each iteration)
-    // if (!card) continue;
-    const title = await (await card.$('.item-card-details__body__primary')).innerText();
-    console.log('Current free game:', title);
+  const external_info = [];
+  for (const card of external) { // need to get data incl. URLs in this loop and then navigate in another, otherwise .all() would update after coming back and .elementHandles() like above would lead to error due to page navigation: elementHandle.$: Protocol error (Page.adoptNode)
+    const title = await card.locator('.item-card-details__body__primary').innerText();
+    const slug = await card.locator('a:has-text("Claim")').first().getAttribute('href');
+    const url = 'https://gaming.amazon.com' + slug.split('?')[0];
+    console.log('Current free game:', title); //, url);
+    // await (await card.$('text=Claim')).click(); // goes to URL of game, no need to wait
+    external_info.push({title, url});
+  }
+  for (const {title, url} of external_info) {
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
     if (cfg.debug) await page.pause();
     if (cfg.dryrun) continue;
-    await (await card.$('text=Claim')).click(); // goes to URL of game, no need to wait
     await Promise.any([page.click('button:has-text("Get game")'), page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")')]); // waits for navigation
 
     // TODO would be simpler than the below, but will block for linked stores without code
@@ -150,7 +156,6 @@ try {
     }
     console.log('  External store:', store);
 
-    const url = page.url().split('?')[0];
     db.data[user][title] ||= { title, time: datetime(), url, store };
     const notify_game = { title, url };
     notify_games.push(notify_game); // status is updated below
@@ -268,9 +273,9 @@ try {
       // console.info('  Saved a screenshot of page to', p);
     }
     // await page.pause();
-    await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
-    await page.click('button[data-type="Game"]');
   }
+  await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
+  await page.click('button[data-type="Game"]');
 
   if (notify_games.length) { // make screenshot of all games if something was claimed
     const p = screenshot(`${filenamify(datetime())}.png`);
