@@ -13,8 +13,8 @@ export const resolve = (...a) => a.length && a[0] == '0' ? null : path.resolve(.
 // json database
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
-export const jsonDb = async file => {
-  const db = new Low(new JSONFile(dataDir(file)));
+export const jsonDb = async (file, defaultData) => {
+  const db = new Low(new JSONFile(dataDir(file)), defaultData);
   await db.read();
   return db;
 };

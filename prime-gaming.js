@@ -10,8 +10,7 @@ const URL_CLAIM = 'https://gaming.amazon.com/home';
 
 console.log(datetime(), 'started checking prime-gaming');
 
-const db = await jsonDb('prime-gaming.json');
-db.data ||= {};
+const db = await jsonDb('prime-gaming.json', {});
 
 handleSIGINT();
 

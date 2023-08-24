@@ -15,8 +15,7 @@ const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=
 
 console.log(datetime(), 'started checking unrealengine');
 
-const db = await jsonDb('unrealengine.json');
-db.data ||= {};
+const db = await jsonDb('unrealengine.json', {});
 
 handleSIGINT();
 

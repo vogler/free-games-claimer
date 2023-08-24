@@ -12,8 +12,7 @@ const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=
 
 console.log(datetime(), 'started checking epic-games');
 
-const db = await jsonDb('epic-games.json');
-db.data ||= {};
+const db = await jsonDb('epic-games.json', {});
 
 handleSIGINT();
 

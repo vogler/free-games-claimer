@@ -8,8 +8,7 @@ const URL_CLAIM = 'https://www.gog.com/en';
 
 console.log(datetime(), 'started checking gog');
 
-const db = await jsonDb('gog.json');
-db.data ||= {};
+const db = await jsonDb('gog.json', {});
 
 handleSIGINT();
 
