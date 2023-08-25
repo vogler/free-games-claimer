@@ -6,6 +6,7 @@ on:
   push: # on every branch, but not for PRs from forks?
     paths-ignore:
       - "README.md"
+      - ".github/dependabot.yml"
       - ".github/ISSUE_TEMPLATE/**"
   pull_request: # includes PRs from forks but only triggers on creation, not pushes?
     branches:
