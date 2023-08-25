@@ -8,8 +8,21 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    # commit-message:
+    #   prefix: "npm"
+    #   include: "scope"
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    # commit-message:
+    #   prefix: "docker"
+    #   include: "scope"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # commit-message:
+    #   prefix: "github-actions"
+    #   include: "scope"
