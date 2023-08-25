@@ -67,7 +67,7 @@ Available options/variables and their default values:
 | WIDTH         	| 1280    	| Width of the opened browser (and of screen for VNC in Docker).         	|
 | HEIGHT        	| 1280    	| Height of the opened browser (and of screen for VNC in Docker).        	|
 | VNC_PASSWORD  	|         	| VNC password for Docker. No password used by default!                  	|
-| NOTIFY        	|         	| Notification services to use (Pushover, Slack, Telegram...), see below. [Apprise]([Apprise](https://github.com/caronc/apprise))	|
+| NOTIFY        	|         	| Notification services to use (Pushover, Slack, Telegram...), see below. [Apprise](https://github.com/caronc/apprise)	|
 | NOTIFY_TITLE  	|         	| Optional title for notifications, e.g. for Pushover.                   	|
 | BROWSER_DIR   	| data/browser	| Directory for browser profile, e.g. for multiple accounts.         	|
 | TIMEOUT       	| 60      	| Timeout for any page action. Should be fine even on slow machines.     	|
@@ -147,7 +147,7 @@ If you want it to run regularly, you have to schedule the runs yourself:
 - macOS: [launchd](https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often)
 - Windows: [task scheduler](https://active-directory-wp.com/docs/Usage/How_to_add_a_cron_job_on_Windows/Scheduled_tasks_and_cron_jobs_on_Windows/index.html), [other options](https://stackoverflow.com/questions/132971/what-is-the-windows-version-of-cron)
 - any OS: use a process manager like [pm2](https://pm2.keymetrics.io/docs/usage/restart-strategies/)
-- Docker Compose `command: bash -c "node epic-games; node prime-gaming; node gog; echo sleeping; sleep 1d"`
+- Docker Compose `command: bash -c "node epic-games; node prime-gaming; node gog; echo sleeping; sleep 1d"` additionally add `restart: unless-stopped` to it.
 
 TODO: ~~add some server-mode where the script just keeps running and claims games e.g. every day.~~
 
