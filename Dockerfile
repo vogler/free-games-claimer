@@ -60,6 +60,16 @@ COPY . .
 RUN dos2unix *.sh && chmod +x *.sh
 COPY docker-entrypoint.sh /usr/local/bin/
 
+LABEL org.opencontainers.image.title="free-games-claimer" \
+      org.opencontainers.image.name="free-games-claimer" \
+      org.opencontainers.image.description="Automatically claims free games on the Epic Games Store, Amazon Prime Gaming and GOG" \
+      org.opencontainers.image.url="https://github.com/vogler/free-games-claimer" \
+      org.opencontainers.image.source="https://github.com/vogler/free-games-claimer" \
+      org.opencontainers.image.revision=${COMMIT_SHA} \
+      org.opencontainers.image.ref.name=${BRANCH} \
+      org.opencontainers.image.base.name="ubuntu:jammy" \
+      org.opencontainers.image.version="latest"
+
 # Configure VNC via environment variables:
 ENV VNC_PORT 5900
 ENV NOVNC_PORT 6080
