@@ -67,6 +67,8 @@ Available options/variables and their default values:
 | WIDTH         	| 1280    	| Width of the opened browser (and of screen for VNC in Docker).         	|
 | HEIGHT        	| 1280    	| Height of the opened browser (and of screen for VNC in Docker).        	|
 | VNC_PASSWORD  	|         	| VNC password for Docker. No password used by default!                  	|
+| DELAY_ON_START	| false    	| Enable Random delay on start if was set to `true`.                     	|
+| DELAY_ON_START_MAXIMUM	| 300     	| Specify maximum delay on start if enabled, default is 300 seconds.	|
 | NOTIFY        	|         	| Notification services to use (Pushover, Slack, Telegram...), see below.	|
 | NOTIFY_TITLE  	|         	| Optional title for notifications, e.g. for Pushover.                   	|
 | BROWSER_DIR   	| data/browser	| Directory for browser profile, e.g. for multiple accounts.         	|

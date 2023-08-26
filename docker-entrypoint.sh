@@ -13,6 +13,19 @@ rm -f /fgc/data/browser/SingletonLock
 # ls -l /tmp/.X11-unix/
 rm -f /tmp/.X1-lock
 
+# Enable random start delay to aviod captcha by parallel execution
+if [[ "$DELAY_ON_START" == "true" ]]; then
+
+    # Set maxumum delay. Default is 300 Seconds.
+    DELAY_ON_START_MAXIMUM="${DELAY_ON_START_MAXIMUM:-300}"
+    # Get random vaule within Range
+    DELAY_ON_START_SECONDS="$((RANDOM % DELAY_ON_START_MAXIMUM))"
+    echo "Random delay on start was enabled, will wait $DELAY_ON_START_SECONDS seconds..."
+    sleep $DELAY_ON_START_SECONDS
+    echo "Continue."
+
+fi
+
 # 6000+SERVERNUM is the TCP port Xvfb is listening on:
 # SERVERNUM=$(echo "$DISPLAY" | sed 's/:\([0-9][0-9]*\).*/\1/')
 
