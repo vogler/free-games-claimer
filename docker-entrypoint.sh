@@ -2,8 +2,9 @@
 
 set -eo pipefail # exit on error, error on any fail in pipe (not just last cmd); add -x to print each cmd; see gist bash_strict_mode.md
 
-echo "Version: https://github.com/vogler/free-games-claimer/tree/${COMMIT_SHA}"
+echo "Version: https://github.com/vogler/free-games-claimer/tree/${COMMIT}"
 [ ! -z $BRANCH ] && [ $BRANCH != "main" ] && echo "Branch: ${BRANCH}"
+echo "Build: $NOW"
 
 # Remove chromium profile lock.
 # When running in docker and then killing it, on the next run chromium displayed a dialog to unlock the profile which made the script time out.
