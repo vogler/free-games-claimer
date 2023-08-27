@@ -108,11 +108,11 @@ export const notify = (html) => new Promise((resolve, reject) => {
   const title = cfg.notify_title ? `-t ${cfg.notify_title}` : '';
   exec(`apprise ${cfg.notify} -i html '${title}' -b '${html}'`, (error, stdout, stderr) => {
     if (error) {
-        console.log(`error: ${error.message}`);
-        if (error.message.includes('command not found')) {
-          console.info('Run `pip install apprise`. See https://github.com/vogler/free-games-claimer#notifications');
-        }
-        return resolve();
+      console.log(`error: ${error.message}`);
+      if (error.message.includes('command not found')) {
+        console.info('Run `pip install apprise`. See https://github.com/vogler/free-games-claimer#notifications');
+      }
+      return resolve();
     }
     if (stderr) console.error(`stderr: ${stderr}`);
     if (stdout) console.log(`stdout: ${stdout}`);
