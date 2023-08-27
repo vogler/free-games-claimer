@@ -70,6 +70,9 @@ LABEL org.opencontainers.image.title="free-games-claimer" \
       org.opencontainers.image.base.name="ubuntu:jammy" \
       org.opencontainers.image.version="latest"
 
+ENV COMMIT_SHA=${COMMIT_SHA}
+ENV BRANCH=${BRANCH}
+
 # Configure VNC via environment variables:
 ENV VNC_PORT 5900
 ENV NOVNC_PORT 6080
