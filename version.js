@@ -1,7 +1,7 @@
 // check if running the latest version
 
 import {log} from 'console';
-import { existsSync, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import { exec } from 'child_process';
 
 const execp = (cmd) => new Promise((resolve, reject) => {
@@ -22,7 +22,8 @@ const execp = (cmd) => new Promise((resolve, reject) => {
 const git_main = () => readFileSync('.git/refs/heads/main').toString().trim();
 
 let sha, date;
-if (existsSync('/.dockerenv')) {
+// if (existsSync('/.dockerenv')) { // did not work
+if (process.env.NOVNC_PORT) {
   log('Running inside Docker.');
   ['COMMIT', 'BRANCH', 'NOW'].forEach(v => log(`  ${v}:`, process.env[v]));
   sha = process.env.COMMIT;
