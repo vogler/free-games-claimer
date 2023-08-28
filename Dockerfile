@@ -60,12 +60,19 @@ COPY . .
 RUN dos2unix *.sh && chmod +x *.sh
 COPY docker-entrypoint.sh /usr/local/bin/
 
+ARG COMMIT=""
+ARG BRANCH=""
+ARG NOW=""
+ENV COMMIT=${COMMIT}
+ENV BRANCH=${BRANCH}
+ENV NOW=${NOW}
+
 LABEL org.opencontainers.image.title="free-games-claimer" \
       org.opencontainers.image.name="free-games-claimer" \
       org.opencontainers.image.description="Automatically claims free games on the Epic Games Store, Amazon Prime Gaming and GOG" \
       org.opencontainers.image.url="https://github.com/vogler/free-games-claimer" \
       org.opencontainers.image.source="https://github.com/vogler/free-games-claimer" \
-      org.opencontainers.image.revision=${COMMIT_SHA} \
+      org.opencontainers.image.revision=${COMMIT} \
       org.opencontainers.image.ref.name=${BRANCH} \
       org.opencontainers.image.base.name="ubuntu:jammy" \
       org.opencontainers.image.version="latest"
