@@ -34,6 +34,7 @@ Data (including json files with claimed games, codes to redeem, screenshots) is 
 2. Clone/download this repository and `cd` into it in a terminal
 3. Run `npm install`
 4. Run `pip install apprise` to install [apprise](https://github.com/caronc/apprise) if you want notifications
+5. To get updates: `git pull; npm install`
 
 During `npm install` Playwright will download its Firefox to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
 If you are missing some dependencies for the browser on your system, you can use `sudo npx playwright install firefox --with-deps`.
