@@ -90,7 +90,7 @@ try {
         await notify('epic-games: got captcha during login. Please check.');
       }).catch(_ => { });
       page.waitForSelector('h6:has-text("Incorrect response.")').then(async () => {
-        console.error('CAPTCHA!')
+        console.error('Incorrect repsonse for captcha!')
       }).catch(_ => { });
       // handle MFA, but don't await it
       page.waitForURL('**/id/login/mfa**').then(async () => {
