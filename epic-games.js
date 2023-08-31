@@ -16,6 +16,8 @@ const db = await jsonDb('epic-games.json', {});
 
 handleSIGINT();
 
+if (cfg.time) console.time('startup');
+
 // https://www.nopecha.com extension source from https://github.com/NopeCHA/NopeCHA/releases/tag/0.1.16
 // const ext = path.resolve('nopecha'); // used in Chromium, currently not needed in Firefox
 
@@ -63,6 +65,9 @@ try {
 
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto
 
+  if (cfg.time) console.timeEnd('startup');
+  if (cfg.time) console.time('login');
+
   // page.click('button:has-text("Accept All Cookies")').catch(_ => { }); // Not needed anymore since we set the cookie above. Clicking this did not always work since the message was animated in too slowly.
 
   while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
@@ -83,6 +88,9 @@ try {
       page.waitForSelector('#h_captcha_challenge_login_prod iframe').then(async () => {
         console.error('Got a captcha during login (likely due to too many attempts)! You may solve it in the browser, get a new IP or try again in a few hours.');
         await notify('epic-games: got captcha during login. Please check.');
+      }).catch(_ => { });
+      page.waitForSelector('h6:has-text("Incorrect response.")').then(async () => {
+        console.error('CAPTCHA!')
       }).catch(_ => { });
       // handle MFA, but don't await it
       page.waitForURL('**/id/login/mfa**').then(async () => {
@@ -107,6 +115,8 @@ try {
   user = await page.locator('#user span').first().innerHTML();
   console.log(`Signed in as ${user}`);
   db.data[user] ||= {};
+  if (cfg.time) console.timeEnd('login');
+  if (cfg.time) console.time('claim all games');
 
   // Detect free games
   const game_loc = page.locator('a:has(span:text-is("Free Now"))');
@@ -120,6 +130,7 @@ try {
   console.log('Free games:', urls);
 
   for (const url of urls) {
+    if (cfg.time) console.time('claim game');
     await page.goto(url); // , { waitUntil: 'domcontentloaded' });
     const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText(); // barrier to block until page is loaded
 
@@ -174,6 +185,7 @@ try {
       if (await iframe.locator(':has-text("unavailable in your region")').count() > 0) {
         console.error('  This product is unavailable in your region!');
         db.data[user][game_id].status = notify_game.status = 'unavailable-in-region';
+        if (cfg.time) console.timeEnd('claim game');
         continue;
       }
 
@@ -190,6 +202,7 @@ try {
       if (cfg.dryrun) {
         console.log('  DRYRUN=1 -> Skip order!');
         notify_game.status = 'skipped';
+        if (cfg.time) console.timeEnd('claim game');
         continue;
       }
 
@@ -230,7 +243,9 @@ try {
       const p = screenshot(`${game_id}.png`);
       if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
     }
+    if (cfg.time) console.timeEnd('claim game');
   }
+  if (cfg.time) console.timeEnd('claim all games');
 } catch (error) {
   console.error(error); // .toString()?
   process.exitCode ||= 1;
