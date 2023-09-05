@@ -246,7 +246,7 @@ try {
                 await page2.click('#nextButton');
                 redeem_action = 'redeemed?';
                 console.log('  Redeemed successfully? Please report your Response from above (if it is new) in https://github.com/vogler/free-games-claimer/issues/5');
-                // db.data[user][title].status = 'claimed and redeemed';
+                db.data[user][title].status = 'claimed and redeemed?';
               }
             }
           } else if (store == 'legacy games') {
@@ -255,9 +255,17 @@ try {
             await page2.fill('[name=email_validate]', cfg.pg_email);
             await page2.uncheck('[name=newsletter_sub]');
             await page2.click('[type="submit"]');
-            redeem_action = 'redeemed?';
-            console.log('  Redeemed successfully? Please report problems in https://github.com/vogler/free-games-claimer/issues/5');
-            db.data[user][title].status = 'claimed and redeemed';
+            try {
+              await page2.waitForResponse(r => r.url().startsWith('https://promo.legacygames.com/promotion-processing/order-management.php'));
+              await page2.waitForSelector('h2:has-text("Thanks for redeeming")');
+              redeem_action = 'redeemed';
+              db.data[user][title].status = 'claimed and redeemed';
+            } catch (error) {
+              console.error('  Got error', error);
+              redeem_action = 'redeemed?';
+              db.data[user][title].status = 'claimed and redeemed?';
+              console.log('  Redeemed successfully? Please report problems in https://github.com/vogler/free-games-claimer/issues/5');
+            }
           } else {
             console.error(`  Redeem on ${store} not yet implemented!`);
           }
