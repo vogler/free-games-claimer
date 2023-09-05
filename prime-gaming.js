@@ -126,11 +126,11 @@ try {
     const title = await card.locator('.item-card-details__body__primary').innerText();
     const slug = await card.locator('a:has-text("Claim")').first().getAttribute('href');
     const url = 'https://gaming.amazon.com' + slug.split('?')[0];
-    console.log('Current free game:', title); //, url);
     // await (await card.$('text=Claim')).click(); // goes to URL of game, no need to wait
     external_info.push({title, url});
   }
   for (const {title, url} of external_info) {
+    console.log('Current free game:', title); //, url);
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     if (cfg.debug) await page.pause();
     if (cfg.dryrun) continue;
