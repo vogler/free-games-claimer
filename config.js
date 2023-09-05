@@ -9,6 +9,7 @@ export const cfg = {
   record: process.env.RECORD == '1', // `recordHar` (network) + `recordVideo`
   time: process.env.TIME == '1', // log duration of each step
   dryrun: process.env.DRYRUN == '1', // don't claim anything
+  interactive: process.env.INTERACTIVE == '1', // confirm to claim, default skip
   show: process.env.SHOW == '1', // run non-headless
   get headless() { return !this.debug && !this.show },
   width: Number(process.env.WIDTH) || 1280, // width of the opened browser

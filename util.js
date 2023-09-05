@@ -98,6 +98,7 @@ const timeoutPlugin = timeout => enquirer => { // cancel prompt after timeout ms
 enquirer.use(timeoutPlugin(cfg.login_timeout)); // TODO may not want to have this timeout for all prompts; better extend Prompt and add a timeout prompt option
 // single prompt that just returns the non-empty value instead of an object
 export const prompt = o => enquirer.prompt({name: 'name', type: 'input', message: 'Enter value', ...o}).then(r => r.name).catch(_ => {});
+export const confirm = o => prompt({type: 'confirm', message: 'Continue?', ...o})
 
 // notifications via apprise CLI
 import { exec } from 'child_process';

@@ -1,6 +1,6 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
 import { authenticator } from 'otplib';
-import { resolve, jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
+import { resolve, jsonDb, datetime, stealth, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './util.js';
 import { cfg } from './config.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'prime-gaming', ...a);
@@ -111,6 +111,7 @@ try {
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     console.log('Current free game:', title);
     if (cfg.dryrun) continue;
+    if (cfg.interactive && !await confirm()) continue;
     await (await card.$('button:has-text("Claim")')).click();
     db.data[user][title] ||= { title, time: datetime(), store: 'internal' };
     notify_games.push({ title, status: 'claimed', url: URL_CLAIM });
@@ -133,6 +134,7 @@ try {
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     if (cfg.debug) await page.pause();
     if (cfg.dryrun) continue;
+    if (cfg.interactive && !await confirm()) continue;
     await Promise.any([page.click('button:has-text("Get game")'), page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")')]); // waits for navigation
 
     // TODO would be simpler than the below, but will block for linked stores without code
@@ -324,6 +326,7 @@ try {
       console.log('Current DLC:', title);
       if (cfg.debug) await page.pause();
       if (cfg.dryrun) continue;
+      if (cfg.interactive && !await confirm()) continue;
       db.data[user][title] ||= { title, time: datetime(), store: 'DLC', status: 'failed: need account linking' };
       const notify_game = { title, url };
       notify_games.push(notify_game); // status is updated below
