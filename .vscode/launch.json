@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch GOG",
+            "outputCapture": "std",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/gog.js",
+            "env": {
+                "GOG_GIVEAWAY": "1",
+                "GOG_FREEGAMES": "1"
+            }
+        }
+    ]
+}
