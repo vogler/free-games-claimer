@@ -264,7 +264,7 @@ try {
           if (cfg.debug) await page2.pause();
           await page2.close();
         }
-        notify_game.status = `<a href="${redeem[store]}">${redeem_action}</a> ${code} on ${store}`;
+        notify_game.status = `<a href='${redeem[store]}'>${redeem_action}</a> ${code} on ${store}`;
       } else {
         notify_game.status = `claimed on ${store}`;
         db.data[user][title].status = 'claimed';
@@ -356,7 +356,7 @@ try {
           console.log('  Code to redeem game:', chalk.blue(code));
           db.data[user][title].code = code;
           db.data[user][title].status = 'claimed';
-          // notify_game.status = `<a href="${redeem[store]}">${redeem_action}</a> ${code} on ${store}`;
+          // notify_game.status = `<a href='${redeem[store]}'>${redeem_action}</a> ${code} on ${store}`;
         }
         // await page.pause();
       } catch (error) {
