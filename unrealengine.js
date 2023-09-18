@@ -17,8 +17,6 @@ console.log(datetime(), 'started checking unrealengine');
 
 const db = await jsonDb('unrealengine.json', {});
 
-handleSIGINT();
-
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
@@ -28,7 +26,10 @@ const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
   recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
   recordHar: cfg.record ? { path: `data/record/ue-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
+  handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
 });
+
+handleSIGINT(context);
 
 await stealth(context);
 
@@ -188,8 +189,9 @@ try {
     console.log('Done');
   }
 } catch (error) {
-  console.error(error); // .toString()?
   process.exitCode ||= 1;
+  console.error('--- Exception:');
+  console.error(error); // .toString()?
   if (error.message && process.exitCode != 130)
     notify(`unrealengine failed: ${error.message.split('\n')[0]}`);
 } finally {

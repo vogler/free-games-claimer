@@ -14,8 +14,6 @@ console.log(datetime(), 'started checking epic-games');
 
 const db = await jsonDb('epic-games.json', {});
 
-handleSIGINT();
-
 if (cfg.time) console.time('startup');
 
 // https://www.nopecha.com extension source from https://github.com/NopeCHA/NopeCHA/releases/tag/0.1.16
@@ -33,6 +31,7 @@ const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
   recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
   recordHar: cfg.record ? { path: `data/record/eg-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
+  handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
   args: [ // https://peter.sh/experiments/chromium-command-line-switches
     // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.'
     // '--restore-last-session', // does not apply for crash/killed
@@ -42,6 +41,8 @@ const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   ],
   // ignoreDefaultArgs: ['--enable-automation'], // remove default arg that shows the info bar with 'Chrome is being controlled by automated test software.'. Since Chromeium 106 this leads to show another info bar with 'You are using an unsupported command-line flag: --no-sandbox. Stability and security will suffer.'.
 });
+
+handleSIGINT(context);
 
 // Without stealth plugin, the website shows an hcaptcha on login with username/password and in the last step of claiming a game. It may have other heuristics like unsuccessful logins as well. After <6h (TBD) it resets to no captcha again. Getting a new IP also resets.
 await stealth(context);
@@ -248,8 +249,9 @@ try {
   }
   if (cfg.time) console.timeEnd('claim all games');
 } catch (error) {
-  console.error(error); // .toString()?
   process.exitCode ||= 1;
+  console.error('--- Exception:');
+  console.error(error); // .toString()?
   if (error.message && process.exitCode != 130)
     notify(`epic-games failed: ${error.message.split('\n')[0]}`);
 } finally {

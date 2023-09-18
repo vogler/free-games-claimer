@@ -10,16 +10,17 @@ console.log(datetime(), 'started checking gog');
 
 const db = await jsonDb('gog.json', {});
 
-handleSIGINT();
-
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
   locale: "en-US", // ignore OS locale to be sure to have english text for locators -> done via /en in URL
-  // recordHar: { path: './data/gog.har' }, // https://toolbox.googleapps.com/apps/har_analyzer/
-  // recordVideo: { dir: './data/videos' }, // console.log(await page.video().path());
+  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
+  recordHar: cfg.record ? { path: `data/record/gog-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
+  handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
 });
+
+handleSIGINT(context);
 
 if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
@@ -135,8 +136,9 @@ try {
     }
   }
 } catch (error) {
-  console.error(error); // .toString()?
   process.exitCode ||= 1;
+  console.error('--- Exception:');
+  console.error(error); // .toString()?
   if (error.message && process.exitCode != 130)
     notify(`gog failed: ${error.message.split('\n')[0]}`);
 } finally {
