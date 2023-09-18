@@ -72,7 +72,7 @@ try {
         console.log('Enter the security code to continue - This appears to be a new device, browser or location. A security code has been sent to your email address at ...');
         // TODO locator for text (email or app?)
         const otp = cfg.eg_otpkey && authenticator.generate(cfg.eg_otpkey) || await prompt({type: 'text', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 6 || 'The code must be 6 digits!'}); // can't use type: 'number' since it strips away leading zeros and codes sometimes have them
-        await page.type('input[name="code-input-0"]', otp.toString());
+        await page.locator('input[name="code-input-0"]').pressSequentially(otp.toString());
         await page.click('button[type="submit"]');
       }).catch(_ => { });
     } else {

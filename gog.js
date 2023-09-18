@@ -61,7 +61,7 @@ try {
         console.log('Two-Step Verification - Enter security code');
         console.log(await iframe.locator('.form__description').innerText())
         const otp = await prompt({type: 'text', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 4 || 'The code must be 4 digits!'}); // can't use type: 'number' since it strips away leading zeros and codes sometimes have them
-        await iframe.locator('#second_step_authentication_token_letter_1').type(otp.toString(), {delay: 10});
+        await iframe.locator('#second_step_authentication_token_letter_1').pressSequentially(otp.toString(), {delay: 10});
         await iframe.locator('#second_step_authentication_send').click();
         await page.waitForTimeout(1000); // TODO still needed with wait for username below?
       }).catch(_ => { });
