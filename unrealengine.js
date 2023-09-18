@@ -199,4 +199,5 @@ try {
   }
 }
 if (cfg.debug) writeFileSync(path.resolve(cfg.dir.browser, 'cookies.json'), JSON.stringify(await context.cookies()));
+if (page.video()) console.log('Recorded video:', await page.video().path())
 await context.close();

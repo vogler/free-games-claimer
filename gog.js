@@ -145,4 +145,5 @@ try {
     notify(`gog (${user}):<br>${html_game_list(notify_games)}`);
   }
 }
+if (page.video()) console.log('Recorded video:', await page.video().path())
 await context.close();
