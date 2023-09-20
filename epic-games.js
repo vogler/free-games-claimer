@@ -14,8 +14,6 @@ console.log(datetime(), 'started checking epic-games');
 
 const db = await jsonDb('epic-games.json', {});
 
-handleSIGINT();
-
 if (cfg.time) console.time('startup');
 
 // https://www.nopecha.com extension source from https://github.com/NopeCHA/NopeCHA/releases/tag/0.1.16
@@ -31,8 +29,9 @@ const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   // userAgent firefox (macOS): Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:106.0) Gecko/20100101 Firefox/106.0
   // userAgent firefox (docker): Mozilla/5.0 (X11; Linux aarch64; rv:109.0) Gecko/20100101 Firefox/115.0
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
-  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
+  recordVideo: cfg.record ? { dir: path.resolve('data/record/'), size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
   recordHar: cfg.record ? { path: `data/record/eg-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
+  handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
   args: [ // https://peter.sh/experiments/chromium-command-line-switches
     // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.'
     // '--restore-last-session', // does not apply for crash/killed
@@ -42,6 +41,8 @@ const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   ],
   // ignoreDefaultArgs: ['--enable-automation'], // remove default arg that shows the info bar with 'Chrome is being controlled by automated test software.'. Since Chromeium 106 this leads to show another info bar with 'You are using an unsupported command-line flag: --no-sandbox. Stability and security will suffer.'.
 });
+
+handleSIGINT(context);
 
 // Without stealth plugin, the website shows an hcaptcha on login with username/password and in the last step of claiming a game. It may have other heuristics like unsuccessful logins as well. After <6h (TBD) it resets to no captcha again. Getting a new IP also resets.
 await stealth(context);
@@ -98,7 +99,7 @@ try {
         console.log('Enter the security code to continue - This appears to be a new device, browser or location. A security code has been sent to your email address at ...');
         // TODO locator for text (email or app?)
         const otp = cfg.eg_otpkey && authenticator.generate(cfg.eg_otpkey) || await prompt({type: 'text', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 6 || 'The code must be 6 digits!'}); // can't use type: 'number' since it strips away leading zeros and codes sometimes have them
-        await page.type('input[name="code-input-0"]', otp.toString());
+        await page.locator('input[name="code-input-0"]').pressSequentially(otp.toString());
         await page.click('button[type="submit"]');
       }).catch(_ => { });
     } else {
@@ -195,7 +196,7 @@ try {
           console.error('  EG_PARENTALPIN not set. Need to enter Parental Control PIN manually.');
           notify('epic-games: EG_PARENTALPIN not set. Need to enter Parental Control PIN manually.');
         }
-        await iframe.locator('input.payment-pin-code__input').first().type(cfg.eg_parentalpin);
+        await iframe.locator('input.payment-pin-code__input').first().pressSequentially(cfg.eg_parentalpin);
         await iframe.locator('button:has-text("Continue")').click({ delay: 11 });
       }).catch(_ => { });
 
@@ -248,8 +249,9 @@ try {
   }
   if (cfg.time) console.timeEnd('claim all games');
 } catch (error) {
-  console.error(error); // .toString()?
   process.exitCode ||= 1;
+  console.error('--- Exception:');
+  console.error(error); // .toString()?
   if (error.message && process.exitCode != 130)
     notify(`epic-games failed: ${error.message.split('\n')[0]}`);
 } finally {
@@ -259,4 +261,5 @@ try {
   }
 }
 if (cfg.debug) writeFileSync(path.resolve(cfg.dir.browser, 'cookies.json'), JSON.stringify(await context.cookies()));
+if (page.video()) console.log('Recorded video:', await page.video().path())
 await context.close();

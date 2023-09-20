@@ -1,4 +1,5 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
+import path from 'path';
 import { resolve, jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
 import { cfg } from './config.js';
 import path from "path";
@@ -12,16 +13,17 @@ console.log(datetime(), 'started checking gog');
 
 const db = await jsonDb('gog.json', {});
 
-handleSIGINT();
-
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
   locale: "en-US", // ignore OS locale to be sure to have english text for locators -> done via /en in URL
-  // recordHar: { path: './data/gog.har' }, // https://toolbox.googleapps.com/apps/har_analyzer/
-  // recordVideo: { dir: './data/videos' }, // console.log(await page.video().path());
+  recordVideo: cfg.record ? { dir: path.resolve('data/record/'), size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
+  recordHar: cfg.record ? { path: `data/record/gog-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
+  handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
 });
+
+handleSIGINT(context);
 
 if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
@@ -61,7 +63,7 @@ try {
         console.log('Two-Step Verification - Enter security code');
         console.log(await iframe.locator('.form__description').innerText())
         const otp = await prompt({type: 'text', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 4 || 'The code must be 4 digits!'}); // can't use type: 'number' since it strips away leading zeros and codes sometimes have them
-        await iframe.locator('#second_step_authentication_token_letter_1').type(otp.toString(), {delay: 10});
+        await iframe.locator('#second_step_authentication_token_letter_1').pressSequentially(otp.toString(), {delay: 10});
         await iframe.locator('#second_step_authentication_send').click();
         await page.waitForTimeout(1000); // TODO still needed with wait for username below?
       }).catch(_ => { });
@@ -96,8 +98,9 @@ try {
     await claimFreegames();
   }
 } catch (error) {
-  console.error(error); // .toString()?
   process.exitCode ||= 1;
+  console.error('--- Exception:');
+  console.error(error); // .toString()?
   if (error.message && process.exitCode != 130)
     notify(`gog failed: ${error.message.split('\n')[0]}`);
 } finally {
@@ -152,6 +155,7 @@ async function claimGiveaway() {
     if (status == 'claimed' && !cfg.gog_newsletter) {
       console.log("Unsubscribe from 'Promotions and hot deals' newsletter");
       await page.goto('https://www.gog.com/en/account/settings/subscriptions');
+      await page.locator('li:has-text("Marketing communications through Trusted Partners") label').uncheck();
       await page.locator('li:has-text("Promotions and hot deals") label').uncheck();
     }
   }
@@ -291,4 +295,5 @@ function isNotClaimedUrl(url) {
     }
 }
 
+if (page.video()) console.log('Recorded video:', await page.video().path()) 
 await context.close();

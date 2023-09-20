@@ -55,9 +55,10 @@ WORKDIR /fgc
 COPY package*.json ./
 
 # Playwright installs patched firefox to ~/.cache/ms-playwright/firefox-*
-# Requires some system deps to run (see install-deps above).
+# Requires some system deps to run (see inlined install-deps above).
 RUN npm install
 # Old: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD + install firefox (had to be done after `npm install` to get the correct version). Now: playwright-firefox as npm dep and `npm install` will only install that.
+# From 1.38 Playwright will no longer install browser automatically for playwright, but apparently still for playwright-firefox: https://github.com/microsoft/playwright/releases/tag/v1.38.0
 # RUN npx playwright install firefox
 
 COPY . .
