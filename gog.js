@@ -2,7 +2,6 @@ import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdate
 import path from 'path';
 import { resolve, jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
 import { cfg } from './config.js';
-import path from "path";
 import { existsSync } from "fs";
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'gog', ...a);
@@ -61,7 +60,7 @@ try {
       // handle MFA, but don't await it
       iframe.locator('form[name=second_step_authentication]').waitFor().then(async () => {
         console.log('Two-Step Verification - Enter security code');
-        console.log(await iframe.locator('.form__description').innerText())
+        console.log(await iframe.locator('.form__description').innerText());
         const otp = await prompt({type: 'text', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 4 || 'The code must be 4 digits!'}); // can't use type: 'number' since it strips away leading zeros and codes sometimes have them
         await iframe.locator('#second_step_authentication_token_letter_1').pressSequentially(otp.toString(), {delay: 10});
         await iframe.locator('#second_step_authentication_send').click();
@@ -74,7 +73,7 @@ try {
         notify('gog: got captcha during login. Please check.');
         // TODO solve reCAPTCHA?
       }).catch(_ => { });
-      await page.waitForSelector('#menuUsername')
+      await page.waitForSelector('#menuUsername');
     } else {
       console.log('Waiting for you to login in the browser.');
       await notify('gog: no longer signed in and not enough options set for automatic login.');
@@ -189,7 +188,7 @@ async function claimGame(url){
         .first();
     const inLibrary = page
         .locator("button.go-to-library-button")
-        .first()
+        .first();
     const inCart = page
         .locator('.cart-button__state-in-cart:visible')
         .first();
@@ -240,14 +239,23 @@ async function claimGame(url){
 }
 
 async function claimFreegames(){
-  console.log("claiming freegames from " + cfg.gog_freegames_url + ". (adding fitler for ownedgames manually)")
-  await page.goto(cfg.gog_freegames_url, { waitUntil: 'networkidle' });
+  var freegames_url = cfg.gog_freegames_url;
+  if (freegames_url.includes("&hideOwned=true")) {
+    freegames_url = freegames_url.replace("&hideOwned=true", "");
+  }
+  if (!freegames_url.includes("priceRange=0,0")) {
+    console.log("Filter for only free games not detected adding it manually.");
+    freegames_url = freegames_url + "&priceRange=0,0";
+  }
+  console.log("claiming freegames from " + freegames_url);
+
+  await page.goto(freegames_url, { waitUntil: 'networkidle' });
   await page.locator('label[selenium-id="hideOwnedCheckbox"]').click(); // when you add it to url immediately it shows more results
   await page.waitForTimeout(2500);
   var allLinks = [];
   var hasMorePages = true;
   do {
-    const links = await page.locator(".product-tile").all()
+    const links = await page.locator(".product-tile").all();
     const gameUrls = await Promise.all(
         links.map(async (game) => {
           var urlSlug = await game.getAttribute("href");
@@ -258,42 +266,42 @@ async function claimFreegames(){
       allLinks.push(url);
     }
     if (await page.locator('.small-pagination__item--next.disabled').isVisible()){
-      hasMorePages = false
-      console.log("last page")
+      hasMorePages = false;
+      console.log("last page");
     } else {
       await page.locator(".small-pagination__item--next").first().click();
-      console.log("next page - waiting")
+      console.log("next page - waiting");
       await page.waitForTimeout(5000); // wait until page is loaded it takes some time with filters
     }
     
-  } while (hasMorePages)
-  console.log("Found total games: " + allLinks.length)
-  allLinks = allLinks.filter(function (str) { return !str.endsWith("_prologue") });
-  allLinks = allLinks.filter(function (str) { return !str.endsWith("_demo") });
-  console.log("Filtered count: " + allLinks.length)
+  } while (hasMorePages);
+  console.log("Found total games: " + allLinks.length);
+  allLinks = allLinks.filter(function (str) { return !str.endsWith("_prologue"); });
+  allLinks = allLinks.filter(function (str) { return !str.endsWith("_demo"); });
+  console.log("Filtered count: " + allLinks.length);
 
   for (const url of allLinks)
     {
-        if (isNotClaimedUrl(url))
+        if (!isClaimedUrl(url))
         {
-          console.log(url)
+          console.log(url);
           await claimGame(url);
         }
     }
 }
 
-function isNotClaimedUrl(url) {
+function isClaimedUrl(url) {
     try {
         var status = db.data[user][url.split("/").filter((x) => !!x).pop()]["status"];
         if (status === "existed" || status === "claimed") {
-            return false;
+            return true;
         } else {
-            return true
+            return false;
         }
     } catch (error) {
-        return true
+        return false;
     }
 }
 
-if (page.video()) console.log('Recorded video:', await page.video().path()) 
+if (page.video()) console.log('Recorded video:', await page.video().path());
 await context.close();
