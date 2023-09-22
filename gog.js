@@ -293,11 +293,7 @@ async function claimFreegames(){
 function isClaimedUrl(url) {
     try {
         var status = db.data[user][url.split("/").filter((x) => !!x).pop()]["status"];
-        if (status === "existed" || status === "claimed") {
-            return true;
-        } else {
-            return false;
-        }
+        return status === "existed" || status === "claimed";
     } catch (error) {
         return false;
     }
