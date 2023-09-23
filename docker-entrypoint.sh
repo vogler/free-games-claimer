@@ -27,10 +27,15 @@ rm -f /tmp/.X1-lock
 export DISPLAY=:1 # need to export this, otherwise playwright complains with 'Looks like you launched a headed browser without having a XServer running.'
 Xvfb $DISPLAY -ac -screen 0 "${WIDTH}x${HEIGHT}x${DEPTH}" &
 echo "Xvfb display server created screen with resolution ${WIDTH}x${HEIGHT}"
-pw="-nopw"
-[ -z "$VNC_PASSWORD" ] || pw="-passwd $VNC_PASSWORD"
+if [ -z "$VNC_PASSWORD" ]; then
+  pw="-nopw"
+  pwt="no password!"
+else
+  pw="-passwd $VNC_PASSWORD"
+  pwt="with password"
+fi
 x11vnc -display $DISPLAY -forever -shared -rfbport $VNC_PORT -bg $pw 2>/dev/null 1>&2
-echo "VNC is running on port $VNC_PORT (no password!)"
+echo "VNC is running on port $VNC_PORT ($pwt)"
 websockify -D --web "/usr/share/novnc/" $NOVNC_PORT "localhost:$VNC_PORT" 2>/dev/null 1>&2 &
 echo "noVNC (VNC via browser) is running on http://localhost:$NOVNC_PORT"
 echo
