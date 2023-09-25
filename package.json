@@ -15,7 +15,7 @@
     "enquirer": "^2.4.1",
     "lowdb": "^6.0.1",
     "otplib": "^12.0.1",
-    "playwright-firefox": "^1.38.0",
+    "playwright-firefox": "^1.38.1",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "repository": {
