@@ -299,7 +299,7 @@ try {
   }
 
   // https://github.com/vogler/free-games-claimer/issues/55
-  if (cfg.pg_claimdlc) {
+  if (1) {
     console.log('Trying to claim in-game content...');
     await page.click('button[data-type="InGameLoot"]');
     const loot = page.locator('div[data-a-target="offer-list-IN_GAME_LOOT"]');
@@ -387,7 +387,7 @@ try {
       } catch (error) {
         console.error(error);
       } finally {
-        await page.goto(URL_CLAIM, { waitUntil: "domcontentloaded" });
+        await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' });
         await page.click('button[data-type="InGameLoot"]');
       }
     }
@@ -396,7 +396,7 @@ try {
   }
 } catch (error) {
   process.exitCode ||= 1;
-  console.error("--- Exception:");
+  console.error('--- Exception:');
   console.error(error); // .toString()?
   if (error.message && process.exitCode != 130)
     notify(`prime-gaming failed: ${error.message.split("\n")[0]}`);
