@@ -399,13 +399,13 @@ try {
   console.error('--- Exception:');
   console.error(error); // .toString()?
   if (error.message && process.exitCode != 130)
-    notify(`prime-gaming failed: ${error.message.split("\n")[0]}`);
+    notify(`prime-gaming failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
-  if (notify_games.length) {
-    // list should only include claimed games
+  if (notify_games.length) { // list should only include claimed games
+  
     notify(`prime-gaming (${user}):<br>${html_game_list(notify_games)}`);
   }
 }
-if (page.video()) console.log("Recorded video:", await page.video().path());
+if (page.video()) console.log('Recorded video:', await page.video().path())
 await context.close();
