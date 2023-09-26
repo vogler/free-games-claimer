@@ -299,7 +299,8 @@ try {
   }
 
   // https://github.com/vogler/free-games-claimer/issues/55
-  if (cfg.pg_claimdlc) {
+  //TODO
+  if (1) {
     console.log('Trying to claim in-game content...');
     await page.click('button[data-type="InGameLoot"]');
     const loot = page.locator('div[data-a-target="offer-list-IN_GAME_LOOT"]');
@@ -325,10 +326,10 @@ try {
     const dlcs = await Promise.all(cards.map(async card => ({
       game: await card.locator('.item-card-details__body p').innerText(),
       title: await card.locator('.item-card-details__body__primary').innerText(),
-      url: "https://gaming.amazon.com" + (await card.locator('a').last().getAttribute("href")),,
+      url: "https://gaming.amazon.com" + (await card.locator('a').last().getAttribute("href")),
       }))
     );
-    // console.log(dlcs);
+    console.log(dlcs);
 
     const dlc_unlinked = {};
     for (const dlc of dlcs) {
@@ -352,6 +353,7 @@ try {
         if (await linkAccountButton.count()) {
           unlinked_store = await linkAccountButton.getAttribute("aria-label");
           console.debug(`  Not able to claim. ${unlinked_store}`);
+          const match = unlinked_store.match(/Link (.*) account/);
         } else {
           //TODO this needs to be tested
           //ran out of possible prime offers
