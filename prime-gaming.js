@@ -299,7 +299,8 @@ try {
   }
 
   // https://github.com/vogler/free-games-claimer/issues/55
-  if (cfg.pg_claimdlc) {
+  //TODO
+  if (1) {
     console.log('Trying to claim in-game content...');
     await page.click('button[data-type="InGameLoot"]');
     const loot = page.locator('div[data-a-target="offer-list-IN_GAME_LOOT"]');
@@ -325,10 +326,10 @@ try {
     const dlcs = await Promise.all(cards.map(async card => ({
       game: await card.locator('.item-card-details__body p').innerText(),
       title: await card.locator('.item-card-details__body__primary').innerText(),
-      url: "https://gaming.amazon.com" + (await card.locator('[data-a-target="ExternalOfferClaim"]').getAttribute("href")),
+      url: "https://gaming.amazon.com" + (await card.locator('a').last().getAttribute("href")),
       }))
     );
-    // console.log(dlcs);
+    console.log(dlcs);
 
     const dlc_unlinked = {};
     for (const dlc of dlcs) {
@@ -352,25 +353,7 @@ try {
         if (await linkAccountButton.count()) {
           unlinked_store = await linkAccountButton.getAttribute("aria-label");
           console.debug(`  Not able to claim. ${unlinked_store}`);
-        // console.debug('  LinkAccountButton label:', unlinked_store);
-        // const match = unlinked_store.match(/Link (.*) account/);
-        // if (match && match.length == 2) unlinked_store = match[1];
-      // } else if(await page.locator('text=Link game account').count()) { // epic-games only?
-      //   console.error('  Missing account linking (epic-games specific button?):', await page.locator('button[data-a-target="gms-cta"]').innerText()); // TODO needed?
-      //   unlinked_store = 'epic-games';
-      // }
-      // if (unlinked_store) {
-      //   console.error('  Missing account linking:', unlinked_store, url);
-      //   dlc_unlinked[unlinked_store] ??= [];
-      //   dlc_unlinked[unlinked_store].push(title);
-      // } else {
-      //   const code = await page.inputValue('input[type="text"]');
-      //   console.log('  Code to redeem game:', code);
-      //   db.data[user][title].code = code;
-      //   db.data[user][title].status = 'claimed';
-      //   // notify_game.status = `<a href="${redeem[store]}">${redeem_action}</a> ${code} on ${store}`;
-      // }
-      // await page.pause();
+          const match = unlinked_store.match(/Link (.*) account/);
         } else {
           //TODO this needs to be tested
           //ran out of possible prime offers
@@ -403,7 +386,6 @@ try {
 } finally {
   await db.write(); // write out json db
   if (notify_games.length) { // list should only include claimed games
-  
     notify(`prime-gaming (${user}):<br>${html_game_list(notify_games)}`);
   }
 }
