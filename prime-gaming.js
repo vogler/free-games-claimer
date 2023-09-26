@@ -329,7 +329,7 @@ try {
       url: "https://gaming.amazon.com" + (await card.locator('a').last().getAttribute("href")),
       }))
     );
-    console.log(dlcs);
+    // console.log(dlcs);
 
     const dlc_unlinked = {};
     for (const dlc of dlcs) {
@@ -354,6 +354,9 @@ try {
           unlinked_store = await linkAccountButton.getAttribute("aria-label");
           console.debug(`  Not able to claim. ${unlinked_store}`);
           const match = unlinked_store.match(/Link (.*) account/);
+          if (match && match.length == 2) unlinked_store = match[1];
+          dlc_unlinked[unlinked_store] ??= [];
+          dlc_unlinked[unlinked_store].push(title);
         } else {
           //TODO this needs to be tested
           //ran out of possible prime offers
@@ -374,8 +377,7 @@ try {
         await page.click('button[data-type="InGameLoot"]');
       }
     }
-    // TODO
-    // console.log("DLC: Unlinked accounts:", dlc_unlinked);
+    console.log("DLC: Unlinked accounts:", dlc_unlinked);
   }
 } catch (error) {
   process.exitCode ||= 1;
