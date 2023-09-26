@@ -9,7 +9,7 @@ services:
       - "6080:6080" # noVNC (browser-based VNC client)
     volumes:
       - fgc:/fgc/data
-    # command: bash -c "node epic-games; node gog"
+    command: bash -c "node epic-games; node gog echo sleeping; sleep 1d" restart: unless-stopped
     environment:
       # - EMAIL=foo@bar.org
       # - NOTIFY='tgram://...'
