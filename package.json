@@ -23,5 +23,8 @@
     "url": "https://github.com/vogler/free-games-claimer.git"
   },
   "author": "Ralf Vogler",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.50.0"
+  }
 }
