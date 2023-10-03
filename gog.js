@@ -239,42 +239,44 @@ async function claimGame(url){
 }
 
 async function claimFreegames(){
-  var freegames_url = cfg.gog_freegames_url;
-  if (freegames_url.includes("&hideOwned=true")) {
-    freegames_url = freegames_url.replace("&hideOwned=true", "");
-  }
-  if (!freegames_url.includes("priceRange=0,0")) {
-    console.log("Filter for only free games not detected adding it manually.");
-    freegames_url = freegames_url + "&priceRange=0,0";
-  }
-  console.log("claiming freegames from " + freegames_url);
-
-  await page.goto(freegames_url, { waitUntil: 'networkidle' });
-  await page.locator('label[selenium-id="hideOwnedCheckbox"]').click(); // when you add it to url immediately it shows more results
-  await page.waitForTimeout(2500);
   var allLinks = [];
-  var hasMorePages = true;
-  do {
-    const links = await page.locator(".product-tile").all();
-    const gameUrls = await Promise.all(
-        links.map(async (game) => {
-          var urlSlug = await game.getAttribute("href");
-          return urlSlug;
-      })
-    );
-    for (const url of gameUrls) {
-      allLinks.push(url);
+  var freegames_urls = cfg.gog_freegames_url.split(";");
+  for (var freegames_url of freegames_urls) {
+    if (freegames_url.includes("&hideOwned=true")) {
+      freegames_url = freegames_url.replace("&hideOwned=true", "");
     }
-    if (await page.locator('.small-pagination__item--next.disabled').isVisible()){
-      hasMorePages = false;
-      console.log("last page");
-    } else {
-      await page.locator(".small-pagination__item--next").first().click();
-      console.log("next page - waiting");
-      await page.waitForTimeout(5000); // wait until page is loaded it takes some time with filters
+    if (!freegames_url.includes("priceRange=0,0")) {
+      console.log("Filter for only free games not detected adding it manually.");
+      freegames_url = freegames_url + "&priceRange=0,0";
     }
-    
-  } while (hasMorePages);
+    console.log("collecting freegames from " + freegames_url);
+
+    await page.goto(freegames_url, { waitUntil: 'networkidle' });
+    await page.locator('label[selenium-id="hideOwnedCheckbox"]').click(); // when you add it to url immediately it shows more results
+    await page.waitForTimeout(2500);
+    var hasMorePages = true;
+    do {
+      const links = await page.locator(".product-tile").all();
+      const gameUrls = await Promise.all(
+          links.map(async (game) => {
+            var urlSlug = await game.getAttribute("href");
+            return urlSlug;
+        })
+      );
+      for (const url of gameUrls) {
+        allLinks.push(url);
+      }
+      if (await page.locator('.small-pagination__item--next.disabled').isVisible()){
+        hasMorePages = false;
+        console.log("last page");
+      } else {
+        await page.locator(".small-pagination__item--next").first().click();
+        console.log("next page - waiting");
+        await page.waitForTimeout(5000); // wait until page is loaded it takes some time with filters
+      }
+      
+    } while (hasMorePages);
+  }
   console.log("Found total games: " + allLinks.length);
   allLinks = allLinks.filter(function (str) { return !str.endsWith("_prologue"); });
   allLinks = allLinks.filter(function (str) { return !str.endsWith("_demo"); });

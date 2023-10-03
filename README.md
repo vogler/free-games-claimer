@@ -89,7 +89,7 @@ Available options/variables and their default values:
 | GOG_NEWSLETTER	| 0       	| Do not unsubscribe from newsletter after claiming a game if 1.         	|
 | GOG_GIVEAWAY	  | 1       	| Claims giveaway game(s).                                                |
 | GOG_FREEGAMES	  | 0      	  | Claims other free games that are not demos or prologue games.           |
-| GOG_FREEGAMES_URL  | [freegames_url](https://www.gog.com/en/games?priceRange=0,0&languages=en&order=asc:title&hideDLCs=true&excludeTags=demo&excludeTags=freegame) | URL to get games to claim additionally. You can add filters for language or certain categories that you don't like. |
+| GOG_FREEGAMES_URL  | [freegames_url](https://www.gog.com/en/games?priceRange=0,0&languages=en&order=asc:title&hideDLCs=true&excludeTags=demo&excludeTags=freegame) | URLs to additional games to claim. Multiple URLs can be added with ";". You can add filters for language, certain categories, DLCs that you like to include or exclude. |
 
 
 See `config.js` for all options.
