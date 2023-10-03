@@ -266,9 +266,12 @@ async function claimFreegames(){
       for (const url of gameUrls) {
         allLinks.push(url);
       }
-      if (await page.locator('.small-pagination__item--next.disabled').isVisible()){
+      if (await page.locator('.catalog__empty').isVisible()){
         hasMorePages = false;
-        console.log("last page");
+        console.log("no games could be found with your filter");
+      } else if (await page.locator('.small-pagination__item--next.disabled').isVisible()){
+        hasMorePages = false;
+        console.log("last page reached");
       } else {
         await page.locator(".small-pagination__item--next").first().click();
         console.log("next page - waiting");
