@@ -137,7 +137,7 @@ try {
     if (cfg.debug) await page.pause();
     if (cfg.dryrun) continue;
     if (cfg.interactive && !await confirm()) continue;
-    await Promise.any([page.click('button:has-text("Get game")'), page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")')]); // waits for navigation
+    await Promise.any([page.click('button:has-text("Get game")'), page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")'), page.waitForSelector('.thank-you-title:has-text("Success")')]); // waits for navigation
 
     // TODO would be simpler than the below, but will block for linked stores without code
     // const redeem_text = await page.textContent('text=/ code on /'); // FAQ: How do I redeem my code?
@@ -167,6 +167,11 @@ try {
       console.error('  Account linking is required to claim this offer!');
       notify_game.status = `failed: need account linking for ${store}`;
       db.data[user][title].status = 'failed: need account linking';
+      // await page.pause();
+      // await page.click('[data-a-target="LinkAccountModal"] [data-a-target="LinkAccountButton"]');
+      // TODO login for epic games also needed if already logged in
+      // wait for https://www.epicgames.com/id/authorize?redirect_uri=https%3A%2F%2Fservice.link.amazon.gg...
+      // await page.click('button[aria-label="Allow"]');
     } else {
       db.data[user][title].status = 'claimed';
       // print code if there is one
@@ -213,19 +218,19 @@ try {
               console.error('  Code was not found!');
             } else { // TODO not logged in? need valid unused code to test.
               redeem_action = 'redeemed?';
-              console.log('  Redeemed successfully? Please report your Responses (if new) in https://github.com/vogler/free-games-claimer/issues/5');
+              // console.log('  Redeemed successfully? Please report your Responses (if new) in https://github.com/vogler/free-games-claimer/issues/5');
               console.debug(`  Response 1: ${r1t}`);
               // then after the click on Redeem there is a POST request which should return {} if claimed successfully
               const r2 = page2.waitForResponse(r => r.request().method() == 'POST' && r.url().startsWith('https://redeem.gog.com/'));
               await page2.click('[type="submit"]'); // click Redeem
               const r2t = await (await r2).text();
-              console.debug(`  Response 2: ${r2t}`);
               if (r2t == '{}') {
                   redeem_action = 'redeemed';
                   console.log('  Redeemed successfully.');
                   db.data[user][title].status = 'claimed and redeemed';
               } else {
                 redeem_action = 'redeemed?';
+                console.debug(`  Response 2: ${r2t}`);
                 console.log('  Unknown Response 2 - please report in https://github.com/vogler/free-games-claimer/issues/5');
               }
             }
