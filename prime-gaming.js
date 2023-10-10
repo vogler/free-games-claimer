@@ -258,7 +258,7 @@ try {
             await page2.uncheck('[name=newsletter_sub]');
             await page2.click('[type="submit"]');
             try {
-              await page2.waitForResponse(r => r.url().startsWith('https://promo.legacygames.com/promotion-processing/order-management.php'));
+              // await page2.waitForResponse(r => r.url().startsWith('https://promo.legacygames.com/promotion-processing/order-management.php')); // status code 302
               await page2.waitForSelector('h2:has-text("Thanks for redeeming")');
               redeem_action = 'redeemed';
               db.data[user][title].status = 'claimed and redeemed';
