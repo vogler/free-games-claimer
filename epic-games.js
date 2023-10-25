@@ -72,7 +72,7 @@ try {
 
   // page.click('button:has-text("Accept All Cookies")').catch(_ => { }); // Not needed anymore since we set the cookie above. Clicking this did not always work since the message was animated in too slowly.
 
-  while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
+  while (await page.locator('egs-navigation').getAttribute('isloggedin') != 'true') {
     console.error('Not signed in anymore. Please login in the browser or here in the terminal.');
     if (cfg.novnc_port) console.info(`Open http://localhost:${cfg.novnc_port} to login inside the docker container.`);
     if (!cfg.debug) context.setDefaultTimeout(cfg.login_timeout); // give user some extra time to log in
@@ -114,7 +114,7 @@ try {
     await page.waitForURL(URL_CLAIM);
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
-  user = await page.locator('#user span').first().innerHTML();
+  user = await page.locator('egs-navigation').getAttribute('displayname'); // 'null' if !isloggedin
   console.log(`Signed in as ${user}`);
   db.data[user] ||= {};
   if (cfg.time) console.timeEnd('login');
