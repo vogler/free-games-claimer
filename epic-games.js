@@ -83,8 +83,9 @@ try {
     const email = cfg.eg_email || await prompt({message: 'Enter email'});
     const password = email && (cfg.eg_password || await prompt({type: 'password', message: 'Enter password'}));
     if (email && password) {
-      await page.click('text=Sign in with Epic Games');
+      // await page.click('text=Sign in with Epic Games');
       await page.fill('#email', email);
+      await page.click('button[type="submit"]');
       await page.fill('#password', password);
       await page.click('button[type="submit"]');
       page.waitForSelector('#h_captcha_challenge_login_prod iframe').then(async () => {
