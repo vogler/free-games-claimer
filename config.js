@@ -5,7 +5,7 @@ dotenv.config({ path: 'data/config.env' }); // loads env vars from file - will n
 
 // Options - also see table in README.md
 export const cfg = {
-  debug: process.env.PWDEBUG == '1', // runs non-headless and opens https://playwright.dev/docs/inspector
+  debug: process.env.DEBUG == '1' || process.env.PWDEBUG == '1', // runs non-headless and opens https://playwright.dev/docs/inspector
   record: process.env.RECORD == '1', // `recordHar` (network) + `recordVideo`
   time: process.env.TIME == '1', // log duration of each step
   dryrun: process.env.DRYRUN == '1', // don't claim anything
