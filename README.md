@@ -24,6 +24,9 @@ Easy option: [install Docker](https://docs.docker.com/get-docker/) (or [podman](
 ```
 docker run --rm -it -p 6080:6080 -v fgc:/fgc/data --pull=always ghcr.io/vogler/free-games-claimer
 ```
+
+_This currently gives you a captcha challenge for epic-games. Until [issue #183](https://github.com/vogler/free-games-claimer/issues/183) is fixed, it is recommended to just run `node epic-games` without docker (see below)._
+
 This will run `node epic-games; node prime-gaming; node gog` - if you only want to claim games for one of the stores, you can override the default command by appending e.g. `node epic-games` at the end of the `docker run` command, or if you want several `bash -c "node epic-games.js; node gog.js"`.
 Data (including json files with claimed games, codes to redeem, screenshots) is stored in the Docker volume `fgc`.
 
@@ -35,6 +38,7 @@ Data (including json files with claimed games, codes to redeem, screenshots) is 
 3. Run `npm install`
 4. Run `pip install apprise` to install [apprise](https://github.com/caronc/apprise) if you want notifications
 5. To get updates: `git pull; npm install`
+6. Run `node epic-games`, `node prime-gaming`, `node gog`...
 
 During `npm install` Playwright will download its Firefox to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
 If you are missing some dependencies for the browser on your system, you can use `sudo npx playwright install firefox --with-deps`.
