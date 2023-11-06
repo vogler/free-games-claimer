@@ -39,7 +39,10 @@ export const cfg = {
   gog_password: process.env.GOG_PASSWORD || process.env.PASSWORD,
   gog_newsletter: process.env.GOG_NEWSLETTER == '1', // do not unsubscribe from newsletter after claiming a game
   // OTP only via GOG_EMAIL, can't add app...
-
+  // auth xbox
+  xbox_email: process.env.XBOX_EMAIL || process.env.EMAIL,
+  xbox_password: process.env.XBOX_PASSWORD || process.env.PASSWORD,
+  xbox_otpkey: process.env.XBOX_OTPKEY,
   // experimmental - likely to change
   pg_redeem: process.env.PG_REDEEM == '1', // prime-gaming: redeem keys on external stores
   pg_claimdlc: process.env.PG_CLAIMDLC == '1', // prime-gaming: claim in-game content

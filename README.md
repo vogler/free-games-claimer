@@ -8,8 +8,8 @@ Claims free games periodically on
 - <img src="https://upload.wikimedia.org/wikipedia/commons/3/31/Epic_Games_logo.svg" width="32"/> [Epic Games Store](https://www.epicgames.com/store/free-games)
 - <img src="https://seeklogo.com/images/P/prime-gaming-logo-61A701B3F5-seeklogo.com.png" width="32"/> [Amazon Prime Gaming](https://gaming.amazon.com)
 - <img src="https://static.wikia.nocookie.net/this-war-of-mine/images/1/1a/Logo_GoG.png/revision/latest?cb=20160711062658" width="32"/> [GOG](https://www.gog.com)
-- <img src="https://www.freepnglogos.com/uploads/xbox-logo-picture-png-14.png" width="32"/> [Xbox Live Games with Gold](https://www.xbox.com/en-US/live/gold#gameswithgold) - planned
 - <img src="https://cdn2.unrealengine.com/ue-logo-white-e34b6ba9383f.svg" width="32"/> [Unreal Engine (Assets)](https://www.unrealengine.com/marketplace/en-US/assets?count=20&sortBy=effectiveDate&sortDir=DESC&start=0&tag=4910) ([experimental](https://github.com/vogler/free-games-claimer/issues/44), same login as Epic Games)
+<!-- - <img src="https://www.freepnglogos.com/uploads/xbox-logo-picture-png-14.png" width="32"/> [Xbox Live Games with Gold](https://www.xbox.com/en-US/live/gold#gameswithgold) ([experimental](https://github.com/vogler/free-games-claimer/issues/19)) -->
 
 Pull requests welcome :)
 
@@ -118,6 +118,7 @@ To get the OTP key, it is easiest to follow the store's guide for adding an auth
 - **Epic Games**: visit [password & security](https://www.epicgames.com/account/password), enable 'third-party authenticator app', copy the 'Manual Entry Key' and use it to set `EG_OTPKEY`.
 - **Prime Gaming**: visit Amazon 'Your Account › Login & security', 2-step verification › Manage › Add new app › Can't scan the barcode, copy the bold key and use it to set `PG_OTPKEY`
 - **GOG**: only offers OTP via email
+<!-- - **Xbox**: visit [additional security](https://account.live.com/proofs/manage/additional) > Add a new way to sign in or verify > Use an app > Set up a different Authenticator app > I can't scan the bar code > copy the bold key and use it to set `XBOX_OTPKEY` -->
 
 Beware that storing passwords and OTP keys as clear text may be a security risk. Use a unique/generated password! TODO: maybe at least offer to base64 encode for storage.
 
@@ -135,14 +136,18 @@ Claiming the Amazon Games works out-of-the-box, however, for games on external s
   Keys and URLs are printed to the console, included in notifications and saved in `data/prime-gaming.json`. A screenshot of the page with the key is also saved to `data/screenshots`.
   [TODO](https://github.com/vogler/free-games-claimer/issues/5): ~~redeem keys on external stores.~~
 
+<!-- ### Xbox Games With Gold -->
+<!-- Run `node xbox` (locally or in docker). -->
+
 ### Run periodically
 #### How often?
 Epic Games usually has two free games *every week*, before Christmas every day.
 Prime Gaming has new games *every month* or more often during Prime days.
 GOG usually has one new game every couples of weeks.
 Unreal Engine has new assets to claim *every first Tuesday of a month*.
+<!-- Xbox usually has two games *every month*. -->
 
-It is save to run the scripts every day.
+It is safe to run the scripts every day.
 
 #### How to schedule?
 The container/scripts will claim currently available games and then exit.
