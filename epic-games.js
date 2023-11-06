@@ -123,7 +123,13 @@ try {
 
   // Detect free games
   const game_loc = page.locator('a:has(span:text-is("Free Now"))');
-  await game_loc.last().waitFor();
+  await game_loc.last().waitFor().catch(_ => {
+    // rarely there are no free games available -> catch Timeout
+    // TODO would be better to wait for alternative like 'coming soon' instead of waiting for timeout
+    // see https://github.com/vogler/free-games-claimer/issues/210#issuecomment-1727420943
+    console.error('Seems like currently there are no free games available in your region...')
+    // urls below should then be an empty list
+  });
   // clicking on `game_sel` sometimes led to a 404, see https://github.com/vogler/free-games-claimer/issues/25
   // debug showed that in those cases the href was still correct, so we `goto` the urls instead of clicking.
   // Alternative: parse the json loaded to build the page https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions
