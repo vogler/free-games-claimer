@@ -66,9 +66,9 @@ jobs:
             BRANCH=${{ env.BRANCH }}
             NOW=${{ env.NOW }}
           platforms: linux/amd64,linux/arm64 # ,linux/arm/v7
+          # TODO docker tag only if DOCKERHUB_* are set?
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/free-games-claimer:${{env.IMAGE_TAG}} # TODO if DOCKERHUB_* are set?
-
+            ${{ secrets.DOCKERHUB_USERNAME }}/free-games-claimer:${{env.IMAGE_TAG}}
             ghcr.io/${{ github.actor }}/free-games-claimer:${{env.IMAGE_TAG}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
