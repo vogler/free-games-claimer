@@ -2,7 +2,7 @@
   "compilerOptions": {
     "checkJs": true,
     "target": "es2021",
-    "module": "esnext",
+    "module": "NodeNext",
     "moduleResolution": "NodeNext", // https://github.com/typicode/lowdb/issues/554
   },
   "exclude": ["node_modules", "**/node_modules"]
