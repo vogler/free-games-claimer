@@ -1,7 +1,6 @@
 // check if running the latest version
 
 import {log} from 'console';
-import { readFileSync } from 'fs';
 import { exec } from 'child_process';
 
 const execp = (cmd) => new Promise((resolve, reject) => {
@@ -19,7 +18,7 @@ const execp = (cmd) => new Promise((resolve, reject) => {
   });
 });
 
-const git_main = () => readFileSync('.git/refs/heads/main').toString().trim();
+// const git_main = () => readFileSync('.git/refs/heads/main').toString().trim();
 
 let sha, date;
 // if (existsSync('/.dockerenv')) { // did not work
@@ -44,7 +43,7 @@ log('Local commit:', sha, new Date(date));
 log('Online commit:', gh.sha, new Date(gh.commit.committer.date));
 
 if (sha == gh.sha) {
-  log('Running the latest version!')
+  log('Running the latest version!');
 } else {
-  log('Not running the latest version!')
+  log('Not running the latest version!');
 }

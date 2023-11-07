@@ -94,7 +94,7 @@ try {
         await notify('epic-games: got captcha during login. Please check.');
       }).catch(_ => { });
       page.waitForSelector('h6:has-text("Incorrect response.")').then(async () => {
-        console.error('Incorrect repsonse for captcha!')
+        console.error('Incorrect repsonse for captcha!');
       }).catch(_ => { });
       // handle MFA, but don't await it
       page.waitForURL('**/id/login/mfa**').then(async () => {
@@ -128,7 +128,7 @@ try {
     // rarely there are no free games available -> catch Timeout
     // TODO would be better to wait for alternative like 'coming soon' instead of waiting for timeout
     // see https://github.com/vogler/free-games-claimer/issues/210#issuecomment-1727420943
-    console.error('Seems like currently there are no free games available in your region...')
+    console.error('Seems like currently there are no free games available in your region...');
     // urls below should then be an empty list
   });
   // clicking on `game_sel` sometimes led to a 404, see https://github.com/vogler/free-games-claimer/issues/25
@@ -227,8 +227,8 @@ try {
         const captcha = iframe.locator('#h_captcha_challenge_checkout_free_prod iframe');
         captcha.waitFor().then(async () => { // don't await, since element may not be shown
           // console.info('  Got hcaptcha challenge! NopeCHA extension will likely solve it.')
-          console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.')
-          await notify('epic-games: got captcha challenge right before claim. Use VNC to solve it manually.')
+          console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.');
+          await notify('epic-games: got captcha challenge right before claim. Use VNC to solve it manually.');
           // await page.waitForTimeout(2000);
           // const p = path.resolve(cfg.dir.screenshots, 'epic-games', 'captcha', `${filenamify(datetime())}.png`);
           // await captcha.screenshot({ path: p });
@@ -269,5 +269,5 @@ try {
   }
 }
 if (cfg.debug) writeFileSync(path.resolve(cfg.dir.browser, 'cookies.json'), JSON.stringify(await context.cookies()));
-if (page.video()) console.log('Recorded video:', await page.video().path())
+if (page.video()) console.log('Recorded video:', await page.video().path());
 await context.close();
