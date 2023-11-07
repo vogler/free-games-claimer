@@ -38,6 +38,9 @@ export const cfg = {
   gog_email: process.env.GOG_EMAIL || process.env.EMAIL,
   gog_password: process.env.GOG_PASSWORD || process.env.PASSWORD,
   gog_newsletter: process.env.GOG_NEWSLETTER == '1', // do not unsubscribe from newsletter after claiming a game
+  gog_giveaway: process.env.GOG_GIVEAWAY == '1',
+  gog_freegames: false || process.env.GOG_FREEGAMES == '1',
+  gog_freegames_url: process.env.GOG_FREEGAMES_URL || "https://www.gog.com/en/games?priceRange=0,0&languages=en&order=asc:title&hideDLCs=true&excludeTags=demo&excludeTags=freegame",
   // OTP only via GOG_EMAIL, can't add app...
   // auth xbox
   xbox_email: process.env.XBOX_EMAIL || process.env.EMAIL,

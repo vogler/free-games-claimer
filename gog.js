@@ -1,6 +1,7 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
 import { resolve, jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
 import { cfg } from './config.js';
+import { existsSync } from "fs";
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'gog', ...a);
 
@@ -58,7 +59,7 @@ try {
       // handle MFA, but don't await it
       iframe.locator('form[name=second_step_authentication]').waitFor().then(async () => {
         console.log('Two-Step Verification - Enter security code');
-        console.log(await iframe.locator('.form__description').innerText())
+        console.log(await iframe.locator('.form__description').innerText());
         const otp = await prompt({type: 'text', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 4 || 'The code must be 4 digits!'}); // can't use type: 'number' since it strips away leading zeros and codes sometimes have them
         await iframe.locator('#second_step_authentication_token_letter_1').pressSequentially(otp.toString(), {delay: 10});
         await iframe.locator('#second_step_authentication_send').click();
@@ -71,7 +72,7 @@ try {
         notify('gog: got captcha during login. Please check.');
         // TODO solve reCAPTCHA?
       }).catch(_ => { });
-      await page.waitForSelector('#menuUsername')
+      await page.waitForSelector('#menuUsername');
     } else {
       console.log('Waiting for you to login in the browser.');
       await notify('gog: no longer signed in and not enough options set for automatic login.');
@@ -88,6 +89,27 @@ try {
   console.log(`Signed in as ${user}`);
   db.data[user] ||= {};
 
+  if (cfg.gog_giveaway) {
+    await claimGiveaway();
+  }
+  if (cfg.gog_freegames) {
+    await claimFreegames();
+  }
+} catch (error) {
+  process.exitCode ||= 1;
+  console.error('--- Exception:');
+  console.error(error); // .toString()?
+  if (error.message && process.exitCode != 130)
+    notify(`gog failed: ${error.message.split('\n')[0]}`);
+} finally {
+  await db.write(); // write out json db
+  if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed
+    notify(`gog (${user}):<br>${html_game_list(notify_games)}`);
+  }
+}
+
+async function claimGiveaway() {
+  console.log("Claiming giveaway");
   const banner = page.locator('#giveaway');
   if (!await banner.count()) {
     console.log('Currently no free giveaway!');
@@ -135,17 +157,151 @@ try {
       await page.locator('li:has-text("Promotions and hot deals") label').uncheck();
     }
   }
-} catch (error) {
-  process.exitCode ||= 1;
-  console.error('--- Exception:');
-  console.error(error); // .toString()?
-  if (error.message && process.exitCode != 130)
-    notify(`gog failed: ${error.message.split('\n')[0]}`);
-} finally {
-  await db.write(); // write out json db
-  if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed
-    notify(`gog (${user}):<br>${html_game_list(notify_games)}`);
-  }
 }
-if (page.video()) console.log('Recorded video:', await page.video().path())
+
+async function claimGame(url){
+  await page.goto(url, { waitUntil: 'networkidle' });
+
+  const title = await page.locator("h1").first().innerText();
+
+  const ageGateButton = page.locator("button.age-gate__button").first();
+  if (await ageGateButton.isVisible()) {
+    await ageGateButton.click();
+  }
+
+  const game_id = page
+      .url()
+      .split("/")
+      .filter((x) => !!x)
+      .pop();
+    db.data[user][game_id] ||= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
+    console.log("Current free game:", title);
+    const notify_game = { title, url, status: "failed" };
+    notify_games.push(notify_game); // status is updated below
+
+    const playforFree = page
+        .locator('a.cart-button:visible')
+        .first();
+    const addToCart = page
+        .locator('button.cart-button:visible')
+        .first();
+    const inLibrary = page
+        .locator("button.go-to-library-button")
+        .first();
+    const inCart = page
+        .locator('.cart-button__state-in-cart:visible')
+        .first();
+
+    await Promise.any([playforFree.waitFor(), addToCart.waitFor(), inCart.waitFor(), inLibrary.waitFor()]);
+
+    if (await inLibrary.isVisible()) {
+        console.log("Already in library! Nothing to claim.");
+        notify_game.status = "existed";
+        db.data[user][game_id].status ||= "existed"; // does not overwrite claimed or failed
+        await db.write();
+    } else if (await inCart.isVisible() || await addToCart.isVisible() || await playforFree.isVisible()) {
+      if (await inCart.isVisible()) {
+        console.log("Not in library yet! But in cart.");
+        await inCart.click();
+      } else if (await addToCart.isVisible()) {
+        console.log("Not in library yet! Click ADD TO CART.");
+
+        await addToCart.click();
+        await inCart.isVisible();
+        await inCart.click();
+      } else if (await playforFree.isVisible()) {
+        console.log("Play For Free. Can't be added to library!" + url);
+        return;
+      }
+
+      await page.waitForURL('**/checkout/**');
+      if (await page.locator('.order-message--error').isVisible()) {
+        console.log("skipping : " + await page.locator('.order-message--error').innerText());
+        await page.locator('span[data-cy="product-remove-button"]').click();
+        return;
+      }
+
+      await page.locator('button[data-cy="payment-checkout-button"]').click();
+
+      await page.waitForURL('**/order/status/**');
+      await page.locator('p[data-cy="order-message"]').isVisible();
+      
+      notify_game.status = "claimed";
+      db.data[user][game_id].status = "claimed";
+      db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
+      console.log("Claimed successfully!");
+      await db.write();
+    }
+
+    const p = path.resolve(cfg.dir.screenshots, 'gog', `${game_id}.png`);
+    if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
+}
+
+async function claimFreegames(){
+  var allLinks = [];
+  var freegames_urls = cfg.gog_freegames_url.split(";");
+  for (var freegames_url of freegames_urls) {
+    if (freegames_url.includes("&hideOwned=true")) {
+      freegames_url = freegames_url.replace("&hideOwned=true", "");
+    }
+    if (!freegames_url.includes("priceRange=0,0")) {
+      console.log("Filter for only free games not detected adding it manually.");
+      freegames_url = freegames_url + "&priceRange=0,0";
+    }
+    console.log("collecting freegames from " + freegames_url);
+
+    await page.goto(freegames_url, { waitUntil: 'networkidle' });
+    await page.locator('label[selenium-id="hideOwnedCheckbox"]').click(); // when you add it to url immediately it shows more results
+    await page.waitForTimeout(2500);
+    var hasMorePages = true;
+    do {
+      const links = await page.locator(".product-tile").all();
+      const gameUrls = await Promise.all(
+          links.map(async (game) => {
+            var urlSlug = await game.getAttribute("href");
+            return urlSlug;
+        })
+      );
+      for (const url of gameUrls) {
+        allLinks.push(url);
+      }
+      if (await page.locator('.catalog__empty').isVisible()){
+        hasMorePages = false;
+        console.log("no games could be found with your filter");
+      } else if (await page.locator('.small-pagination__item--next.disabled').isVisible()){
+        hasMorePages = false;
+        console.log("last page reached");
+      } else {
+        await page.locator(".small-pagination__item--next").first().click();
+        console.log("next page - waiting");
+        await page.waitForTimeout(5000); // wait until page is loaded it takes some time with filters
+      }
+      
+    } while (hasMorePages);
+  }
+  console.log("Found total games: " + allLinks.length);
+  allLinks = allLinks.filter(function (str) { return !str.endsWith("_prologue"); });
+  allLinks = allLinks.filter(function (str) { return !str.endsWith("_demo"); });
+  console.log("Filtered count: " + allLinks.length);
+
+  for (const url of allLinks)
+    {
+        if (!isClaimedUrl(url))
+        {
+          console.log(url);
+          await claimGame(url);
+        }
+    }
+}
+
+function isClaimedUrl(url) {
+    try {
+        var status = db.data[user][url.split("/").filter((x) => !!x).pop()]["status"];
+        return status === "existed" || status === "claimed";
+    } catch (error) {
+        return false;
+    }
+}
+
+if (page.video()) console.log('Recorded video:', await page.video().path());
 await context.close();
