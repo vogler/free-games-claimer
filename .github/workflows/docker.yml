@@ -3,15 +3,15 @@ name: Build and push Docker image (amd64, arm64 to hub.docker.com and ghcr.io)
 on:
   workflow_dispatch: # allow manual trigger
   # https://github.com/orgs/community/discussions/26276
-  push: # on every branch, but not for PRs from forks?
-    paths:
-      - '**'
-      - '!README.md'
-      - '!.github/**'
-      - '.github/workflows/docker.yml'
-  pull_request: # includes PRs from forks but only triggers on creation, not pushes?
+  push:
     branches:
-      - "main" # only PRs against main
+      - "main"
+      - "v*"
+    tags:
+       - "v*"
+  pull_request:
+    branches:
+      - "main"
 
 jobs:
   docker:
@@ -25,6 +25,11 @@ jobs:
         run: |
           echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
           echo "NOW=$(date -R)" >> $GITHUB_ENV # date -Iseconds; date +'%Y-%m-%dT%H:%M:%S'
+          if [[ "${{ env.BRANCH }}" == "main" ]]; then
+            echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+          fi
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -34,7 +39,7 @@ jobs:
       -
         name: Login to Docker Hub
         uses: docker/login-action@v3
-        # if: ${{ secrets.DOCKERHUB_USERNAME && secrets.DOCKERHUB_TOKEN }}
+        if: github.event_name != 'pull_request'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -43,21 +48,22 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Build and push
         uses: docker/build-push-action@v5
+        if: github.event_name != 'pull_request'
         with:
           context: .
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           build-args: |
             COMMIT=${{ github.sha }}
             BRANCH=${{ env.BRANCH }}
             NOW=${{ env.NOW }}
           platforms: linux/amd64,linux/arm64 # ,linux/arm/v7
           tags: |
-            voglerr/free-games-claimer:latest
-            ghcr.io/vogler/free-games-claimer:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/free-games-claimer:${{env.IMAGE_TAG}}
+            ghcr.io/${{ github.actor }}/free-games-claimer:${{env.IMAGE_TAG}}
           cache-from: type=gha
           cache-to: type=gha,mode=max

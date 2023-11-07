@@ -4,3 +4,5 @@ data
 .gitignore
 **Dockerfile**
 .dockerignore
+
+.github
