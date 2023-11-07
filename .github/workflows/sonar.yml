@@ -1,5 +1,5 @@
 on:
-  # Trigger analysis when pushing in master or pull requests, and when creating a pull request.
+  # Trigger analysis when pushing in main or pull requests, and when creating a pull request.
   push:
     branches:
       - main
@@ -10,18 +10,23 @@ jobs:
   sonarcloud:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    -
+      uses: actions/checkout@v4
       with:
         # Disabling shallow clone is recommended for improving relevancy of reporting
         fetch-depth: 0
-    - name: Install modules
+    -
+      name: Install modules
       run: npm install -g eslint
-    - name: Run ESLint
+    -
+      name: Run ESLint
       continue-on-error: true
       run: eslint . --ext .js,.ts -f json -o eslint_report.json
-    - name: Fix ESLint paths
+    -
+      name: Fix ESLint paths
       run: sed -i 's+/home/runner/work/free-games-claimer/free-games-claimer+/github/workspace+g' eslint_report.json
-    - name: SonarCloud Scan
+    -
+      name: SonarCloud Scan
       uses: sonarsource/sonarcloud-github-action@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
