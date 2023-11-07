@@ -36,8 +36,8 @@ RUN apt-get update \
       libgdk-pixbuf-2.0-0 \
       libdbus-glib-1-2 \
       libxcursor1 \
-    && apt-get autoclean -y \
     && apt-get autoremove -y \
+    && apt-get clean \
     && rm -rf \
       /tmp/* \
       /usr/share/doc/* \
