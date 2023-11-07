@@ -206,7 +206,7 @@ try {
             // {"reason":"Invalid or no captcha"}
             // {"reason":"code_used"}
             // {"reason":"code_not_found"}
-            if (reason && reason.includes('captcha')) {
+            if (reason?.includes('captcha')) {
               redeem_action = 'redeem (got captcha)';
               console.error('  Got captcha; could not redeem!');
             } else if (reason == 'code_used') {
@@ -228,7 +228,6 @@ try {
                   console.log('  Redeemed successfully.');
                   db.data[user][title].status = 'claimed and redeemed';
               } else {
-                redeem_action = 'redeemed?';
                 console.debug(`  Response 2: ${r2t}`);
                 console.log('  Unknown Response 2 - please report in https://github.com/vogler/free-games-claimer/issues/5');
               }

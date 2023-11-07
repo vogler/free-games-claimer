@@ -8,8 +8,6 @@ import {
     notify,
     prompt,
 } from "./util.js";
-import path from "path";
-import { existsSync, writeFileSync } from "fs";
 import { cfg } from "./config.js";
 
 // ### SETUP
