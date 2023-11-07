@@ -13,7 +13,7 @@ const execp = (cmd) => new Promise((resolve, reject) => {
       if (error.message.includes('command not found')) {
         console.info('Install git to check for updates!');
       }
-      return reject();
+      return reject(error);
     }
     resolve(stdout.trim());
   });
