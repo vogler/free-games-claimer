@@ -9,10 +9,10 @@ on:
       - "v*"
     tags:
        - "v*"
-    paths:
+    paths: # ignore changes to certain files
       - '**'
-      - '!README.md'
-      - '!.github/**'
+      - '!*.md'
+      # - '!.github/**'
   pull_request: # runs when opened/reopned or when the head branch is updated, see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
     branches:
       - "main" # only PRs against main
