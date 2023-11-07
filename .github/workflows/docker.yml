@@ -9,9 +9,13 @@ on:
       - "v*"
     tags:
        - "v*"
-  pull_request:
+    paths:
+      - '**'
+      - '!README.md'
+      - '!.github/**'
+  pull_request: # runs when opened/reopned or when the head branch is updated, see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
     branches:
-      - "main"
+      - "main" # only PRs against main
 
 jobs:
   docker:
@@ -39,7 +43,7 @@ jobs:
       -
         name: Login to Docker Hub
         uses: docker/login-action@v3
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' # TODO if DOCKERHUB_* are set?
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -48,22 +52,23 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.actor }} # actor is user that opened PR, was repository_owner before
           password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Build and push
         uses: docker/build-push-action@v5
-        if: github.event_name != 'pull_request'
+        # if: github.event_name != 'pull_request' # still want to build image
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' }} # TODO push for forks?
           build-args: |
             COMMIT=${{ github.sha }}
             BRANCH=${{ env.BRANCH }}
             NOW=${{ env.NOW }}
           platforms: linux/amd64,linux/arm64 # ,linux/arm/v7
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/free-games-claimer:${{env.IMAGE_TAG}}
+            ${{ secrets.DOCKERHUB_USERNAME }}/free-games-claimer:${{env.IMAGE_TAG}} # TODO if DOCKERHUB_* are set?
+
             ghcr.io/${{ github.actor }}/free-games-claimer:${{env.IMAGE_TAG}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
