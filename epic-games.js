@@ -51,6 +51,7 @@ if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
 const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
 // console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
+// eslint-disable-next-line no-undef
 if (cfg.debug) console.debug(await page.evaluate(() => window.screen));
 if (cfg.record && cfg.debug) {
   // const filter = _ => true;
