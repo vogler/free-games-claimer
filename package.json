@@ -13,9 +13,9 @@
     "cross-env": "^7.0.3",
     "dotenv": "^16.3.1",
     "enquirer": "^2.4.1",
-    "lowdb": "^6.0.1",
+    "lowdb": "^6.1.1",
     "otplib": "^12.0.1",
-    "playwright-firefox": "^1.38.0",
+    "playwright-firefox": "^1.39.0",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "repository": {
@@ -23,7 +23,7 @@
     "url": "https://github.com/vogler/free-games-claimer.git"
   },
   "author": "Ralf Vogler",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "devDependencies": {
     "eslint": "^8.50.0"
   }

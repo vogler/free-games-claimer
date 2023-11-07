@@ -1,6 +1,10 @@
-node_modules
-data
+node_modules/
+data/
+*.env
 
 .gitignore
+.github/
+
 **Dockerfile**
 .dockerignore
+

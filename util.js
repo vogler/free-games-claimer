@@ -11,14 +11,8 @@ export const dataDir = s => path.resolve(__dirname, 'data', s);
 export const resolve = (...a) => a.length && a[0] == '0' ? null : path.resolve(...a);
 
 // json database
-import { Low } from 'lowdb';
-import { JSONFile } from 'lowdb/node';
-export const jsonDb = async (file, defaultData) => {
-  const db = new Low(new JSONFile(dataDir(file)), defaultData);
-  await db.read();
-  return db;
-};
-
+import { JSONPreset } from 'lowdb/node';
+export const jsonDb = (file, defaultData) => JSONPreset(dataDir(file), defaultData);
 
 export const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 // date and time as UTC (no timezone offset) in nicely readable and sortable format, e.g., 2022-10-06 12:05:27.313
@@ -32,21 +26,6 @@ export const handleSIGINT = (context = null) => process.on('SIGINT', async () =>
   process.exitCode = 130; // 128+SIGINT to indicate to parent that process was killed
   if (context) await context.close(); // in order to save recordings also on SIGINT, we need to disable Playwright's handleSIGINT and close the context ourselves
 });
-
-// stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
-// gets userAgent and then removes "Headless" from it
-const newStealthContext = async (browser, contextOptions = {}, debug = false) => {
-  if (!debug) { // only need to fix userAgent in headless mode
-    const dummyContext = await browser.newContext();
-    const originalUserAgent = await (await dummyContext.newPage()).evaluate(() => navigator.userAgent);
-    await dummyContext.close();
-    // console.log('originalUserAgent:', originalUserAgent); // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/96.0.4664.110 Safari/537.36
-    contextOptions = {
-      ...contextOptions,
-      userAgent: originalUserAgent.replace("Headless", ""), // HeadlessChrome -> Chrome, TODO needed?
-    };
-  }
-};
 
 export const stealth = async (context) => {
   // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212

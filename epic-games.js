@@ -29,7 +29,7 @@ const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   // userAgent firefox (macOS): Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:106.0) Gecko/20100101 Firefox/106.0
   // userAgent firefox (docker): Mozilla/5.0 (X11; Linux aarch64; rv:109.0) Gecko/20100101 Firefox/115.0
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
-  recordVideo: cfg.record ? { dir: path.resolve('data/record/'), size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
+  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
   recordHar: cfg.record ? { path: `data/record/eg-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
   args: [ // https://peter.sh/experiments/chromium-command-line-switches
@@ -72,7 +72,7 @@ try {
 
   // page.click('button:has-text("Accept All Cookies")').catch(_ => { }); // Not needed anymore since we set the cookie above. Clicking this did not always work since the message was animated in too slowly.
 
-  while (await page.locator('a[role="button"]:has-text("Sign In")').count() > 0) {
+  while (await page.locator('egs-navigation').getAttribute('isloggedin') != 'true') {
     console.error('Not signed in anymore. Please login in the browser or here in the terminal.');
     if (cfg.novnc_port) console.info(`Open http://localhost:${cfg.novnc_port} to login inside the docker container.`);
     if (!cfg.debug) context.setDefaultTimeout(cfg.login_timeout); // give user some extra time to log in
@@ -83,8 +83,9 @@ try {
     const email = cfg.eg_email || await prompt({message: 'Enter email'});
     const password = email && (cfg.eg_password || await prompt({type: 'password', message: 'Enter password'}));
     if (email && password) {
-      await page.click('text=Sign in with Epic Games');
+      // await page.click('text=Sign in with Epic Games');
       await page.fill('#email', email);
+      await page.click('button[type="submit"]');
       await page.fill('#password', password);
       await page.click('button[type="submit"]');
       page.waitForSelector('#h_captcha_challenge_login_prod iframe').then(async () => {
@@ -114,7 +115,7 @@ try {
     await page.waitForURL(URL_CLAIM);
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
-  user = await page.locator('#user span').first().innerHTML();
+  user = await page.locator('egs-navigation').getAttribute('displayname'); // 'null' if !isloggedin
   console.log(`Signed in as ${user}`);
   db.data[user] ||= {};
   if (cfg.time) console.timeEnd('login');
@@ -122,7 +123,13 @@ try {
 
   // Detect free games
   const game_loc = page.locator('a:has(span:text-is("Free Now"))');
-  await game_loc.last().waitFor();
+  await game_loc.last().waitFor().catch(_ => {
+    // rarely there are no free games available -> catch Timeout
+    // TODO would be better to wait for alternative like 'coming soon' instead of waiting for timeout
+    // see https://github.com/vogler/free-games-claimer/issues/210#issuecomment-1727420943
+    console.error('Seems like currently there are no free games available in your region...')
+    // urls below should then be an empty list
+  });
   // clicking on `game_sel` sometimes led to a 404, see https://github.com/vogler/free-games-claimer/issues/25
   // debug showed that in those cases the href was still correct, so we `goto` the urls instead of clicking.
   // Alternative: parse the json loaded to build the page https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions
@@ -227,7 +234,7 @@ try {
           // console.info('  Saved a screenshot of hcaptcha challenge to', p);
           // console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
         }).catch(_ => { }); // may time out if not shown
-        await page.waitForSelector('text=Thanks for your order!');
+        await page.locator('text=Thanks for your order!').waitFor({state: 'attached'});
         db.data[user][game_id].status = 'claimed';
         db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
         console.log('  Claimed successfully!');

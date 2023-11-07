@@ -1,6 +1,5 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
 import { authenticator } from 'otplib';
-import path from 'path';
 import { resolve, jsonDb, datetime, stealth, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './util.js';
 import { cfg } from './config.js';
 
@@ -18,7 +17,7 @@ const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
   locale: "en-US", // ignore OS locale to be sure to have english text for locators
-  recordVideo: cfg.record ? { dir: path.resolve('data/record/'), size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
+  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
   recordHar: cfg.record ? { path: `data/record/pg-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
 });
@@ -137,7 +136,7 @@ try {
     if (cfg.debug) await page.pause();
     if (cfg.dryrun) continue;
     if (cfg.interactive && !await confirm()) continue;
-    await Promise.any([page.click('button:has-text("Get game")'), page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")')]); // waits for navigation
+    await Promise.any([page.click('button:has-text("Get game")'), page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")'), page.waitForSelector('.thank-you-title:has-text("Success")')]); // waits for navigation
 
     // TODO would be simpler than the below, but will block for linked stores without code
     // const redeem_text = await page.textContent('text=/ code on /'); // FAQ: How do I redeem my code?
@@ -162,10 +161,16 @@ try {
     db.data[user][title] ||= { title, time: datetime(), url, store };
     const notify_game = { title, url };
     notify_games.push(notify_game); // status is updated below
-    if (await page.locator('div:has-text("Link game account")').count()) {
+    if (await page.locator('div:has-text("Link game account")').count() // TODO still needed? epic games store just has 'Link account' as the button text now.
+       || await page.locator('div:has-text("Link account")').count()) {
       console.error('  Account linking is required to claim this offer!');
       notify_game.status = `failed: need account linking for ${store}`;
       db.data[user][title].status = 'failed: need account linking';
+      // await page.pause();
+      // await page.click('[data-a-target="LinkAccountModal"] [data-a-target="LinkAccountButton"]');
+      // TODO login for epic games also needed if already logged in
+      // wait for https://www.epicgames.com/id/authorize?redirect_uri=https%3A%2F%2Fservice.link.amazon.gg...
+      // await page.click('button[aria-label="Allow"]');
     } else {
       db.data[user][title].status = 'claimed';
       // print code if there is one
@@ -201,7 +206,7 @@ try {
             // {"reason":"Invalid or no captcha"}
             // {"reason":"code_used"}
             // {"reason":"code_not_found"}
-            if (reason && reason.includes('captcha')) {
+            if (reason?.includes('captcha')) {
               redeem_action = 'redeem (got captcha)';
               console.error('  Got captcha; could not redeem!');
             } else if (reason == 'code_used') {
@@ -212,19 +217,18 @@ try {
               console.error('  Code was not found!');
             } else { // TODO not logged in? need valid unused code to test.
               redeem_action = 'redeemed?';
-              console.log('  Redeemed successfully? Please report your Responses (if new) in https://github.com/vogler/free-games-claimer/issues/5');
+              // console.log('  Redeemed successfully? Please report your Responses (if new) in https://github.com/vogler/free-games-claimer/issues/5');
               console.debug(`  Response 1: ${r1t}`);
               // then after the click on Redeem there is a POST request which should return {} if claimed successfully
               const r2 = page2.waitForResponse(r => r.request().method() == 'POST' && r.url().startsWith('https://redeem.gog.com/'));
               await page2.click('[type="submit"]'); // click Redeem
               const r2t = await (await r2).text();
-              console.debug(`  Response 2: ${r2t}`);
               if (r2t == '{}') {
                   redeem_action = 'redeemed';
                   console.log('  Redeemed successfully.');
                   db.data[user][title].status = 'claimed and redeemed';
               } else {
-                redeem_action = 'redeemed?';
+                console.debug(`  Response 2: ${r2t}`);
                 console.log('  Unknown Response 2 - please report in https://github.com/vogler/free-games-claimer/issues/5');
               }
             }
@@ -258,7 +262,7 @@ try {
             await page2.uncheck('[name=newsletter_sub]');
             await page2.click('[type="submit"]');
             try {
-              await page2.waitForResponse(r => r.url().startsWith('https://promo.legacygames.com/promotion-processing/order-management.php'));
+              // await page2.waitForResponse(r => r.url().startsWith('https://promo.legacygames.com/promotion-processing/order-management.php')); // status code 302
               await page2.waitForSelector('h2:has-text("Thanks for redeeming")');
               redeem_action = 'redeemed';
               db.data[user][title].status = 'claimed and redeemed';
