@@ -25,6 +25,6 @@
   "author": "Ralf Vogler",
   "license": "AGPL-3.0-only",
   "devDependencies": {
-    "eslint": "^8.50.0"
+    "eslint": "^8.53.0"
   }
 }
