@@ -27,7 +27,7 @@ export const handleSIGINT = (context = null) => process.on('SIGINT', async () =>
   if (context) await context.close(); // in order to save recordings also on SIGINT, we need to disable Playwright's handleSIGINT and close the context ourselves
 });
 
-export const stealth = async (context) => {
+export const stealth = async context => {
   // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
   // https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth/evasions
   const enabledEvasions = [
@@ -47,13 +47,13 @@ export const stealth = async (context) => {
     'sourceurl',
     // 'user-agent-override', // doesn't work since playwright has no page.browser()
     'webgl.vendor',
-    'window.outerdimensions'
+    'window.outerdimensions',
   ];
   const stealth = {
     callbacks: [],
     async evaluateOnNewDocument(...args) {
       this.callbacks.push({ cb: args[0], a: args[1] });
-    }
+    },
   };
   for (const e of enabledEvasions) {
     const evasion = await import(`puppeteer-extra-plugin-stealth/evasions/${e}/index.js`);
@@ -70,7 +70,10 @@ export const stealth = async (context) => {
 import Enquirer from 'enquirer'; const enquirer = new Enquirer();
 const timeoutPlugin = timeout => enquirer => { // cancel prompt after timeout ms
   enquirer.on('prompt', prompt => {
-    const t = setTimeout(() => { prompt.hint = () => 'timeout'; prompt.cancel(); }, timeout);
+    const t = setTimeout(() => {
+      prompt.hint = () => 'timeout';
+      prompt.cancel();
+    }, timeout);
     prompt.on('submit', _ => clearTimeout(t));
     prompt.on('cancel', _ => clearTimeout(t));
   });
@@ -78,14 +81,14 @@ const timeoutPlugin = timeout => enquirer => { // cancel prompt after timeout ms
 enquirer.use(timeoutPlugin(cfg.login_timeout)); // TODO may not want to have this timeout for all prompts; better extend Prompt and add a timeout prompt option
 // single prompt that just returns the non-empty value instead of an object
 // @ts-ignore
-export const prompt = o => enquirer.prompt({name: 'name', type: 'input', message: 'Enter value', ...o}).then(r => r.name).catch(_ => {});
-export const confirm = o => prompt({type: 'confirm', message: 'Continue?', ...o});
+export const prompt = o => enquirer.prompt({ name: 'name', type: 'input', message: 'Enter value', ...o }).then(r => r.name).catch(_ => {});
+export const confirm = o => prompt({ type: 'confirm', message: 'Continue?', ...o });
 
 // notifications via apprise CLI
 import { exec } from 'child_process';
 import { cfg } from './config.js';
 
-export const notify = (html) => new Promise((resolve, reject) => {
+export const notify = html => new Promise((resolve, reject) => {
   if (!cfg.notify) return resolve();
   const title = cfg.notify_title ? `-t ${cfg.notify_title}` : '';
   exec(`apprise ${cfg.notify} -i html '${title}' -b '${html}'`, (error, stdout, stderr) => {
@@ -102,6 +105,6 @@ export const notify = (html) => new Promise((resolve, reject) => {
   });
 });
 
-export const escapeHtml = (unsafe) => unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+export const escapeHtml = unsafe => unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll('\'', '&#039;');
 
 export const html_game_list = games => games.map(g => `- <a href="${g.url}">${escapeHtml(g.title)}</a> (${g.status})`).join('<br>');

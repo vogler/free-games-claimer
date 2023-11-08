@@ -14,7 +14,7 @@ const db = await jsonDb('gog.json', {});
 const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
-  locale: "en-US", // ignore OS locale to be sure to have english text for locators -> done via /en in URL
+  locale: 'en-US', // ignore OS locale to be sure to have english text for locators -> done via /en in URL
   recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
   recordHar: cfg.record ? { path: `data/record/gog-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
@@ -31,7 +31,7 @@ const notify_games = [];
 let user;
 
 try {
-  await context.addCookies([{name: 'CookieConsent', value: '{stamp:%274oR8MJL+bxVlG6g+kl2we5+suMJ+Tv7I4C5d4k+YY4vrnhCD+P23RQ==%27%2Cnecessary:true%2Cpreferences:true%2Cstatistics:true%2Cmarketing:true%2Cmethod:%27explicit%27%2Cver:1%2Cutc:1672331618201%2Cregion:%27de%27}', domain: 'www.gog.com', path: '/'}]); // to not waste screen space when non-headless
+  await context.addCookies([{ name: 'CookieConsent', value: '{stamp:%274oR8MJL+bxVlG6g+kl2we5+suMJ+Tv7I4C5d4k+YY4vrnhCD+P23RQ==%27%2Cnecessary:true%2Cpreferences:true%2Cstatistics:true%2Cmarketing:true%2Cmethod:%27explicit%27%2Cver:1%2Cutc:1672331618201%2Cregion:%27de%27}', domain: 'www.gog.com', path: '/' }]); // to not waste screen space when non-headless
 
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // default 'load' takes forever
 
@@ -45,11 +45,11 @@ try {
     await page.waitForSelector('#GalaxyAccountsFrameContainer iframe'); // TODO needed?
     const iframe = page.frameLocator('#GalaxyAccountsFrameContainer iframe');
     if (!cfg.debug) context.setDefaultTimeout(cfg.login_timeout); // give user some extra time to log in
-    console.info(`Login timeout is ${cfg.login_timeout/1000} seconds!`);
+    console.info(`Login timeout is ${cfg.login_timeout / 1000} seconds!`);
     if (cfg.gog_email && cfg.gog_password) console.info('Using email and password from environment.');
     else console.info('Press ESC to skip the prompts if you want to login in the browser (not possible in headless mode).');
-    const email = cfg.gog_email || await prompt({message: 'Enter email'});
-    const password = email && (cfg.gog_password || await prompt({type: 'password', message: 'Enter password'}));
+    const email = cfg.gog_email || await prompt({ message: 'Enter email' });
+    const password = email && (cfg.gog_password || await prompt({ type: 'password', message: 'Enter password' }));
     if (email && password) {
       iframe.locator('a[href="/logout"]').click().catch(_ => { }); // Click 'Change account' (email from previous login is set in some cookie)
       await iframe.locator('#login_username').fill(email);
@@ -58,9 +58,9 @@ try {
       // handle MFA, but don't await it
       iframe.locator('form[name=second_step_authentication]').waitFor().then(async () => {
         console.log('Two-Step Verification - Enter security code');
-        console.log(await iframe.locator('.form__description').innerText())
-        const otp = await prompt({type: 'text', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 4 || 'The code must be 4 digits!'}); // can't use type: 'number' since it strips away leading zeros and codes sometimes have them
-        await iframe.locator('#second_step_authentication_token_letter_1').pressSequentially(otp.toString(), {delay: 10});
+        console.log(await iframe.locator('.form__description').innerText());
+        const otp = await prompt({ type: 'text', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 4 || 'The code must be 4 digits!' }); // can't use type: 'number' since it strips away leading zeros and codes sometimes have them
+        await iframe.locator('#second_step_authentication_token_letter_1').pressSequentially(otp.toString(), { delay: 10 });
         await iframe.locator('#second_step_authentication_send').click();
         await page.waitForTimeout(1000); // TODO still needed with wait for username below?
       }).catch(_ => { });
@@ -71,7 +71,7 @@ try {
         notify('gog: got captcha during login. Please check.');
         // TODO solve reCAPTCHA?
       }).catch(_ => { });
-      await page.waitForSelector('#menuUsername')
+      await page.waitForSelector('#menuUsername');
     } else {
       console.log('Waiting for you to login in the browser.');
       await notify('gog: no longer signed in and not enough options set for automatic login.');
@@ -129,7 +129,7 @@ try {
     notify_games.push({ title, url, status });
 
     if (status == 'claimed' && !cfg.gog_newsletter) {
-      console.log("Unsubscribe from 'Promotions and hot deals' newsletter");
+      console.log('Unsubscribe from \'Promotions and hot deals\' newsletter');
       await page.goto('https://www.gog.com/en/account/settings/subscriptions');
       await page.locator('li:has-text("Marketing communications through Trusted Partners") label').uncheck();
       await page.locator('li:has-text("Promotions and hot deals") label').uncheck();
@@ -139,13 +139,12 @@ try {
   process.exitCode ||= 1;
   console.error('--- Exception:');
   console.error(error); // .toString()?
-  if (error.message && process.exitCode != 130)
-    notify(`gog failed: ${error.message.split('\n')[0]}`);
+  if (error.message && process.exitCode != 130) notify(`gog failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
   if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed
     notify(`gog (${user}):<br>${html_game_list(notify_games)}`);
   }
 }
-if (page.video()) console.log('Recorded video:', await page.video().path())
+if (page.video()) console.log('Recorded video:', await page.video().path());
 await context.close();

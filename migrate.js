@@ -4,8 +4,7 @@ import { JSONFile } from 'lowdb/node';
 import { datetime } from './util.js';
 
 const datetime_UTCtoLocalTimezone = async file => {
-  if (!existsSync(file))
-    return console.error('File does not exist:', file);
+  if (!existsSync(file)) return console.error('File does not exist:', file);
   const db = new Low(new JSONFile(file));
   await db.read();
   db.data ||= {};

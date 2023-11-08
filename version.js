@@ -1,9 +1,9 @@
 // check if running the latest version
 
-import {log} from 'console';
+import { log } from 'console';
 import { exec } from 'child_process';
 
-const execp = (cmd) => new Promise((resolve, reject) => {
+const execp = cmd => new Promise((resolve, reject) => {
   exec(cmd, (error, stdout, stderr) => {
     if (stderr) console.error(`stderr: ${stderr}`);
     // if (stdout) console.log(`stdout: ${stdout}`);
@@ -35,8 +35,8 @@ if (process.env.NOVNC_PORT) {
 }
 
 const gh = await (await fetch('https://api.github.com/repos/vogler/free-games-claimer/commits/main', {
-    // headers: { accept: 'application/vnd.github.VERSION.sha' }
-  })).json();
+  // headers: { accept: 'application/vnd.github.VERSION.sha' }
+})).json();
 // log(gh);
 
 log('Local commit:', sha, new Date(date));

@@ -11,7 +11,9 @@ export const cfg = {
   dryrun: process.env.DRYRUN == '1', // don't claim anything
   interactive: process.env.INTERACTIVE == '1', // confirm to claim, default skip
   show: process.env.SHOW == '1', // run non-headless
-  get headless() { return !this.debug && !this.show },
+  get headless() {
+    return !this.debug && !this.show;
+  },
   width: Number(process.env.WIDTH) || 1920, // width of the opened browser
   height: Number(process.env.HEIGHT) || 1080, // height of the opened browser
   timeout: (Number(process.env.TIMEOUT) || 60) * 1000, // default timeout for playwright is 30s
@@ -23,7 +25,7 @@ export const cfg = {
     return {
       browser: process.env.BROWSER_DIR || dataDir('browser'), // for multiple accounts or testing
       screenshots: process.env.SCREENSHOTS_DIR || dataDir('screenshots'), // set to 0 to disable screenshots
-    }
+    };
   },
   // auth epic-games
   eg_email: process.env.EG_EMAIL || process.env.EMAIL,

@@ -1,5 +1,5 @@
 /* eslint-disable no-constant-condition */
-import { delay, html_game_list, notify } from "./util.js";
+import { delay, html_game_list, notify } from './util.js';
 
 const URL_CLAIM = 'https://gaming.amazon.com/home'; // dummy URL
 

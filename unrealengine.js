@@ -23,7 +23,7 @@ const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   viewport: { width: cfg.width, height: cfg.height },
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
   // userAgent for firefox: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:106.0) Gecko/20100101 Firefox/106.0
-  locale: "en-US", // ignore OS locale to be sure to have english text for locators
+  locale: 'en-US', // ignore OS locale to be sure to have english text for locators
   recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
   recordHar: cfg.record ? { path: `data/record/ue-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
@@ -42,7 +42,7 @@ const notify_games = [];
 let user;
 
 try {
-  await context.addCookies([{name: 'OptanonAlertBoxClosed', value: new Date(Date.now() - 5*24*60*60*1000).toISOString(), domain: '.epicgames.com', path: '/'}]); // Accept cookies to get rid of banner to save space on screen. Set accept time to 5 days ago.
+  await context.addCookies([{ name: 'OptanonAlertBoxClosed', value: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), domain: '.epicgames.com', path: '/' }]); // Accept cookies to get rid of banner to save space on screen. Set accept time to 5 days ago.
 
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto
 
@@ -52,12 +52,12 @@ try {
     console.error('Not signed in anymore. Please login in the browser or here in the terminal.');
     if (cfg.novnc_port) console.info(`Open http://localhost:${cfg.novnc_port} to login inside the docker container.`);
     if (!cfg.debug) context.setDefaultTimeout(cfg.login_timeout); // give user some extra time to log in
-    console.info(`Login timeout is ${cfg.login_timeout/1000} seconds!`);
+    console.info(`Login timeout is ${cfg.login_timeout / 1000} seconds!`);
     await page.goto(URL_LOGIN, { waitUntil: 'domcontentloaded' });
     if (cfg.eg_email && cfg.eg_password) console.info('Using email and password from environment.');
     else console.info('Press ESC to skip the prompts if you want to login in the browser (not possible in headless mode).');
-    const email = cfg.eg_email || await prompt({message: 'Enter email'});
-    const password = email && (cfg.eg_password || await prompt({type: 'password', message: 'Enter password'}));
+    const email = cfg.eg_email || await prompt({ message: 'Enter email' });
+    const password = email && (cfg.eg_password || await prompt({ type: 'password', message: 'Enter password' }));
     if (email && password) {
       await page.click('text=Sign in with Epic Games');
       await page.fill('#email', email);
@@ -71,7 +71,7 @@ try {
       page.waitForURL('**/id/login/mfa**').then(async () => {
         console.log('Enter the security code to continue - This appears to be a new device, browser or location. A security code has been sent to your email address at ...');
         // TODO locator for text (email or app?)
-        const otp = cfg.eg_otpkey && authenticator.generate(cfg.eg_otpkey) || await prompt({type: 'text', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 6 || 'The code must be 6 digits!'}); // can't use type: 'number' since it strips away leading zeros and codes sometimes have them
+        const otp = cfg.eg_otpkey && authenticator.generate(cfg.eg_otpkey) || await prompt({ type: 'text', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 6 || 'The code must be 6 digits!' }); // can't use type: 'number' since it strips away leading zeros and codes sometimes have them
         await page.locator('input[name="code-input-0"]').pressSequentially(otp.toString());
         await page.click('button[type="submit"]');
       }).catch(_ => { });
@@ -105,7 +105,7 @@ try {
     const notify_game = { title, url, status: 'failed' };
     notify_games.push(notify_game); // status is updated below
     // if (await p.locator('.btn .add-review-btn').count()) { // did not work
-    if((await p.getAttribute('class')).includes('asset--owned')) {
+    if ((await p.getAttribute('class')).includes('asset--owned')) {
       console.log('  ↳ Already claimed');
       if (db.data[user][id].status != 'claimed') {
         db.data[user][id].status = 'existed';
@@ -128,7 +128,7 @@ try {
     const price = (await page.locator('.shopping-cart .total .price').innerText()).split(' ');
     console.log('Price: ', price[1], 'instead of', price[0]);
     if (price[1] != '0') {
-      const err = 'Price is not 0! Exit! Please <a href="https://github.com/vogler/free-games-claimer/issues/44">report</a>.'
+      const err = 'Price is not 0! Exit! Please <a href="https://github.com/vogler/free-games-claimer/issues/44">report</a>.';
       console.error(err);
       notify('unrealengine: ' + err);
       process.exit(1);
@@ -142,7 +142,7 @@ try {
     // maybe: Accept End User License Agreement
     page.locator('[name=accept-label]').check().then(() => {
       console.log('Accept End User License Agreement');
-      page.locator('span:text-is("Accept")').click() // otherwise matches 'Accept All Cookies'
+      page.locator('span:text-is("Accept")').click(); // otherwise matches 'Accept All Cookies'
     }).catch(_ => { });
     await page.waitForSelector('#webPurchaseContainer iframe'); // TODO needed?
     const iframe = page.frameLocator('#webPurchaseContainer iframe');
@@ -165,7 +165,7 @@ try {
       const captcha = iframe.locator('#h_captcha_challenge_checkout_free_prod iframe');
       captcha.waitFor().then(async () => { // don't await, since element may not be shown
         // console.info('  Got hcaptcha challenge! NopeCHA extension will likely solve it.')
-        console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.')
+        console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.');
       }).catch(_ => { }); // may time out if not shown
       await page.waitForSelector('text=Thank you');
       for (const id of ids) {
@@ -192,8 +192,7 @@ try {
   process.exitCode ||= 1;
   console.error('--- Exception:');
   console.error(error); // .toString()?
-  if (error.message && process.exitCode != 130)
-    notify(`unrealengine failed: ${error.message.split('\n')[0]}`);
+  if (error.message && process.exitCode != 130) notify(`unrealengine failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
   if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed
@@ -201,5 +200,5 @@ try {
   }
 }
 if (cfg.debug) writeFileSync(path.resolve(cfg.dir.browser, 'cookies.json'), JSON.stringify(await context.cookies()));
-if (page.video()) console.log('Recorded video:', await page.video().path())
+if (page.video()) console.log('Recorded video:', await page.video().path());
 await context.close();
