@@ -10,18 +10,17 @@ jobs:
   sonarcloud:
     runs-on: ubuntu-latest
     steps:
-    -
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v3
       with:
-        # Disabling shallow clone is recommended for improving relevancy of reporting
-        fetch-depth: 0
+        cache: 'npm'
     -
-      name: Install modules
-      run: npm install -g eslint
+      name: Install dev dependencies which includde ESLint + plugins
+      run: npm install --only=dev
     -
       name: Run ESLint
       continue-on-error: true
-      run: eslint . --ext .js,.ts -f json -o eslint_report.json
+      run: npx eslint . -f json -o eslint_report.json
     -
       name: Fix ESLint paths
       run: sed -i 's+/home/runner/work/free-games-claimer/free-games-claimer+/github/workspace+g' eslint_report.json
