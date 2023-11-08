@@ -1,0 +1,9 @@
+{
+  // https://eslint.style/guide/faq#vs-code
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "modifications",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "eslint.experimental.useFlatConfig": true,
+}
