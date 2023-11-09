@@ -85,13 +85,19 @@ export const prompt = o => enquirer.prompt({ name: 'name', type: 'input', messag
 export const confirm = o => prompt({ type: 'confirm', message: 'Continue?', ...o });
 
 // notifications via apprise CLI
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { cfg } from './config.js';
 
 export const notify = html => new Promise((resolve, reject) => {
-  if (!cfg.notify) return resolve();
-  const title = cfg.notify_title ? `-t ${cfg.notify_title}` : '';
-  exec(`apprise ${cfg.notify} -i html '${title}' -b '${html}'`, (error, stdout, stderr) => {
+  if (!cfg.notify) {
+    if (cfg.debug) console.debug('notify: NOTIFY is not set!');
+    return resolve();
+  }
+  // const cmd = `apprise '${cfg.notify}' ${title} -i html -b '${html}'`; // this had problems if e.g. ' was used in arg; could have `npm i shell-escape`, but instead using safer execFile which takes args as array instead of exec which spawned a shell to execute the command
+  const args = [cfg.notify, '-i', 'html', '-b', html];
+  if (cfg.notify_title) args.push(...['-t', cfg.notify_title]);
+  if (cfg.debug) console.debug(`apprise ${args.map(a => `'${a}'`).join(' ')}`); // this also doesn't escape, but it's just for info
+  execFile('apprise', args, (error, stdout, stderr) => {
     if (error) {
       console.log(`error: ${error.message}`);
       if (error.message.includes('command not found')) {

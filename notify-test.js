@@ -1,7 +1,10 @@
 /* eslint-disable no-constant-condition */
 import { delay, html_game_list, notify } from './util.js';
+import { cfg } from './config.js';
 
 const URL_CLAIM = 'https://gaming.amazon.com/home'; // dummy URL
+
+console.debug('NOTIFY:', cfg.notify);
 
 if (true) {
   const notify_games = [
@@ -9,7 +12,7 @@ if (true) {
     // { title: "Shadow Tactics - Aiko's Choice", status: 'claimed', url: URL_CLAIM },
     { title: 'Epistory - Typing Chronicles', status: 'claimed', url: URL_CLAIM },
   ];
-  notify(`epic-games:<br>${html_game_list(notify_games)}`);
+  await notify(`epic-games:<br>${html_game_list(notify_games)}`);
 }
 
 if (false) {
