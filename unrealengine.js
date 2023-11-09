@@ -48,7 +48,7 @@ try {
 
   await page.waitForResponse(r => r.request().method() == 'POST' && r.url().startsWith('https://graphql.unrealengine.com/ue/graphql'));
 
-  while (await page.locator('.display-name').count() == 0) {
+  while (await page.locator('unrealengine-navigation').getAttribute('isloggedin') != 'true') {
     console.error('Not signed in anymore. Please login in the browser or here in the terminal.');
     if (cfg.novnc_port) console.info(`Open http://localhost:${cfg.novnc_port} to login inside the docker container.`);
     if (!cfg.debug) context.setDefaultTimeout(cfg.login_timeout); // give user some extra time to log in
@@ -59,8 +59,9 @@ try {
     const email = cfg.eg_email || await prompt({ message: 'Enter email' });
     const password = email && (cfg.eg_password || await prompt({ type: 'password', message: 'Enter password' }));
     if (email && password) {
-      await page.click('text=Sign in with Epic Games');
+      // await page.click('text=Sign in with Epic Games');
       await page.fill('#email', email);
+      await page.click('button[type="submit"]');
       await page.fill('#password', password);
       await page.click('button[type="submit"]');
       page.waitForSelector('#h_captcha_challenge_login_prod iframe').then(() => {
@@ -88,7 +89,7 @@ try {
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
   await page.waitForTimeout(1000);
-  user = await page.locator('.display-name').first().innerHTML();
+  user = await page.locator('unrealengine-navigation').getAttribute('displayname'); // 'null' if !isloggedin
   console.log(`Signed in as ${user}`);
   db.data[user] ||= {};
 
