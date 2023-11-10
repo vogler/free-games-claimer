@@ -51,7 +51,7 @@ export const cfg = {
 
   steam_username: process.env.STEAM_USERNAME,
   steam_password: process.env.STEAM_PASSWORD || process.env.PASSWORD,
-  steam_json: false || process.env.STEAM_JSON == '1',
+  steam_json: process.env.STEAM_JSON == '1',
   steam_json_url: process.env.STEAM_JSON_URL || 'https://raw.githubusercontent.com/vogler/free-games-claimer/main/steam-games.json',
-  steam_gamerpower: true || process.env.STEAM_GAMERPOWER == '1',
+  steam_gamerpower: process.env.STEAM_GAMERPOWER == '1',
 };

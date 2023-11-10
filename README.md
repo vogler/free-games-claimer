@@ -96,7 +96,7 @@ Available options/variables and their default values:
 | STEAM_PASSWORD  |         	| Steam password for login. Overrides PASSWORD.                          	|
 | STEAM_JSON      | 0        	| Claims steam games from json. STEAM_JSON_URL can be defined.            |
 | STEAM_JSON_URL  | [steam-games.json](https://raw.githubusercontent.com/vogler/free-games-claimer/main/steam-games.json) | A list of steam urls in json format to claim the games. |
-| STEAM_GAMERPOWER | 1        	| Claims steam games using [gamerpower api](https://www.gamerpower.com/api/giveaways?platform=steam&type=game). |
+| STEAM_GAMERPOWER | 0        	| Claims steam games using [gamerpower api](https://www.gamerpower.com/api/giveaways?platform=steam&type=game). |
 
 
 See `config.js` for all options.
