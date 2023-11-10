@@ -10,7 +10,7 @@ import {
   stealth,
 } from "./util.js";
 import path from "path";
-import { existsSync, writeFileSync } from "fs";
+import { existsSync } from "fs";
 import { cfg } from "./config.js";
 
 // ### SETUP
@@ -36,11 +36,10 @@ export async function setup() {
     // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
     headless: cfg.headless,
     viewport: { width: cfg.width, height: cfg.height },
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
-    // userAgent for firefox: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:106.0) Gecko/20100101 Firefox/106.0
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36',
     locale: "en-US", // ignore OS locale to be sure to have english text for locators
-    recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
-    recordHar: cfg.record ? { path: `data/record/eg-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
+    recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined,
+    recordHar: cfg.record ? { path: `data/record/eg-${datetime()}.har` } : undefined,
     args: [ // https://peter.sh/experiments/chromium-command-line-switches
       // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.'
       // '--restore-last-session', // does not apply for crash/killed
@@ -250,7 +249,7 @@ async function claimGame(url) {
     return;
   }
 
-  var prefix;
+  let prefix;
   if (url.includes("store.playstation.com")) {
     const gameDiv = await page.locator(".psw-l-anchor").first();
     if (gameDiv.isVisible()) {
@@ -385,11 +384,8 @@ async function claimGameCatalog() {
 
   const catalogGameUrls = await Promise.all(
     catalogGames.map(async (catalogGame) => {
-      var urlSlug = await catalogGame.getAttribute("href");
-
-      urlSlug = urlSlug.replace("en-gb", cfg.ps_locale).replace("en-us", cfg.ps_locale).substring(0, urlSlug.indexOf("?"));
-      //console.log(urlSlug);
-      return urlSlug;  // url may have anchor tag, remove it
+      const urlSlug = await catalogGame.getAttribute("href");
+      return urlSlug.replace("en-gb", cfg.ps_locale).replace("en-us", cfg.ps_locale).substring(0, urlSlug.indexOf("?"));
     })
   );
   console.log("Total catalog games:", catalogGameUrls.length);
@@ -403,7 +399,7 @@ async function claimGameCatalog() {
 
 function isClaimedUrl(url) {
   try {
-    var status = db.data[user][url.split("/").filter((x) => !!x).pop()]["status"];
+    const status = db.data[user][url.split("/").filter((x) => !!x).pop()]["status"];
     return status === "existed" || status === "claimed";
   } catch (error) {
     return false;

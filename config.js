@@ -53,8 +53,8 @@ export const cfg = {
   ps_email: process.env.PS_EMAIL || process.env.EMAIL,
   ps_password: process.env.PS_PASSWORD || process.env.PASSWORD,
   ps_otpkey: process.env.PS_OTPKEY, 
-  ps_locale: "en-us" || process.env.PS_LOCALE,
-  ps_plus_games: true || process.env.PS_PLUS_GAMES == '1',
-  ps_game_catalog: false || process.env.PS_GAME_CATALOG == '1',
-  ps_classics_catalog: false || process.env.PS_CLASSICS_CATALOG == '1',
+  ps_locale: process.env.PS_LOCALE || "en-us",
+  ps_plus_games: process.env.PS_PLUS_GAMES == '1',
+  ps_game_catalog: process.env.PS_GAME_CATALOG == '1',
+  ps_classics_catalog: process.env.PS_CLASSICS_CATALOG == '1',
 };

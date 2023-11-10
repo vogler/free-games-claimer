@@ -97,7 +97,7 @@ Available options/variables and their default values:
 | PS_PASSWORD     |           | PlayStation password for login. Overrides PASSWORD.                     |
 | PS_OTPKEY       |           | PlayStation MFA OTP key.                                                |
 | PS_LOCALE       | en-us     | Configurable locale to use the store. Examples are en-us, en-gb, de-at, ... |
-| PS_PLUS_GAMES   | 1         | Claim monthly ps plus games. Requires PS Plus Essential or higher subscription. |
+| PS_PLUS_GAMES   | 0         | Claim monthly ps plus games. Requires PS Plus Essential or higher subscription. |
 | PS_GAME_CATALOG | 0         | Claim over 400 game catalog games. Requires PS Extra or higher. |
 | PS_CLASSICS_CATALOG | 0     | Currently not implemented! Requires PS Extra or higher. |
 
