@@ -26,6 +26,6 @@
   "license": "AGPL-3.0-only",
   "devDependencies": {
     "@stylistic/eslint-plugin-js": "^1.0.1",
-    "eslint": "^8.53.0"
+    "eslint": "^8.54.0"
   }
 }
