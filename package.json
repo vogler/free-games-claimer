@@ -25,7 +25,7 @@
   "author": "Ralf Vogler",
   "license": "AGPL-3.0-only",
   "devDependencies": {
-    "@stylistic/eslint-plugin-js": "^1.0.1",
+    "@stylistic/eslint-plugin-js": "^1.4.0",
     "eslint": "^8.53.0"
   }
 }
