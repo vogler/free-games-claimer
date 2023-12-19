@@ -10,6 +10,9 @@
     "lint": "npx eslint ."
   },
   "type": "module",
+  "engines": {
+    "node": ">=15"
+  },
   "dependencies": {
     "chalk": "^5.3.0",
     "cross-env": "^7.0.3",
