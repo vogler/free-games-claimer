@@ -3,7 +3,8 @@
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "modifications",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "explicit"
   },
   "eslint.experimental.useFlatConfig": true,
+  "eslint.codeActionsOnSave.rules": null,
 }
