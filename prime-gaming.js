@@ -1,5 +1,6 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
 import { authenticator } from 'otplib';
+import chalk from 'chalk';
 import { resolve, jsonDb, datetime, stealth, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './util.js';
 import { cfg } from './config.js';
 
@@ -182,7 +183,7 @@ try {
       };
       if (store in redeem) { // did not work for linked origin: && !await page.locator('div:has-text("Successfully Claimed")').count()
         const code = await Promise.any([page.inputValue('input[type="text"]'), page.textContent('[data-a-target="ClaimStateClaimCodeContent"]').then(s => s.replace('Your code: ', ''))]); // input: Legacy Games; text: gog.com
-        console.log('  Code to redeem game:', code);
+        console.log('  Code to redeem game:', chalk.blue(code));
         if (store == 'legacy games') { // may be different URL like https://legacygames.com/primeday/puzzleoftheyear/
           redeem[store] = await (await page.$('li:has-text("Click here") a')).getAttribute('href'); // full text: Click here to enter your redemption code.
         }
@@ -367,7 +368,7 @@ try {
           dlc_unlinked[unlinked_store].push(title);
         } else {
           const code = await page.inputValue('input[type="text"]');
-          console.log('  Code to redeem game:', code);
+          console.log('  Code to redeem game:', chalk.blue(code));
           db.data[user][title].code = code;
           db.data[user][title].status = 'claimed';
           // notify_game.status = `<a href="${redeem[store]}">${redeem_action}</a> ${code} on ${store}`;
