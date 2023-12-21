@@ -53,7 +53,7 @@ const page = context.pages().length ? context.pages()[0] : await context.newPage
 // console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 // eslint-disable-next-line no-undef
 if (cfg.debug) console.debug(await page.evaluate(() => window.screen));
-if (cfg.record && cfg.debug) {
+if (cfg.debug_network) {
   // const filter = _ => true;
   const filter = r => r.url().includes('store.epicgames.com');
   page.on('request', request => filter(request) && console.log('>>', request.method(), request.url()));
