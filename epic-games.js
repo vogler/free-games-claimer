@@ -87,15 +87,15 @@ try {
       // await page.click('text=Sign in with Epic Games');
       await page.fill('#email', email);
       await page.click('button[type="submit"]');
-      await page.fill('#password', password);
-      await page.click('button[type="submit"]');
-      page.waitForSelector('#h_captcha_challenge_login_prod iframe').then(async () => {
+      page.waitForSelector('.h_captcha_challenge iframe').then(async () => {
         console.error('Got a captcha during login (likely due to too many attempts)! You may solve it in the browser, get a new IP or try again in a few hours.');
         await notify('epic-games: got captcha during login. Please check.');
       }).catch(_ => { });
-      page.waitForSelector('h6:has-text("Incorrect response.")').then(async () => {
+      page.waitForSelector('p:has-text("Incorrect response.")').then(async () => {
         console.error('Incorrect repsonse for captcha!');
       }).catch(_ => { });
+      await page.fill('#password', password);
+      await page.click('button[type="submit"]');
       // handle MFA, but don't await it
       page.waitForURL('**/id/login/mfa**').then(async () => {
         console.log('Enter the security code to continue - This appears to be a new device, browser or location. A security code has been sent to your email address at ...');
