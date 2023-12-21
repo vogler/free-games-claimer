@@ -3,6 +3,12 @@
   "version": "1.4.0",
   "description": "Automatically claims free games on the Epic Games Store, Amazon Prime Gaming and GOG.",
   "homepage": "https://github.com/vogler/free-games-claimer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vogler/free-games-claimer.git"
+  },
+  "author": "Ralf Vogler",
+  "license": "AGPL-3.0-only",
   "main": "index.js",
   "scripts": {
     "docker:build": "docker build . -t ghcr.io/vogler/free-games-claimer",
@@ -23,12 +29,6 @@
     "playwright-firefox": "^1.40.1",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/vogler/free-games-claimer.git"
-  },
-  "author": "Ralf Vogler",
-  "license": "AGPL-3.0-only",
   "devDependencies": {
     "@stylistic/eslint-plugin-js": "^1.5.1",
     "eslint": "^8.56.0"
