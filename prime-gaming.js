@@ -137,7 +137,7 @@ try {
     if (cfg.debug) await page.pause();
     if (cfg.dryrun) continue;
     if (cfg.interactive && !await confirm()) continue;
-    await Promise.any([page.click('button:has-text("Get game")'), page.click('button:has-text("Claim now")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")'), page.waitForSelector('.thank-you-title:has-text("Success")')]); // waits for navigation
+    await Promise.any([page.click('button:has-text("Get game")'), page.click('button:has-text("Claim")'), page.click('button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")'), page.waitForSelector('.thank-you-title:has-text("Success")')]); // waits for navigation
 
     // TODO would be simpler than the below, but will block for linked stores without code
     // const redeem_text = await page.textContent('text=/ code on /'); // FAQ: How do I redeem my code?
@@ -348,8 +348,8 @@ try {
       try {
         await page.goto(url, { waitUntil: 'domcontentloaded' });
         // most games have a button 'Get in-game content'
-        // epic-games: Fall Guys: Claim now -> Continue -> Go to Epic Games (despite account linked and logged into epic-games) -> not tied to account but via some cookie?
-        await Promise.any([page.click('button:has-text("Get in-game content")'), page.click('button:has-text("Claim your gift")'), page.click('button:has-text("Claim now")').then(() => page.click('button:has-text("Continue")'))]);
+        // epic-games: Fall Guys: Claim -> Continue -> Go to Epic Games (despite account linked and logged into epic-games) -> not tied to account but via some cookie?
+        await Promise.any([page.click('button:has-text("Get in-game content")'), page.click('button:has-text("Claim your gift")'), page.click('button:has-text("Claim")').then(() => page.click('button:has-text("Continue")'))]);
         page.click('button:has-text("Continue")').catch(_ => { });
         const linkAccountButton = page.locator('[data-a-target="LinkAccountButton"]');
         let unlinked_store;
