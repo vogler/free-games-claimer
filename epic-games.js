@@ -50,9 +50,8 @@ await stealth(context);
 if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
 const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
-// console.debug('userAgent:', await page.evaluate(() => navigator.userAgent));
 // eslint-disable-next-line no-undef
-if (cfg.debug) console.debug(await page.evaluate(() => window.screen));
+if (cfg.debug) console.debug(await page.evaluate(() => [window.screen, navigator.userAgent, navigator.platform]));
 if (cfg.debug_network) {
   // const filter = _ => true;
   const filter = r => r.url().includes('store.epicgames.com');
