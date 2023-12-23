@@ -367,7 +367,7 @@ try {
           dlc_unlinked[unlinked_store] ??= [];
           dlc_unlinked[unlinked_store].push(title);
         } else {
-          const code = await page.inputValue('input[type="text"]');
+          const code = await page.inputValue('input[type="text"]').catch(_ => undefined);
           console.log('  Code to redeem game:', chalk.blue(code));
           db.data[user][title].code = code;
           db.data[user][title].status = 'claimed';
