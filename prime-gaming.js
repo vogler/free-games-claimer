@@ -349,12 +349,12 @@ try {
         await page.goto(url, { waitUntil: 'domcontentloaded' });
         // most games have a button 'Get in-game content'
         // epic-games: Fall Guys: Claim -> Continue -> Go to Epic Games (despite account linked and logged into epic-games) -> not tied to account but via some cookie?
-        await Promise.any([page.click('button:has-text("Get in-game content")'), page.click('button:has-text("Claim your gift")'), page.click('button:has-text("Claim")').then(() => page.click('button:has-text("Continue")'))]);
+        await Promise.any([page.click('.tw-button:has-text("Get in-game content")'), page.click('.tw-button:has-text("Claim your gift")'), page.click('.tw-button:has-text("Claim")').then(() => page.click('button:has-text("Continue")'))]);
         page.click('button:has-text("Continue")').catch(_ => { });
         const linkAccountButton = page.locator('[data-a-target="LinkAccountButton"]');
         let unlinked_store;
         if (await linkAccountButton.count()) {
-          unlinked_store = await linkAccountButton.getAttribute('aria-label');
+          unlinked_store = await linkAccountButton.first().getAttribute('aria-label');
           console.debug('  LinkAccountButton label:', unlinked_store);
           const match = unlinked_store.match(/Link (.*) account/);
           if (match && match.length == 2) unlinked_store = match[1];
