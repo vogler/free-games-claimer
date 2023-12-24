@@ -63,7 +63,10 @@ const notify_games = [];
 let user;
 
 try {
-  await context.addCookies([{ name: 'OptanonAlertBoxClosed', value: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), domain: '.epicgames.com', path: '/' }]); // Accept cookies to get rid of banner to save space on screen. Set accept time to 5 days ago.
+  await context.addCookies([
+    { name: 'OptanonAlertBoxClosed', value: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), domain: '.epicgames.com', path: '/' }, // Accept cookies to get rid of banner to save space on screen. Set accept time to 5 days ago.
+    { name: 'HasAcceptedAgeGates', value: 'USK:9007199254740991,general:18,EPIC SUGGESTED RATING:18', domain: 'store.epicgames.com', path: '/' }, // gets rid of 'To continue, please provide your date of birth', https://github.com/vogler/free-games-claimer/issues/275, USK number doesn't seem to matter, cookie from 'Fallout 3: Game of the Year Edition'
+  ]);
 
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto
 
@@ -146,6 +149,9 @@ try {
     // click Continue if 'This game contains mature content recommended only for ages 18+'
     if (await page.locator('button:has-text("Continue")').count() > 0) {
       console.log('  This game contains mature content recommended only for ages 18+');
+      if (await page.locator('[data-testid="AgeSelect"]').count()) {
+        console.error('  Got "To continue, please provide your date of birth" - This shouldn\'t happen due to cookie set above. Please report to https://github.com/vogler/free-games-claimer/issues/275');
+      }
       await page.click('button:has-text("Continue")', { delay: 111 });
       await page.waitForTimeout(2000);
     }
