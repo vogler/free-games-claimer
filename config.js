@@ -49,4 +49,10 @@ export const cfg = {
   // experimmental - likely to change
   pg_redeem: process.env.PG_REDEEM == '1', // prime-gaming: redeem keys on external stores
   pg_claimdlc: process.env.PG_CLAIMDLC == '1', // prime-gaming: claim in-game content
+
+  steam_username: process.env.STEAM_USERNAME,
+  steam_password: process.env.STEAM_PASSWORD || process.env.PASSWORD,
+  steam_json: process.env.STEAM_JSON == '1',
+  steam_json_url: process.env.STEAM_JSON_URL || 'https://raw.githubusercontent.com/vogler/free-games-claimer/main/steam-games.json',
+  steam_gamerpower: process.env.STEAM_GAMERPOWER == '1',
 };
