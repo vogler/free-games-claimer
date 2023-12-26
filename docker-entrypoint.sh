@@ -12,6 +12,13 @@ echo "Build: $NOW"
 # https://bugs.chromium.org/p/chromium/issues/detail?id=367048
 rm -f /fgc/data/browser/SingletonLock
 
+# Firefox preferences are stored in $BROWSER_DIR/pref.js and can be overridden by a file user.js
+# Since this file has to be in the volume (data/browser), we can't do this in Dockerfile.
+mkdir -p /fgc/data/browser
+# fix for 'Incorrect response' after solving a captcha correctly - https://github.com/vogler/free-games-claimer/issues/261#issuecomment-1868385830
+echo 'user_pref("privacy.resistFingerprinting", true);' >> /fgc/data/browser/user.js
+# TODO disable session restore message?
+
 # Remove X server display lock, fix for `docker compose up` which reuses container which made it fail after initial run, https://github.com/vogler/free-games-claimer/issues/31
 # echo $DISPLAY
 # ls -l /tmp/.X11-unix/
