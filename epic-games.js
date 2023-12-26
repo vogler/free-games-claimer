@@ -74,9 +74,18 @@ try {
     await page.goto(URL_LOGIN, { waitUntil: 'domcontentloaded' });
     if (cfg.eg_email && cfg.eg_password) console.info('Using email and password from environment.');
     else console.info('Press ESC to skip the prompts if you want to login in the browser (not possible in headless mode).');
+    const notifyBrowserLogin = async () => {
+      console.log('Waiting for you to login in the browser.');
+      await notify('epic-games: no longer signed in and not enough options set for automatic login.');
+      if (cfg.headless) {
+        console.log('Run `SHOW=1 node epic-games` to login in the opened browser.');
+        await context.close(); // finishes potential recording
+        process.exit(1);
+      }
+    };
     const email = cfg.eg_email || await prompt({ message: 'Enter email' });
-    const password = email && (cfg.eg_password || await prompt({ type: 'password', message: 'Enter password' }));
-    if (email && password) {
+    if (!email) await notifyBrowserLogin();
+    else {
       // await page.click('text=Sign in with Epic Games');
       await page.fill('#email', email);
       await page.click('button[type="submit"]');
@@ -87,6 +96,8 @@ try {
       page.waitForSelector('p:has-text("Incorrect response.")').then(async () => {
         console.error('Incorrect repsonse for captcha!');
       }).catch(_ => { });
+      const password = email && (cfg.eg_password || await prompt({ type: 'password', message: 'Enter password' }));
+      if (!password) await notifyBrowserLogin();
       await page.fill('#password', password);
       await page.click('button[type="submit"]');
       // handle MFA, but don't await it
@@ -97,14 +108,6 @@ try {
         await page.locator('input[name="code-input-0"]').pressSequentially(otp.toString());
         await page.click('button[type="submit"]');
       }).catch(_ => { });
-    } else {
-      console.log('Waiting for you to login in the browser.');
-      await notify('epic-games: no longer signed in and not enough options set for automatic login.');
-      if (cfg.headless) {
-        console.log('Run `SHOW=1 node epic-games` to login in the opened browser.');
-        await context.close(); // finishes potential recording
-        process.exit(1);
-      }
     }
     await page.waitForURL(URL_CLAIM);
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
