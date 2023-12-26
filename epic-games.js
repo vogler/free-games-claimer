@@ -16,13 +16,8 @@ const db = await jsonDb('epic-games.json', {});
 
 if (cfg.time) console.time('startup');
 
-// https://www.nopecha.com extension source from https://github.com/NopeCHA/NopeCHA/releases/tag/0.1.16
-// const ext = path.resolve('nopecha'); // used in Chromium, currently not needed in Firefox
-
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(cfg.dir.browser, {
-  // chrome will not work in linux arm64, only chromium
-  // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
   userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
@@ -32,14 +27,10 @@ const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
   recordHar: cfg.record ? { path: `data/record/eg-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
-  args: [ // https://peter.sh/experiments/chromium-command-line-switches
-    // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.'
-    // '--restore-last-session', // does not apply for crash/killed
-    '--hide-crash-restore-bubble',
-    // `--disable-extensions-except=${ext}`,
-    // `--load-extension=${ext}`,
+  // user settings for firefox have to be put in $BROWSER_DIR/user.js
+  args: [ // https://wiki.mozilla.org/Firefox/CommandLineOptions
+    // '-kiosk',
   ],
-  // ignoreDefaultArgs: ['--enable-automation'], // remove default arg that shows the info bar with 'Chrome is being controlled by automated test software.'. Since Chromeium 106 this leads to show another info bar with 'You are using an unsupported command-line flag: --no-sandbox. Stability and security will suffer.'.
 });
 
 handleSIGINT(context);
