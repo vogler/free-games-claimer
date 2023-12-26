@@ -1,6 +1,6 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
-import { resolve, jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT } from './util.js';
-import { cfg } from './config.js';
+import { resolve, jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT } from './src/util.js';
+import { cfg } from './src/config.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'gog', ...a);
 

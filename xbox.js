@@ -7,8 +7,8 @@ import {
   jsonDb,
   notify,
   prompt,
-} from './util.js';
-import { cfg } from './config.js';
+} from './src/util.js';
+import { cfg } from './src/config.js';
 
 // ### SETUP
 const URL_CLAIM = 'https://www.xbox.com/en-US/live/gold'; // #gameswithgold";

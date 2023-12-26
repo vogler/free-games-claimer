@@ -93,7 +93,7 @@ Available options/variables and their default values:
 | GOG_PASSWORD  	|         	| GOG password for login. Overrides PASSWORD.                            	|
 | GOG_NEWSLETTER	| 0       	| Do not unsubscribe from newsletter after claiming a game if 1.         	|
 
-See `config.js` for all options.
+See `src/config.js` for all options.
 
 #### How to set options
 You can add options directly in the command or put them in a file to load.
