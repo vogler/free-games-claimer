@@ -37,7 +37,7 @@ Data (including json files with claimed games, codes to redeem, screenshots) is 
 1. [Install Node.js](https://nodejs.org/en/download)
 2. Clone/download this repository and `cd` into it in a terminal
 3. Run `npm install`
-4. Run `pip install apprise` to install [apprise](https://github.com/caronc/apprise) if you want notifications
+4. Run `pip install apprise` (or use [pipx](https://github.com/pypa/pipx) if you have [problems](https://stackoverflow.com/questions/75608323/how-do-i-solve-error-externally-managed-environment-every-time-i-use-pip-3)) to install [apprise](https://github.com/caronc/apprise) if you want notifications
 5. To get updates: `git pull; npm install`
 6. Run `node epic-games`, `node prime-gaming`, `node gog`...
 
