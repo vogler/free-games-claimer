@@ -41,6 +41,7 @@ await stealth(context);
 if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
 const page = context.pages().length ? context.pages()[0] : await context.newPage(); // should always exist
+await page.setViewportSize({ width: cfg.width, height: cfg.height }); // TODO workaround for https://github.com/vogler/free-games-claimer/issues/277 until Playwright fixes it
 
 // some debug info about the page (screen dimensions, user agent, platform)
 // eslint-disable-next-line no-undef
