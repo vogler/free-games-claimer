@@ -1,5 +1,5 @@
 // https://github.com/enquirer/enquirer/issues/372
-import { prompt } from '../util.js';
+import { prompt } from '../src/util.js';
 
 const handleSIGINT = () => process.on('SIGINT', () => { // e.g. when killed by Ctrl-C
   console.log('\nInterrupted by SIGINT. Exit!');
