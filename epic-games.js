@@ -148,6 +148,12 @@ try {
       console.log('  This game contains mature content recommended only for ages 18+');
       if (await page.locator('[data-testid="AgeSelect"]').count()) {
         console.error('  Got "To continue, please provide your date of birth" - This shouldn\'t happen due to cookie set above. Please report to https://github.com/vogler/free-games-claimer/issues/275');
+        await page.locator('#month_toggle').click();
+        await page.locator('#month_menu li:has-text("01")').click();
+        await page.locator('#day_toggle').click();
+        await page.locator('#day_menu li:has-text("01")').click();
+        await page.locator('#year_toggle').click();
+        await page.locator('#year_menu li:has-text("1987")').click();
       }
       await page.click('button:has-text("Continue")', { delay: 111 });
       await page.waitForTimeout(2000);
