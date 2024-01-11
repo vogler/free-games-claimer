@@ -213,6 +213,8 @@ Added notifications via [apprise](https://github.com/caronc/apprise).
 
 [![Star History Chart](https://api.star-history.com/svg?repos=vogler/free-games-claimer&type=Date)](https://star-history.com/#vogler/free-games-claimer&Date)
 
+![Alt](https://repobeats.axiom.co/api/embed/a1c5e6e420d90e0d6b34c1285e92a69a44138faa.svg "Repobeats analytics image")
+
 ---
 
 Logo with smaller aspect ratio (for Telegram bot etc.): 👾 - [emojipedia](https://emojipedia.org/alien-monster/)
