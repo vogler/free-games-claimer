@@ -112,12 +112,14 @@ try {
   for (const card of internal) {
     await card.scrollIntoViewIfNeeded();
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
+    const slug = await (await card.$('a')).getAttribute('href');
+    const url = 'https://gaming.amazon.com' + slug.split('?')[0];
     console.log('Current free game:', title);
     if (cfg.dryrun) continue;
     if (cfg.interactive && !await confirm()) continue;
     await (await card.$('.tw-button:has-text("Claim")')).click();
-    db.data[user][title] ||= { title, time: datetime(), store: 'internal' };
-    notify_games.push({ title, status: 'claimed', url: URL_CLAIM });
+    db.data[user][title] ||= { title, time: datetime(), url, store: 'internal' };
+    notify_games.push({ title, status: 'claimed', url });
     // const img = await (await card.$('img.tw-image')).getAttribute('src');
     // console.log('Image:', img);
     await card.screenshot({ path: screenshot('internal', `${filenamify(title)}.png`) });
