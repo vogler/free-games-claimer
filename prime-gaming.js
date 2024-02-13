@@ -138,30 +138,12 @@ try {
     console.log('Current free game:', title); // , url);
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     if (cfg.debug) await page.pause();
+    const item_text = await page.innerText('[data-a-target="DescriptionItemDetails"]');
+    const store = item_text.toLowerCase().replace(/.* on /, '').slice(0, -1);
+    console.log('  External store:', store);
     if (cfg.dryrun) continue;
     if (cfg.interactive && !await confirm()) continue;
-    await Promise.any([page.click('.tw-button:has-text("Get game")'), page.click('.tw-button:has-text("Claim")'), page.click('.tw-button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")'), page.waitForSelector('.thank-you-title:has-text("Success")')]); // waits for navigation
-
-    // TODO would be simpler than the below, but will block for linked stores without code
-    // const redeem_text = await page.textContent('text=/ code on /'); // FAQ: How do I redeem my code?
-    // console.log(' ', redeem_text);
-    //   // Before July 29, 2023, redeem your offer code on GOG.com.
-    //   // Before July 1, 2023, redeem your product code on Legacy Games.
-    // let store = redeem_text.toLowerCase().replace(/.* on /, '').slice(0, -1);
-
-    let store = '';
-    const store_text = await page.$('[data-a-target="hero-header-subtitle"]'); // worked fine for every store, but now no longer works for gog.com
-    if (store_text) { // legacy games, ?
-      const store_texts = await store_text.innerText();
-      // Full game for PC [and MAC] on: Legacy Games, Origin, EPIC GAMES, Battle.net; alt: 3 Full PC Games on Legacy Games
-      store = store_texts.toLowerCase().replace(/.* on /, '');
-    } else { // gog.com, ?
-      // $('[data-a-target="DescriptionItemDetails"]').innerText is e.g. 'Prey for PC on GOG.com.' but does not work for Legacy Games
-      const item_text = await page.innerText('[data-a-target="DescriptionItemDetails"]');
-      store = item_text.toLowerCase().replace(/.* on /, '').slice(0, -1);
-    }
-    console.log('  External store:', store);
-
+    await Promise.any([page.click('[data-a-target="buy-box"] .tw-button:has-text("Get game")'), page.click('[data-a-target="buy-box"] .tw-button:has-text("Claim")'), page.click('.tw-button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")'), page.waitForSelector('.thank-you-title:has-text("Success")')]); // waits for navigation
     db.data[user][title] ||= { title, time: datetime(), url, store };
     const notify_game = { title, url };
     notify_games.push(notify_game); // status is updated below
