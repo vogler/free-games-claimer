@@ -212,6 +212,7 @@ Added notifications via [apprise](https://github.com/caronc/apprise).
 </details>
 
 [![Star History Chart](https://api.star-history.com/svg?repos=vogler/free-games-claimer&type=Date)](https://star-history.com/#vogler/free-games-claimer&Date)
+<!-- [![Stargazers over time](https://starchart.cc/vogler/free-games-claimer.svg?variant=adaptive)](https://starchart.cc/vogler/free-games-claimer) -->
 
 ![Alt](https://repobeats.axiom.co/api/embed/a1c5e6e420d90e0d6b34c1285e92a69a44138faa.svg "Repobeats analytics image")
 
