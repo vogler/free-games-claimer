@@ -24,6 +24,7 @@ export default [
     // https://eslint.style/packages/js
     rules: {
       'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      'prefer-const': 'error',
       '@stylistic/js/array-bracket-newline': ['error', 'consistent'],
       '@stylistic/js/array-bracket-spacing': 'error',
       '@stylistic/js/array-element-newline': ['error', 'consistent'],

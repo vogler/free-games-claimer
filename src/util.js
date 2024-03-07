@@ -81,7 +81,7 @@ export const stealth = async context => {
     const evasion = await import(`puppeteer-extra-plugin-stealth/evasions/${e}/index.js`);
     evasion.default().onPageCreated(stealth);
   }
-  for (let evasion of stealth.callbacks) {
+  for (const evasion of stealth.callbacks) {
     await context.addInitScript(evasion.cb, evasion.a);
   }
 };
