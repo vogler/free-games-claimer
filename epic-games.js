@@ -158,14 +158,18 @@ try {
       await page.click('button:has-text("Continue")', { delay: 111 });
       await page.waitForTimeout(2000);
     }
-
-    const title = await page.locator('h1').first().innerText();
+    let title;
+    if (url.includes("/bundles/")) {
+      title = (await page.locator('//span[@class][contains(text(),"Buy")]').first().innerText()).replace("Buy ","")
+      console.log('Current free bundle:', title);
+    } else {
+      title = await page.locator('h1').first().innerText();
+      console.log('Current free game:', title);
+    }
     const game_id = page.url().split('/').pop();
     db.data[user][game_id] ||= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
-    console.log('Current free game:', title);
     const notify_game = { title, url, status: 'failed' };
     notify_games.push(notify_game); // status is updated below
-
     if (btnText.toLowerCase() == 'in library') {
       console.log('  Already in library! Nothing to claim.');
       notify_game.status = 'existed';
@@ -182,7 +186,6 @@ try {
     } else { // GET
       console.log('  Not in library yet! Click GET.');
       await page.click('[data-testid="purchase-cta-button"]', { delay: 11 }); // got stuck here without delay (or mouse move), see #75, 1ms was also enough
-
       // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoided by Windows userAgent?
       page.click('button:has-text("Continue")').catch(_ => { }); // needed since change from Chromium to Firefox?
 
@@ -243,10 +246,16 @@ try {
           // console.info('  Saved a screenshot of hcaptcha challenge to', p);
           // console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
         }).catch(_ => { }); // may time out if not shown
-        await page.locator('text=Thanks for your order!').waitFor({ state: 'attached' });
-        db.data[user][game_id].status = 'claimed';
-        db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
-        console.log('  Claimed successfully!');
+        try {
+          await page.locator('text=Thanks for your order!').waitFor({ state: 'attached' });
+          db.data[user][game_id].status = 'claimed';
+          db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
+          console.log('  Claimed successfully!');
+        } catch (e) {
+          db.data[user][game_id].status = 'claimed?';
+          db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
+          console.log('  Claimed successfully?');
+        }
         // context.setDefaultTimeout(cfg.timeout);
       } catch (e) {
         console.log(e);

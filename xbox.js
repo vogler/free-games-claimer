@@ -15,8 +15,7 @@ const URL_CLAIM = 'https://www.xbox.com/en-US/live/gold'; // #gameswithgold";
 
 console.log(datetime(), 'started checking xbox');
 
-const db = await jsonDb('xbox.json');
-db.data ||= {};
+const db = await jsonDb('xbox.json', {});
 
 handleSIGINT();
 

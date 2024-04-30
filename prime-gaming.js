@@ -144,9 +144,8 @@ try {
     if (cfg.dryrun) continue;
     if (cfg.interactive && !await confirm()) continue;
     await Promise.any([page.click('[data-a-target="buy-box"] .tw-button:has-text("Get game")'), page.click('[data-a-target="buy-box"] .tw-button:has-text("Claim")'), page.click('.tw-button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")'), page.waitForSelector('.thank-you-title:has-text("Success")')]); // waits for navigation
-    db.data[user][title] ||= { title, time: datetime(), url, store };
+    db.data[user][title] ||= { title, time: datetime(), url, store, notified: false };
     const notify_game = { title, url };
-    notify_games.push(notify_game); // status is updated below
     if (await page.locator('div:has-text("Link game account")').count() // TODO still needed? epic games store just has 'Link account' as the button text now.
        || await page.locator('div:has-text("Link account")').count()) {
       console.error('  Account linking is required to claim this offer!');
@@ -167,6 +166,8 @@ try {
         'legacy games': 'https://www.legacygames.com/primedeal',
       };
       if (store in redeem) { // did not work for linked origin: && !await page.locator('div:has-text("Successfully Claimed")').count()
+        notify_games.push(notify_game); // status is updated below
+        db.data[user][title].notified = true
         const code = await Promise.any([page.inputValue('input[type="text"]'), page.textContent('[data-a-target="ClaimStateClaimCodeContent"]').then(s => s.replace('Your code: ', ''))]); // input: Legacy Games; text: gog.com
         console.log('  Code to redeem game:', chalk.blue(code));
         if (store == 'legacy games') { // may be different URL like https://legacygames.com/primeday/puzzleoftheyear/
@@ -268,6 +269,10 @@ try {
       } else {
         notify_game.status = `claimed on ${store}`;
         db.data[user][title].status = 'claimed';
+        if (!db.data[user][title].notified) {
+          db.data[user][title].notified = true
+          notify_games.push(notify_game);
+        }
       }
       // save screenshot of potential code just in case
       await page.screenshot({ path: screenshot('external', `${filenamify(title)}.png`), fullPage: true });
