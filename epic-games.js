@@ -159,8 +159,22 @@ try {
       await page.waitForTimeout(2000);
     }
 
-    const title = await page.locator('h1').first().innerText();
     const game_id = page.url().split('/').pop();
+    const page_url_array = page.url().split('/');
+    const page_type = page_url_array[page_url_array.length - 2];
+
+    // Detect type of page: blundle or single game
+    // When bundle, title is set as game_id
+    let title;
+    if(page_type == 'bundles'){
+      console.log('branch: ' + 'bundles');
+      title = game_id;
+    } else if(page_type == 'p'){
+      console.log('branch: ' + 'p');
+      title = await page.locator('h1').first().innerText();
+    }else
+      console.log('Uknown page type');    
+    
     db.data[user][game_id] ||= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
     console.log('Current free game:', title);
     const notify_game = { title, url, status: 'failed' };
