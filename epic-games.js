@@ -159,7 +159,13 @@ try {
       await page.waitForTimeout(2000);
     }
 
-    const title = await page.locator('h1').first().innerText();
+    let title;
+    if (await page.locator('span:text-is("About Bundle")').count()) {
+      // console.log('  This is a bundle containing: TODO');
+      title = (await page.locator('span:has-text("Buy"):left-of([data-testid="purchase-cta-button"])').first().innerText()).replace('Buy ', '');
+    } else {
+      title = await page.locator('h1').first().innerText();
+    }
     const game_id = page.url().split('/').pop();
     db.data[user][game_id] ||= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
     console.log('Current free game:', title);
@@ -191,8 +197,8 @@ try {
 
       // Accept End User License Agreement (only needed once)
       page.locator('input#agree').waitFor().then(async () => {
-        console.log('Accept End User License Agreement (only needed once)');
-        await page.locator('input#agree').check();
+        console.log('  Accept End User License Agreement (only needed once)');
+        await page.locator('input#agree').check(); // TODO Bundle: got stuck here
         await page.locator('button:has-text("Accept")').click();
       }).catch(_ => { });
 
@@ -243,7 +249,7 @@ try {
           // console.info('  Saved a screenshot of hcaptcha challenge to', p);
           // console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
         }).catch(_ => { }); // may time out if not shown
-        await page.locator('text=Thanks for your order!').waitFor({ state: 'attached' });
+        await page.locator('text=Thanks for your order!').waitFor({ state: 'attached' }); // TODO Bundle: got stuck here
         db.data[user][game_id].status = 'claimed';
         db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
         console.log('  Claimed successfully!');
