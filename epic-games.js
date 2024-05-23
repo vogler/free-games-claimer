@@ -185,6 +185,8 @@ try {
       const baseUrl = 'https://store.epicgames.com' + await page.locator('a:has-text("Overview")').getAttribute('href');
       console.log('  Base game:', baseUrl);
       // await page.click('a:has-text("Overview")');
+      urls.push(baseUrl); // add base game to the list of games to claim
+      urls.push(url); // add add-on itself again
     } else { // GET
       console.log('  Not in library yet! Click GET.');
       await page.click('[data-testid="purchase-cta-button"]', { delay: 11 }); // got stuck here without delay (or mouse move), see #75, 1ms was also enough
