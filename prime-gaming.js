@@ -172,7 +172,7 @@ try {
         if (store == 'legacy games') { // may be different URL like https://legacygames.com/primeday/puzzleoftheyear/
           redeem[store] = await (await page.$('li:has-text("Click here") a')).getAttribute('href'); // full text: Click here to enter your redemption code.
         }
-        console.log('  URL to redeem game:', redeem[store]);
+        console.log('  URL to redeem game:' + redeem[store] + '/' + code);
         db.data[user][title].code = code;
         let redeem_action = 'redeem';
         if (cfg.pg_redeem) { // try to redeem keys on external stores
