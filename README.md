@@ -156,7 +156,7 @@ If you want it to run regularly, you have to schedule the runs yourself:
 
 - Linux/macOS: `crontab -e` ([example](https://github.com/vogler/free-games-claimer/discussions/56))
 - macOS: [launchd](https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often)
-- Windows: [task scheduler](https://active-directory-wp.com/docs/Usage/How_to_add_a_cron_job_on_Windows/Scheduled_tasks_and_cron_jobs_on_Windows/index.html), [other options](https://stackoverflow.com/questions/132971/what-is-the-windows-version-of-cron), or just put the command in a `.bat` file in Autostart if you restart often...
+- Windows: [task scheduler](https://active-directory-wp.com/docs/Usage/How_to_add_a_cron_job_on_Windows/Scheduled_tasks_and_cron_jobs_on_Windows/index.html) ([example](https://github.com/vogler/free-games-claimer/wiki/%5BHowTo%5D-Schedule-runs-on-Windows)), [other options](https://stackoverflow.com/questions/132971/what-is-the-windows-version-of-cron), or just put the command in a `.bat` file in Autostart if you restart often...
 - any OS: use a process manager like [pm2](https://pm2.keymetrics.io/docs/usage/restart-strategies/)
 - Docker Compose `command: bash -c "node epic-games; node prime-gaming; node gog; echo sleeping; sleep 1d"` additionally add `restart: unless-stopped` to it.
 
