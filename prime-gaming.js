@@ -155,6 +155,7 @@ try {
     // await (await card.$('text=Claim')).click(); // goes to URL of game, no need to wait
     external_info.push({ title, url });
   }
+  // external_info = [ { title: 'Fallout 76 (XBOX)', url: 'https://gaming.amazon.com/fallout-76-xbox-fgwp/dp/amzn1.pg.item.9fe17d7b-b6c2-4f58-b494-cc4e79528d0b?ingress=amzn&ref_=SM_Fallout76XBOX_S01_FGWP_CRWN' } ];
   for (const { title, url } of external_info) {
     console.log('Current free game:', title); // , url);
     await page.goto(url, { waitUntil: 'domcontentloaded' });
@@ -185,7 +186,8 @@ try {
       const redeem = {
         // 'origin': 'https://www.origin.com/redeem', // TODO still needed or now only via account linking?
         'gog.com': 'https://www.gog.com/redeem',
-        'microsoft games': 'https://redeem.microsoft.com',
+        'microsoft store': 'https://account.microsoft.com/billing/redeem',
+        xbox: 'https://account.microsoft.com/billing/redeem',
         'legacy games': 'https://www.legacygames.com/primedeal',
       };
       if (store in redeem) { // did not work for linked origin: && !await page.locator('div:has-text("Successfully Claimed")').count()
@@ -240,27 +242,44 @@ try {
                 console.log('  Unknown Response 2 - please report in https://github.com/vogler/free-games-claimer/issues/5');
               }
             }
-          } else if (store == 'microsoft games') {
-            console.error(`  Redeem on ${store} not yet implemented!`);
+          } else if (store == 'microsoft store' || store == 'xbox') {
+            console.error(`  Redeem on ${store} is experimental!`);
+            // await page2.pause();
             if (page2.url().startsWith('https://login.')) {
-              console.error('  Not logged in! Use the browser to login manually.');
+              console.error('  Not logged in! Use the browser to login manually. Waiting for 60s.');
+              await page2.waitForTimeout(60 * 1000);
               redeem_action = 'redeem (login)';
             } else {
-              const r = page2.waitForResponse(r => r.url().startsWith('https://purchase.mp.microsoft.com/'));
-              await page2.fill('[name=tokenString]', code);
+              const iframe = page2.frameLocator('#redeem-iframe');
+              const input = iframe.locator('[name=tokenString]');
+              await input.waitFor();
+              await input.fill(code);
+              const r = page2.waitForResponse(r => r.url().startsWith('https://cart.production.store-web.dynamics.com/v1.0/Redeem/PrepareRedeem'));
               // console.log(await page2.locator('.redeem_code_error').innerText());
               const rt = await (await r).text();
-              console.debug(`  Response: ${rt}`);
               // {"code":"NotFound","data":[],"details":[],"innererror":{"code":"TokenNotFound",...
-              const reason = JSON.parse(rt).code;
-              if (reason == 'NotFound') {
+              const j = JSON.parse(rt);
+              const reason = j?.events?.cart.length && j.events.cart[0]?.data?.reason;
+              if (reason == 'TokenNotFound') {
                 redeem_action = 'redeem (not found)';
                 console.error('  Code was not found!');
+              } else if (j?.productInfos?.length && j.productInfos[0]?.redeemable) {
+                await iframe.locator('button:has-text("Next")').click();
+                await iframe.locator('button:has-text("Confirm")').click();
+                const r = page2.waitForResponse(r => r.url().startsWith('https://cart.production.store-web.dynamics.com/v1.0/Redeem/RedeemToken'));
+                const j = JSON.parse(await (await r).text());
+                if (j?.events?.cart.length && j.events.cart[0]?.data?.reason == 'UserAlreadyOwnsContent') {
+                  redeem_action = 'already redeemed';
+                  console.error('  error: UserAlreadyOwnsContent');
+                } else if (true) { // TODO what's returned on success?
+                  redeem_action = 'redeemed';
+                  db.data[user][title].status = 'claimed and redeemed?';
+                  console.log('  Redeemed successfully? Please report if not in https://github.com/vogler/free-games-claimer/issues/5');
+                }
               } else { // TODO find out other responses
-                await page2.click('#nextButton');
-                redeem_action = 'redeemed?';
+                redeem_action = 'unknown';
+                console.debug(`  Response: ${rt}`);
                 console.log('  Redeemed successfully? Please report your Response from above (if it is new) in https://github.com/vogler/free-games-claimer/issues/5');
-                db.data[user][title].status = 'claimed and redeemed?';
               }
             }
           } else if (store == 'legacy games') {
