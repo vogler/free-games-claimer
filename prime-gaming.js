@@ -107,6 +107,9 @@ try {
   // can't use .all() since the list of elements via locator will change after click while we iterate over it
   const internal = await games.locator('.item-card__action:has([data-a-target="FGWPOffer"])').elementHandles();
   const external = await games.locator('.item-card__action:has([data-a-target="ExternalOfferClaim"])').all();
+  // bottom to top: oldest to newest games
+  internal.reverse();
+  external.reverse();
   console.log('Number of free unclaimed games (Prime Gaming):', internal.length);
   // claim games in internal store
   for (const card of internal) {
