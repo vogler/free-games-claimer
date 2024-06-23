@@ -103,7 +103,7 @@ You can pass variables using `-e VAR=VAL`, for example `docker run -e EMAIL=foo@
 If you are using [docker compose](https://docs.docker.com/compose/environment-variables/) (or Portainer etc.), you can put options in the `environment:` section.
 
 ##### Without Docker
-On Linux/macOS you can prefix the variables you want to set, for example `EMAIL=foo@bar.baz SHOW=1 node epic-games` will show the browser and skip asking you for your login email.
+On Linux/macOS you can prefix the variables you want to set, for example `EMAIL=foo@bar.baz SHOW=1 node epic-games` will show the browser and skip asking you for your login email. On Windows you have to use `set`, [example](https://github.com/vogler/free-games-claimer/issues/314).
 You can also put options in `data/config.env` which will be loaded by [dotenv](https://github.com/motdotla/dotenv).
 
 ### Notifications
