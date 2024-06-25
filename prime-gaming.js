@@ -196,7 +196,9 @@ try {
         if (store == 'legacy games') { // may be different URL like https://legacygames.com/primeday/puzzleoftheyear/
           redeem[store] = await (await page.$('li:has-text("Click here") a')).getAttribute('href'); // full text: Click here to enter your redemption code.
         }
-        console.log('  URL to redeem game:', redeem[store]);
+        let redeem_url = redeem[store];
+        if (store == 'gog.com') redeem_url += '/' + code; // to log and notify, but can't use for goto below (captcha)
+        console.log('  URL to redeem game:', redeem_url);
         db.data[user][title].code = code;
         let redeem_action = 'redeem';
         if (cfg.pg_redeem) { // try to redeem keys on external stores
@@ -305,7 +307,7 @@ try {
           if (cfg.debug) await page2.pause();
           await page2.close();
         }
-        notify_game.status = `<a href="${redeem[store]}">${redeem_action}</a> ${code} on ${store}`;
+        notify_game.status = `<a href="${redeem_url}">${redeem_action}</a> ${code} on ${store}`;
       } else {
         notify_game.status = `claimed on ${store}`;
         db.data[user][title].status = 'claimed';
