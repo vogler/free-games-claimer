@@ -10,6 +10,11 @@ console.log(datetime(), 'started checking gog');
 
 const db = await jsonDb('gog.json', {});
 
+if (cfg.width < 1280) { // otherwise 'Sign in' and #menuUsername are hidden (but attached to DOM), see https://github.com/vogler/free-games-claimer/issues/335
+  console.error(`Window width is set to ${cfg.width} but needs to be at least 1280 for GOG!`);
+  process.exit(1);
+}
+
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
