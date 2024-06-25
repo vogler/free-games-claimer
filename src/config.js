@@ -46,9 +46,9 @@ export const cfg = {
   xbox_email: process.env.XBOX_EMAIL || process.env.EMAIL,
   xbox_password: process.env.XBOX_PASSWORD || process.env.PASSWORD,
   xbox_otpkey: process.env.XBOX_OTPKEY,
-  // experimmental - likely to change
+  // experimmental
   pg_redeem: process.env.PG_REDEEM == '1', // prime-gaming: redeem keys on external stores
+  lg_email: process.env.LG_EMAIL || process.env.PG_EMAIL || process.env.EMAIL, // prime-gaming: external: legacy-games: email to use for redeeming
   pg_claimdlc: process.env.PG_CLAIMDLC == '1', // prime-gaming: claim in-game content
-  // external stores
-  lg_email: process.env.LG_EMAIL || process.env.PG_EMAIL || process.env.EMAIL, // legacy-games: email to use for redeeming
+  pg_timeLeft: process.env.PG_TIMELEFT == '1', // prime-gaming: list time left to claim
 };

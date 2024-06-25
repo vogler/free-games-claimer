@@ -185,6 +185,8 @@ try {
       const baseUrl = 'https://store.epicgames.com' + await page.locator('a:has-text("Overview")').getAttribute('href');
       console.log('  Base game:', baseUrl);
       // await page.click('a:has-text("Overview")');
+      urls.push(baseUrl); // add base game to the list of games to claim
+      urls.push(url); // add add-on itself again
     } else { // GET
       console.log('  Not in library yet! Click GET.');
       await page.click('[data-testid="purchase-cta-button"]', { delay: 11 }); // got stuck here without delay (or mouse move), see #75, 1ms was also enough
@@ -249,6 +251,10 @@ try {
           // console.info('  Saved a screenshot of hcaptcha challenge to', p);
           // console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
         }).catch(_ => { }); // may time out if not shown
+        iframe.locator('.payment__errors:has-text("Failed to challenge captcha, please try again later.")').waitFor().then(async () => {
+          console.error('  Failed to challenge captcha, please try again later.');
+          await notify('epic-games: failed to challenge captcha. Please check.');
+        });
         await page.locator('text=Thanks for your order!').waitFor({ state: 'attached' }); // TODO Bundle: got stuck here
         db.data[user][game_id].status = 'claimed';
         db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
