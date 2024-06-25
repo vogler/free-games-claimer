@@ -48,6 +48,7 @@ export const cfg = {
   xbox_otpkey: process.env.XBOX_OTPKEY,
   // experimmental
   pg_redeem: process.env.PG_REDEEM == '1', // prime-gaming: redeem keys on external stores
+  lg_email: process.env.LG_EMAIL || process.env.PG_EMAIL || process.env.EMAIL, // prime-gaming: external: legacy-games: email to use for redeeming
   pg_claimdlc: process.env.PG_CLAIMDLC == '1', // prime-gaming: claim in-game content
   pg_timeLeft: process.env.PG_TIMELEFT == '1', // prime-gaming: list time left to claim
 };
