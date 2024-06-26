@@ -20,7 +20,7 @@ if (cfg.time) console.time('startup');
 const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
   // userAgent firefox (macOS): Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:106.0) Gecko/20100101 Firefox/106.0
   // userAgent firefox (docker): Mozilla/5.0 (X11; Linux aarch64; rv:109.0) Gecko/20100101 Firefox/115.0
   locale: 'en-US', // ignore OS locale to be sure to have english text for locators
@@ -90,8 +90,6 @@ try {
     if (!email) await notifyBrowserLogin();
     else {
       // await page.click('text=Sign in with Epic Games');
-      await page.fill('#email', email);
-      await page.click('button[type="submit"]');
       page.waitForSelector('.h_captcha_challenge iframe').then(async () => {
         console.error('Got a captcha during login (likely due to too many attempts)! You may solve it in the browser, get a new IP or try again in a few hours.');
         await notify('epic-games: got captcha during login. Please check.');
@@ -99,10 +97,20 @@ try {
       page.waitForSelector('p:has-text("Incorrect response.")').then(async () => {
         console.error('Incorrect repsonse for captcha!');
       }).catch(_ => { });
+      await page.fill('#email', email);
+      // await page.click('button[type="submit"]'); login was split in two steps for some time, now email and password are on the same form again
       const password = email && (cfg.eg_password || await prompt({ type: 'password', message: 'Enter password' }));
       if (!password) await notifyBrowserLogin();
-      await page.fill('#password', password);
-      await page.click('button[type="submit"]');
+      else {
+        await page.fill('#password', password);
+        await page.click('button[type="submit"]');
+      }
+      const error = page.locator('#form-error-message');
+      error.waitFor().then(async () => {
+        console.error('Login error:', await error.innerText());
+        await context.close(); // finishes potential recording
+        process.exit(1);
+      }).catch(_ => { });
       // handle MFA, but don't await it
       page.waitForURL('**/id/login/mfa**').then(async () => {
         console.log('Enter the security code to continue - This appears to be a new device, browser or location. A security code has been sent to your email address at ...');
