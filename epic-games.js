@@ -193,6 +193,7 @@ try {
       const baseUrl = 'https://store.epicgames.com' + await page.locator('a:has-text("Overview")').getAttribute('href');
       console.log('  Base game:', baseUrl);
       // await page.click('a:has-text("Overview")');
+      // TODO handle this via function call for base game above since this will never terminate if DRYRUN=1
       urls.push(baseUrl); // add base game to the list of games to claim
       urls.push(url); // add add-on itself again
     } else { // GET
