@@ -103,7 +103,7 @@ try {
         await notify('epic-games: got captcha during login. Please check.');
       }).catch(_ => { });
       page.waitForSelector('p:has-text("Incorrect response.")').then(async () => {
-        console.error('Incorrect repsonse for captcha!');
+        console.error('Incorrect response for captcha!');
       }).catch(_ => { });
       await page.fill('#email', email);
       // await page.click('button[type="submit"]'); login was split in two steps for some time, now email and password are on the same form again
@@ -116,8 +116,7 @@ try {
       const error = page.locator('#form-error-message');
       error.waitFor().then(async () => {
         console.error('Login error:', await error.innerText());
-        await context.close(); // finishes potential recording
-        process.exit(1);
+        console.log('Please login in the browser!');
       }).catch(_ => { });
       // handle MFA, but don't await it
       page.waitForURL('**/id/login/mfa**').then(async () => {
