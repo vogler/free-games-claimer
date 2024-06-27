@@ -263,7 +263,7 @@ try {
         iframe.locator('.payment__errors:has-text("Failed to challenge captcha, please try again later.")').waitFor().then(async () => {
           console.error('  Failed to challenge captcha, please try again later.');
           await notify('epic-games: failed to challenge captcha. Please check.');
-        });
+        }).catch(_ => { });
         await page.locator('text=Thanks for your order!').waitFor({ state: 'attached' }); // TODO Bundle: got stuck here
         db.data[user][game_id].status = 'claimed';
         db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
