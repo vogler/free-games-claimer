@@ -352,7 +352,7 @@ try {
     await loot.waitFor();
 
     process.stdout.write('Loading all DLCs on page...');
-    scrollUntilStable(() => loot.locator('[data-a-target="item-card"]').count())
+    await scrollUntilStable(() => loot.locator('[data-a-target="item-card"]').count())
 
     console.log('\nNumber of already claimed DLC:', await loot.locator('p:has-text("Collected")').count());
 
