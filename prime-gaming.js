@@ -101,6 +101,7 @@ try {
     let v;
     while (true) {
       const v2 = await f();
+      console.log('waitUntilStable', v2);
       if (v == v2) break;
       v = v2;
       await act();
@@ -109,7 +110,7 @@ try {
   const scrollUntilStable = async f => waitUntilStable(f, async () => {
     await page.keyboard.press('End'); // scroll to bottom to show all games
     await page.waitForLoadState('networkidle'); // wait for all games to be loaded
-    await page.waitForTimeout(2000); // TODO networkidle wasn't enough to load all already collected games
+    await page.waitForTimeout(5000); // TODO networkidle wasn't enough to load all already collected games
   });
 
   await page.click('button[data-type="Game"]');
@@ -118,8 +119,8 @@ try {
   await scrollUntilStable(() => games.locator('.item-card__action').count());
   console.log('Number of already claimed games (total):', await games.locator('p:has-text("Collected")').count());
   // can't use .all() since the list of elements via locator will change after click while we iterate over it
-  const internal = await games.locator('.item-card__action:has([data-a-target="FGWPOffer"])').elementHandles();
-  const external = await games.locator('.item-card__action:has([data-a-target="ExternalOfferClaim"])').all();
+  const internal = await games.locator('.item-card__action:has(button[data-a-target="FGWPOffer"])').elementHandles();
+  const external = await games.locator('.item-card__action:has(a[data-a-target="FGWPOffer"])').all();
   // bottom to top: oldest to newest games
   internal.reverse();
   external.reverse();
