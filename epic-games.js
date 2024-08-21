@@ -1,7 +1,7 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
 import { authenticator } from 'otplib';
 import path from 'path';
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync, appendFileSync } from 'fs';
 import { resolve, jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
 
@@ -16,16 +16,24 @@ const db = await jsonDb('epic-games.json', {});
 
 if (cfg.time) console.time('startup');
 
+const browserPrefs = path.join(cfg.dir.browser, 'prefs.js');
+if (existsSync(browserPrefs)) {
+  console.log('Adding webgl.disabled to', browserPrefs);
+  appendFileSync(browserPrefs, 'user_pref("webgl.disabled", true);'); // apparently Firefox removes duplicates (and sorts), so no problem appending every time
+} else {
+  console.log(browserPrefs, 'does not exist yet, will patch it on next run. Restart the script if you get a captcha.');
+}
+
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.83 Safari/537.36', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
+  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
   // userAgent firefox (macOS): Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:106.0) Gecko/20100101 Firefox/106.0
   // userAgent firefox (docker): Mozilla/5.0 (X11; Linux aarch64; rv:109.0) Gecko/20100101 Firefox/115.0
   locale: 'en-US', // ignore OS locale to be sure to have english text for locators
   recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
-  recordHar: cfg.record ? { path: `data/record/eg-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
+  recordHar: cfg.record ? { path: `data/record/eg-${filenamify(datetime())}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
   // user settings for firefox have to be put in $BROWSER_DIR/user.js
   args: [ // https://wiki.mozilla.org/Firefox/CommandLineOptions
@@ -90,19 +98,26 @@ try {
     if (!email) await notifyBrowserLogin();
     else {
       // await page.click('text=Sign in with Epic Games');
-      await page.fill('#email', email);
-      await page.click('button[type="submit"]');
       page.waitForSelector('.h_captcha_challenge iframe').then(async () => {
         console.error('Got a captcha during login (likely due to too many attempts)! You may solve it in the browser, get a new IP or try again in a few hours.');
         await notify('epic-games: got captcha during login. Please check.');
       }).catch(_ => { });
       page.waitForSelector('p:has-text("Incorrect response.")').then(async () => {
-        console.error('Incorrect repsonse for captcha!');
+        console.error('Incorrect response for captcha!');
       }).catch(_ => { });
+      await page.fill('#email', email);
+      // await page.click('button[type="submit"]'); login was split in two steps for some time, now email and password are on the same form again
       const password = email && (cfg.eg_password || await prompt({ type: 'password', message: 'Enter password' }));
       if (!password) await notifyBrowserLogin();
-      await page.fill('#password', password);
-      await page.click('button[type="submit"]');
+      else {
+        await page.fill('#password', password);
+        await page.click('button[type="submit"]');
+      }
+      const error = page.locator('#form-error-message');
+      error.waitFor().then(async () => {
+        console.error('Login error:', await error.innerText());
+        console.log('Please login in the browser!');
+      }).catch(_ => { });
       // handle MFA, but don't await it
       page.waitForURL('**/id/login/mfa**').then(async () => {
         console.log('Enter the security code to continue - This appears to be a new device, browser or location. A security code has been sent to your email address at ...');
@@ -141,7 +156,8 @@ try {
   for (const url of urls) {
     if (cfg.time) console.time('claim game');
     await page.goto(url); // , { waitUntil: 'domcontentloaded' });
-    const btnText = await page.locator('//button[@data-testid="purchase-cta-button"][not(contains(.,"Loading"))]').first().innerText(); // barrier to block until page is loaded
+    const purcahseBtn = page.locator('aside button').first();
+    const btnText = (await purcahseBtn.innerText()).toLowerCase(); // barrier to block until page is loaded
 
     // click Continue if 'This game contains mature content recommended only for ages 18+'
     if (await page.locator('button:has-text("Continue")').count() > 0) {
@@ -159,19 +175,25 @@ try {
       await page.waitForTimeout(2000);
     }
 
-    const title = await page.locator('h1').first().innerText();
+    let title;
+    if (await page.locator('span:text-is("About Bundle")').count()) {
+      // console.log('  This is a bundle containing: TODO');
+      title = (await page.locator('span:has-text("Buy"):left-of([data-testid="purchase-cta-button"])').first().innerText()).replace('Buy ', '');
+    } else {
+      title = await page.locator('h1').first().innerText();
+    }
     const game_id = page.url().split('/').pop();
     db.data[user][game_id] ||= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
     console.log('Current free game:', title);
     const notify_game = { title, url, status: 'failed' };
     notify_games.push(notify_game); // status is updated below
 
-    if (btnText.toLowerCase() == 'in library') {
+    if (btnText == 'in library') {
       console.log('  Already in library! Nothing to claim.');
       notify_game.status = 'existed';
       db.data[user][game_id].status ||= 'existed'; // does not overwrite claimed or failed
       if (db.data[user][game_id].status.startsWith('failed')) db.data[user][game_id].status = 'manual'; // was failed but now it's claimed
-    } else if (btnText.toLowerCase() == 'requires base game') {
+    } else if (btnText == 'requires base game') {
       console.log('  Requires base game! Nothing to claim.');
       notify_game.status = 'requires base game';
       db.data[user][game_id].status ||= 'failed:requires-base-game';
@@ -179,9 +201,12 @@ try {
       const baseUrl = 'https://store.epicgames.com' + await page.locator('a:has-text("Overview")').getAttribute('href');
       console.log('  Base game:', baseUrl);
       // await page.click('a:has-text("Overview")');
+      // TODO handle this via function call for base game above since this will never terminate if DRYRUN=1
+      urls.push(baseUrl); // add base game to the list of games to claim
+      urls.push(url); // add add-on itself again
     } else { // GET
       console.log('  Not in library yet! Click GET.');
-      await page.click('[data-testid="purchase-cta-button"]', { delay: 11 }); // got stuck here without delay (or mouse move), see #75, 1ms was also enough
+      await purcahseBtn.click({ delay: 11 }); // got stuck here without delay (or mouse move), see #75, 1ms was also enough
 
       // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoided by Windows userAgent?
       page.click('button:has-text("Continue")').catch(_ => { }); // needed since change from Chromium to Firefox?
@@ -191,8 +216,8 @@ try {
 
       // Accept End User License Agreement (only needed once)
       page.locator('input#agree').waitFor().then(async () => {
-        console.log('Accept End User License Agreement (only needed once)');
-        await page.locator('input#agree').check();
+        console.log('  Accept End User License Agreement (only needed once)');
+        await page.locator('input#agree').check(); // TODO Bundle: got stuck here
         await page.locator('button:has-text("Accept")').click();
       }).catch(_ => { });
 
@@ -228,7 +253,7 @@ try {
       await iframe.locator('button:has-text("Place Order"):not(:has(.payment-loading--loading))').click({ delay: 11 });
 
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
-      const btnAgree = iframe.locator('button:has-text("I Agree")');
+      const btnAgree = iframe.locator('button:has-text("I Accept")');
       btnAgree.waitFor().then(() => btnAgree.click()).catch(_ => { }); // EU: wait for and click 'I Agree'
       try {
         // context.setDefaultTimeout(100 * 1000); // give time to solve captcha, iframe goes blank after 60s?
@@ -243,7 +268,11 @@ try {
           // console.info('  Saved a screenshot of hcaptcha challenge to', p);
           // console.error('  Got hcaptcha challenge. To avoid it, get a link from https://www.hcaptcha.com/accessibility'); // TODO save this link in config and visit it daily to set accessibility cookie to avoid captcha challenge?
         }).catch(_ => { }); // may time out if not shown
-        await page.locator('text=Thanks for your order!').waitFor({ state: 'attached' });
+        iframe.locator('.payment__errors:has-text("Failed to challenge captcha, please try again later.")').waitFor().then(async () => {
+          console.error('  Failed to challenge captcha, please try again later.');
+          await notify('epic-games: failed to challenge captcha. Please check.');
+        }).catch(_ => { });
+        await page.locator('text=Thanks for your order!').waitFor({ state: 'attached' }); // TODO Bundle: got stuck here
         db.data[user][game_id].status = 'claimed';
         db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
         console.log('  Claimed successfully!');

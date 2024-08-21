@@ -10,13 +10,18 @@ console.log(datetime(), 'started checking gog');
 
 const db = await jsonDb('gog.json', {});
 
+if (cfg.width < 1280) { // otherwise 'Sign in' and #menuUsername are hidden (but attached to DOM), see https://github.com/vogler/free-games-claimer/issues/335
+  console.error(`Window width is set to ${cfg.width} but needs to be at least 1280 for GOG!`);
+  process.exit(1);
+}
+
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
   locale: 'en-US', // ignore OS locale to be sure to have english text for locators -> done via /en in URL
   recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
-  recordHar: cfg.record ? { path: `data/record/gog-${datetime()}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
+  recordHar: cfg.record ? { path: `data/record/gog-${filenamify(datetime())}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
 });
 
@@ -93,10 +98,9 @@ try {
   if (!await banner.count()) {
     console.log('Currently no free giveaway!');
   } else {
-    const text = await page.locator('.giveaway-banner__title').innerText();
-    const title = text.match(/Claim (.*)/)[1];
-    const slug = await banner.getAttribute('href');
-    const url = `https://gog.com${slug}`;
+    const text = await page.locator('.giveaway__content-header').innerText();
+    const title = text.match(/Claim (.*) and don't miss the/)[1];
+    const url = await banner.locator('a').first().getAttribute('href');
     console.log(`Current free game: ${title} - ${url}`);
     db.data[user][title] ||= { title, time: datetime(), url };
     if (cfg.dryrun) process.exit(1);

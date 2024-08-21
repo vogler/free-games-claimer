@@ -41,12 +41,13 @@ export const cfg = {
   gog_email: process.env.GOG_EMAIL || process.env.EMAIL,
   gog_password: process.env.GOG_PASSWORD || process.env.PASSWORD,
   gog_newsletter: process.env.GOG_NEWSLETTER == '1', // do not unsubscribe from newsletter after claiming a game
+  // auth AliExpress
+  ae_email: process.env.AE_EMAIL || process.env.EMAIL,
+  ae_password: process.env.AE_PASSWORD || process.env.PASSWORD,
   // OTP only via GOG_EMAIL, can't add app...
-  // auth xbox
-  xbox_email: process.env.XBOX_EMAIL || process.env.EMAIL,
-  xbox_password: process.env.XBOX_PASSWORD || process.env.PASSWORD,
-  xbox_otpkey: process.env.XBOX_OTPKEY,
-  // experimmental - likely to change
+  // experimmental
   pg_redeem: process.env.PG_REDEEM == '1', // prime-gaming: redeem keys on external stores
+  lg_email: process.env.LG_EMAIL || process.env.PG_EMAIL || process.env.EMAIL, // prime-gaming: external: legacy-games: email to use for redeeming
   pg_claimdlc: process.env.PG_CLAIMDLC == '1', // prime-gaming: claim in-game content
+  pg_timeLeft: process.env.PG_TIMELEFT == '1', // prime-gaming: list time left to claim
 };
