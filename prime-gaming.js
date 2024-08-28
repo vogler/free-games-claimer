@@ -53,6 +53,7 @@ try {
     const password = email && (cfg.pg_password || await prompt({ type: 'password', message: 'Enter password' }));
     if (email && password) {
       await page.fill('[name=email]', email);
+      await page.click('input[type="submit"]');
       await page.fill('[name=password]', password);
       await page.check('[name=rememberMe]');
       await page.click('input[type="submit"]');
