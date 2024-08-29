@@ -157,6 +157,7 @@ try {
     if (cfg.time) console.time('claim game');
     await page.goto(url); // , { waitUntil: 'domcontentloaded' });
     const purchaseBtn = page.locator('button[data-testid="purchase-cta-button"]').first();
+    await purchaseBtn.waitFor();
     const btnText = (await purchaseBtn.innerText()).toLowerCase(); // barrier to block until page is loaded
 
     // click Continue if 'This game contains mature content recommended only for ages 18+'
@@ -212,7 +213,7 @@ try {
       urls.push(baseUrl); // add base game to the list of games to claim
       urls.push(url); // add add-on itself again
     } else { // GET
-      console.log('  Not in library yet! Click GET.');
+      console.log('  Not in library yet! Click', btnText);
       await purchaseBtn.click({ delay: 11 }); // got stuck here without delay (or mouse move), see #75, 1ms was also enough
 
       // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoided by Windows userAgent?
@@ -281,7 +282,7 @@ try {
           console.error('  Failed to challenge captcha, please try again later.');
           await notify('epic-games: failed to challenge captcha. Please check.');
         }).catch(_ => { });
-        await page.locator('text=Thanks for your order!').waitFor({ state: 'attached' }); // TODO Bundle: got stuck here
+        await page.locator('text=Thanks for your order!').waitFor({ state: 'attached' }); // TODO Bundle: got stuck here, but normal game now as well
         db.data[user][game_id].status = 'claimed';
         db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
         console.log('  Claimed successfully!');
