@@ -108,16 +108,22 @@ try {
       await act();
     }
   };
-  const scrollUntilStable = async f => waitUntilStable(f, async () => {
-    await page.keyboard.press('End'); // scroll to bottom to show all games
+  const scrollUntilStable = async f => await waitUntilStable(f, async () => {
+    // await page.keyboard.press('End'); // scroll to bottom to show all games
+  // loading all games became flaky; see https://github.com/vogler/free-games-claimer/issues/357
+    await page.keyboard.press('PageDown'); // scrolling to straight to the bottom started to skip loading some games
     await page.waitForLoadState('networkidle'); // wait for all games to be loaded
-    await page.waitForTimeout(5000); // TODO networkidle wasn't enough to load all already collected games
+    await page.waitForTimeout(3000); // TODO networkidle wasn't enough to load all already collected games
+    // do it again since once wasn't enough...
+    await page.keyboard.press('PageDown');
+    await page.waitForTimeout(3000);
   });
 
   await page.click('button[data-type="Game"]');
   const games = page.locator('div[data-a-target="offer-list-FGWP_FULL"]');
   await games.waitFor();
-  await scrollUntilStable(() => games.locator('.item-card__action').count());
+  // await scrollUntilStable(() => games.locator('.item-card__action').count()); // number of games
+  await scrollUntilStable(() => page.evaluate(() => document.querySelector('.tw-full-width').scrollHeight)); // height may change during loading while number of games is still the same?
   console.log('Number of already claimed games (total):', await games.locator('p:has-text("Collected")').count());
   // can't use .all() since the list of elements via locator will change after click while we iterate over it
   const internal = await games.locator('.item-card__action:has(button[data-a-target="FGWPOffer"])').elementHandles();
