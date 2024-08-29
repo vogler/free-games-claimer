@@ -176,16 +176,22 @@ try {
     }
 
     let title;
+    let bundle_includes;
     if (await page.locator('span:text-is("About Bundle")').count()) {
-      // console.log('  This is a bundle containing: TODO');
       title = (await page.locator('span:has-text("Buy"):left-of([data-testid="purchase-cta-button"])').first().innerText()).replace('Buy ', '');
       // h1 first didn't exist for bundles but now it does... However h1 would e.g. be 'Fallout® Classic Collection' instead of 'Fallout Classic Collection'
+      try {
+        bundle_includes = await Promise.all((await page.locator('.product-card-top-row h5').all()).map(b => b.innerText()));
+      } catch (e) {
+        console.error('Failed to get "Bundle Includes":', e);
+      }
     } else {
       title = await page.locator('h1').first().innerText();
     }
     const game_id = page.url().split('/').pop();
     db.data[user][game_id] ||= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
     console.log('Current free game:', title);
+    if (bundle_includes) console.log('  This bundle includes:', bundle_includes);
     const notify_game = { title, url, status: 'failed' };
     notify_games.push(notify_game); // status is updated below
 
@@ -220,7 +226,7 @@ try {
         console.log('  Accept End User License Agreement (only needed once)');
         console.log(page.innerHTML);
         console.log('Please report the HTML above here: https://github.com/vogler/free-games-claimer/issues/371');
-        await page.locator('input#agree').check(); // TODO Bundle: got stuck here
+        await page.locator('input#agree').check(); // TODO Bundle: got stuck here; likely unrelated to bundle and locator just changed: https://github.com/vogler/free-games-claimer/issues/371
         await page.locator('button:has-text("Accept")').click();
       }).catch(_ => { });
 
