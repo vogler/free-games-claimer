@@ -156,8 +156,8 @@ try {
   for (const url of urls) {
     if (cfg.time) console.time('claim game');
     await page.goto(url); // , { waitUntil: 'domcontentloaded' });
-    const purcahseBtn = page.locator('aside button').first();
-    const btnText = (await purcahseBtn.innerText()).toLowerCase(); // barrier to block until page is loaded
+    const purchaseBtn = page.locator('button[data-testid="purchase-cta-button"]').first();
+    const btnText = (await purchaseBtn.innerText()).toLowerCase(); // barrier to block until page is loaded
 
     // click Continue if 'This game contains mature content recommended only for ages 18+'
     if (await page.locator('button:has-text("Continue")').count() > 0) {
@@ -179,6 +179,7 @@ try {
     if (await page.locator('span:text-is("About Bundle")').count()) {
       // console.log('  This is a bundle containing: TODO');
       title = (await page.locator('span:has-text("Buy"):left-of([data-testid="purchase-cta-button"])').first().innerText()).replace('Buy ', '');
+      // h1 first didn't exist for bundles but now it does... However h1 would e.g. be 'Fallout® Classic Collection' instead of 'Fallout Classic Collection'
     } else {
       title = await page.locator('h1').first().innerText();
     }
@@ -206,7 +207,7 @@ try {
       urls.push(url); // add add-on itself again
     } else { // GET
       console.log('  Not in library yet! Click GET.');
-      await purcahseBtn.click({ delay: 11 }); // got stuck here without delay (or mouse move), see #75, 1ms was also enough
+      await purchaseBtn.click({ delay: 11 }); // got stuck here without delay (or mouse move), see #75, 1ms was also enough
 
       // click Continue if 'Device not supported. This product is not compatible with your current device.' - avoided by Windows userAgent?
       page.click('button:has-text("Continue")').catch(_ => { }); // needed since change from Chromium to Firefox?
