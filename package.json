@@ -31,6 +31,6 @@
   },
   "devDependencies": {
     "@stylistic/eslint-plugin-js": "^2.2.2",
-    "eslint": "^9.5.0"
+    "eslint": "^9.11.0"
   }
 }
