@@ -99,7 +99,8 @@ try {
     console.log('Currently no free giveaway!');
   } else {
     const text = await page.locator('.giveaway__content-header').innerText();
-    const title = text.match(/Claim (.*) and don't miss the/)[1];
+    const match_all = text.match(/Claim (.*) and don't miss the|Success! (.*) was added to/);
+    const title = match_all[1] ? match_all[1] : match_all[2];
     const url = await banner.locator('a').first().getAttribute('href');
     console.log(`Current free game: ${title} - ${url}`);
     db.data[user][title] ||= { title, time: datetime(), url };
