@@ -198,6 +198,8 @@ try {
 
     if (btnText == 'in library') {
       console.log('  Already in library! Nothing to claim.');
+      //await notify(`Game Already in Library! Follow is a test link:.\n Game link ${url}`); // Decomment this line if you want to also test if a link is beeing sent correctly in a notification. The "already in library" notification was missing, I find it usefull.
+      await notify(`Game Already in Library!`); // decomment the previous line and comment this one if you also want to test for proper link-handling via notification.
       notify_game.status = 'existed';
       db.data[user][game_id].status ||= 'existed'; // does not overwrite claimed or failed
       if (db.data[user][game_id].status.startsWith('failed')) db.data[user][game_id].status = 'manual'; // was failed but now it's claimed
@@ -271,7 +273,7 @@ try {
         captcha.waitFor().then(async () => { // don't await, since element may not be shown
           // console.info('  Got hcaptcha challenge! NopeCHA extension will likely solve it.')
           console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.');
-          await notify(`epic-games: got captcha challenge right before claim of <a href="${url}">${title}</a>. Use VNC to solve it manually.`); // TODO could even create purchase URL, see https://github.com/vogler/free-games-claimer/pull/130
+          await notify(`epic-games: got captcha challenge.\n Game link ${url}`);// FIXED: Game link was not sent, probably error with html formatting? Anyway, the link is automatically parsed. TODO could even create purchase URL, see https://github.com/vogler/free-games-claimer/pull/130
           // await page.waitForTimeout(2000);
           // const p = path.resolve(cfg.dir.screenshots, 'epic-games', 'captcha', `${filenamify(datetime())}.png`);
           // await captcha.screenshot({ path: p });
