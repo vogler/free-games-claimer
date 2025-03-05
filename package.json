@@ -30,7 +30,7 @@
     "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin-js": "^2.2.2",
+    "@stylistic/eslint-plugin-js": "^4.0.0",
     "eslint": "^9.5.0"
   }
 }
