@@ -1,6 +1,6 @@
 # FROM mcr.microsoft.com/playwright:v1.20.0
 # Partially from https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.focal
-FROM ubuntu:jammy
+FROM ubuntu:noble
 
 # Configuration variables are at the end!
 
