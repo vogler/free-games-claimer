@@ -8,7 +8,7 @@ on: # yamllint disable-line rule:truthy
 permissions: {}
 
 jobs:
-  build:
+  lint:
     name: Lint
     runs-on: ubuntu-latest
 
@@ -31,3 +31,5 @@ jobs:
         env:
           # To report GitHub Actions status checks
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # TODO automatically fix linting issues and commit them for PRs
+  # fix-lint-issues: # https://github.com/marketplace/actions/super-linter#github-actions-workflow-example-pull-request
