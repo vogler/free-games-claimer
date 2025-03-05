@@ -11,8 +11,9 @@ export const dataDir = s => path.resolve(__dirname, '..', 'data', s);
 export const resolve = (...a) => a.length && a[0] == '0' ? null : path.resolve(...a);
 
 // json database
-import { JSONFilePreset } from 'lowdb/node';
-export const jsonDb = (file, defaultData) => JSONFilePreset(dataDir(file), defaultData);
+import { LowSync } from "lowdb";
+import { JSONFileSync } from "lowdb/node";
+export const jsonDb = (file, defaultData) => new LowSync(new JSONFileSync(dataDir(file)), defaultData);
 
 export const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 // date and time as UTC (no timezone offset) in nicely readable and sortable format, e.g., 2022-10-06 12:05:27.313
