@@ -96,6 +96,12 @@ Available options/variables and their default values:
 
 See `src/config.js` for all options.
 
+#### Using Secrets for Docker
+
+You can set any options/variables via [docker secrets](https://docs.docker.com/compose/use-secrets/) by appending `_FILE` to the variable/option name, e.g. to set `EG_PASSWORD` as secret replace it with `EG_PASSWORD_FILE` and setup secret as described in a docker documentation. You can find example in `docker-compose.yml`.
+
+If you set same options as variables and as secret, secret value will override variable.
+
 #### How to set options
 You can add options directly in the command or put them in a file to load.
 
