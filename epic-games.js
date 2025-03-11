@@ -190,6 +190,7 @@ try {
       title = await page.locator('h1').first().innerText();
     }
     const game_id = page.url().split('/').pop();
+    const existedInDb = db.data[user][game_id];
     db.data[user][game_id] ||= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
     console.log('Current free game:', title);
     if (bundle_includes) console.log('  This bundle includes:', bundle_includes);
@@ -198,7 +199,7 @@ try {
 
     if (btnText == 'in library') {
       console.log('  Already in library! Nothing to claim.');
-      await notify(`Game already in library: ${url}`);
+      if (!existedInDb) await notify(`Game already in library: ${url}`);
       notify_game.status = 'existed';
       db.data[user][game_id].status ||= 'existed'; // does not overwrite claimed or failed
       if (db.data[user][game_id].status.startsWith('failed')) db.data[user][game_id].status = 'manual'; // was failed but now it's claimed
