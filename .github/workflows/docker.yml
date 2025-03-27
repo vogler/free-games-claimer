@@ -28,12 +28,12 @@ jobs:
         name: Set environment variables
         run: |
           BRANCH="${GITHUB_REF#refs/heads/}"
-          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
-          echo "NOW=$(date -R)" >> $GITHUB_ENV # date -Iseconds; date +'%Y-%m-%dT%H:%M:%S'
+          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
+          echo "NOW=$(date -R)" >> "$GITHUB_ENV" # date -Iseconds; date +'%Y-%m-%dT%H:%M:%S'
           if [[ "$BRANCH" == "main" ]]; then
-            echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+            echo "IMAGE_TAG=latest" >> "$GITHUB_ENV"
           else
-            echo "IMAGE_TAG=$BRANCH" >> $GITHUB_ENV
+            echo "IMAGE_TAG=$BRANCH" >> "$GITHUB_ENV"
           fi
       -
         name: Set up QEMU
