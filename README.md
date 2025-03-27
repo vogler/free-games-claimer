@@ -6,10 +6,10 @@
 # free-games-claimer
 
 Claims free games periodically on
-- <img src="https://upload.wikimedia.org/wikipedia/commons/3/31/Epic_Games_logo.svg" width="32" style="vertical-align: middle" /> [Epic Games Store](https://www.epicgames.com/store/free-games)
-- <img src="https://www.allkeyshop.com/blog/wp-content/uploads/amazon-prime-day-2022_featured.png" width="32" style="vertical-align: middle" /> [Amazon Prime Gaming](https://gaming.amazon.com)
-- <img src="https://static.wikia.nocookie.net/this-war-of-mine/images/1/1a/Logo_GoG.png/revision/latest?cb=20160711062658" width="32" style="vertical-align: middle" /> [GOG](https://www.gog.com)
-- <img src="https://cdn2.unrealengine.com/ue-logo-white-e34b6ba9383f.svg" width="32" style="vertical-align: middle" /> [Unreal Engine (Assets)](https://www.unrealengine.com/marketplace/en-US/assets?count=20&sortBy=effectiveDate&sortDir=DESC&start=0&tag=4910) ([experimental](https://github.com/vogler/free-games-claimer/issues/44), same login as Epic Games)
+- <img src="https://upload.wikimedia.org/wikipedia/commons/3/31/Epic_Games_logo.svg" width="32" align="middle" /> [Epic Games Store](https://www.epicgames.com/store/free-games)
+- <img src="https://www.allkeyshop.com/blog/wp-content/uploads/amazon-prime-day-2022_featured.png" width="32" align="middle" /> [Amazon Prime Gaming](https://gaming.amazon.com)
+- <img src="https://static.wikia.nocookie.net/this-war-of-mine/images/1/1a/Logo_GoG.png/revision/latest?cb=20160711062658" width="32" align="middle" /> [GOG](https://www.gog.com)
+- <img src="https://cdn2.unrealengine.com/ue-logo-white-e34b6ba9383f.svg" width="32" align="middle" /> [Unreal Engine (Assets)](https://www.unrealengine.com/marketplace/en-US/assets?count=20&sortBy=effectiveDate&sortDir=DESC&start=0&tag=4910) ([experimental](https://github.com/vogler/free-games-claimer/issues/44), same login as Epic Games)
 <!-- - <img src="https://www.freepnglogos.com/uploads/xbox-logo-picture-png-14.png" width="32"/> [Xbox Live Games with Gold](https://www.xbox.com/en-US/live/gold#gameswithgold) ([experimental](https://github.com/vogler/free-games-claimer/issues/19)) -->
 
 Pull requests welcome :)
