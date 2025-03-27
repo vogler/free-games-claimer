@@ -30,6 +30,34 @@ EOT
 # ls -l /tmp/.X11-unix/
 rm -f /tmp/.X1-lock
 
+# Check and export secrets to variables if exist
+# Get list of VARIABLES with "_FILE" at the end
+SECRETS_LIST=$(env | grep "_FILE")
+if [ ! -z "$SECRETS_LIST" ]; then
+
+    echo "Secrets were found, will try to convert them into the Variables..."
+
+    # Will read one by one, remove "_FILE" from the end and get value from the file
+    # Known bug: if you set "=" in the variable value, it will be converted to the space
+    while read SECRETS; do
+        SECRET_VALUE=$(echo $SECRETS | awk -F'[=]' '{ $1=""; print $0 }')
+        # Remove unneeded space at the begging
+        SECRET_VALUE=${SECRET_VALUE:1}
+        SECRET_NAME=$(echo $SECRETS | awk -F'[=]' '{ print $1 }')
+        # Remove "_FILE" at the end of the Variable Name
+        SECRET_NAME=${SECRET_NAME::-5}
+
+        # If file with value readable, use it to fetch value and export variable
+        if [ -r "$SECRET_VALUE" ]; then
+            echo "Setting $SECRET_NAME with value from $SECRET_VALUE"
+            export "$SECRET_NAME"="$(cat "$SECRET_VALUE")"
+        else
+            echo "ERROR - $SECRETS is configured, but file not exist or not readable."
+        fi
+    done <<< $SECRETS_LIST
+
+fi
+
 # 6000+SERVERNUM is the TCP port Xvfb is listening on:
 # SERVERNUM=$(echo "$DISPLAY" | sed 's/:\([0-9][0-9]*\).*/\1/')
 
