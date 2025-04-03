@@ -2,16 +2,35 @@ import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdate
 import { datetime, filenamify, prompt, handleSIGINT, stealth } from './src/util.js';
 import { cfg } from './src/config.js';
 
+// using https://github.com/apify/fingerprint-suite worked, but has no launchPersistentContext...
+// from https://github.com/apify/fingerprint-suite/issues/162
+import { FingerprintInjector } from 'fingerprint-injector';
+import { FingerprintGenerator } from 'fingerprint-generator';
+
+const { fingerprint, headers } = new FingerprintGenerator().getFingerprint({
+    devices: ["mobile"],
+    operatingSystems: ["android"],
+});
+
 const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
-  viewport: { width: cfg.width, height: cfg.height },
+  // viewport: { width: cfg.width, height: cfg.height },
   locale: 'en-US', // ignore OS locale to be sure to have english text for locators -> done via /en in URL
   recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
-  recordHar: cfg.record ? { path: `data/record/gog-${filenamify(datetime())}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
+  recordHar: cfg.record ? { path: `data/record/aliexpress-${filenamify(datetime())}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
+  userAgent: fingerprint.navigator.userAgent,
+  viewport: {
+      width: fingerprint.screen.width,
+      height: fingerprint.screen.height,
+  },
+  extraHTTPHeaders: {
+      'accept-language': headers['accept-language'],
+  },
 });
 handleSIGINT(context);
-await stealth(context);
+// await stealth(context);
+await new FingerprintInjector().attachFingerprintToPlaywright(context, { fingerprint, headers });
 
 context.setDefaultTimeout(cfg.debug ? 0 : cfg.timeout);
 
@@ -88,11 +107,11 @@ const merge = async () => {
 try {
   // await coins();
   await [
-    coins,
+    // coins,
     // grow,
     // gogo,
     // euro,
-    // merge,
+    merge,
   ].reduce((a, f) => a.then(async _ => { await auth(urls[f.name]); await f(); console.log() }), Promise.resolve());
 
   // await page.pause();
