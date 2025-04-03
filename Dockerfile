@@ -1,19 +1,18 @@
-# FROM mcr.microsoft.com/playwright:v1.20.0
-# Partially from https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.focal
-FROM ubuntu:jammy
+# Partially from https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.noble
+FROM ubuntu:noble
 
 # Configuration variables are at the end!
+ARG DEBIAN_FRONTEND=noninteractive
 
 # https://github.com/hadolint/hadolint/wiki/DL4006
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ARG DEBIAN_FRONTEND=noninteractive
 
-# Install up-to-date node & npm, deps for virtual screen & noVNC, firefox, pip for apprise.
+# Install up-to-date node & npm, deps for virtual screen & noVNC, firefox, pipx for apprise.
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y curl ca-certificates gnupg \
+    && apt-get install -y curl wget gpg ca-certificates \
     && mkdir -p /etc/apt/keyrings \
-    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
+    && curl -sL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" >> /etc/apt/sources.list.d/nodesource.list \
     && apt-get update \
     && apt-get install --no-install-recommends -y \
       nodejs \
@@ -22,20 +21,20 @@ RUN apt-get update \
       tini \
       novnc websockify \
       dos2unix \
-      python3-pip \
+      pipx \
     # && npx playwright install-deps firefox \
+    # When running playwright without deps, it said to install the below (which should be what install-deps above does)
     && apt-get install --no-install-recommends -y \
-      libgtk-3-0 \
-      libasound2 \
       libxcomposite1 \
+      libxcursor1 \
+      libgtk-3-0t64 \
       libpangocairo-1.0-0 \
       libpango-1.0-0 \
-      libatk1.0-0 \
+      libatk1.0-0t64 \
       libcairo-gobject2 \
       libcairo2 \
       libgdk-pixbuf-2.0-0 \
-      libdbus-glib-1-2 \
-      libxcursor1 \
+      libasound2t64 \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf \
@@ -44,12 +43,13 @@ RUN apt-get update \
       /var/cache/* \
       /var/lib/apt/lists/* \
       /var/tmp/*
-
+#
 # RUN node --version
 # RUN npm --version
 
-RUN ln -s /usr/share/novnc/vnc_auto.html /usr/share/novnc/index.html
-RUN pip install apprise
+# TODO This was vnc_auto.html before which no longer exists, but only vnc_lite.html and vnc.html which we link now:
+RUN ln -s /usr/share/novnc/vnc.html /usr/share/novnc/index.html
+RUN pipx install apprise
 
 WORKDIR /fgc
 COPY package*.json ./
