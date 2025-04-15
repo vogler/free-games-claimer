@@ -55,7 +55,7 @@ try {
       await page.fill('[name=email]', email);
       await page.click('input[type="submit"]');
       await page.fill('[name=password]', password);
-      await page.check('[name=rememberMe]');
+      // await page.check('[name=rememberMe]'); // no longer exists
       await page.click('input[type="submit"]');
       page.waitForURL('**/ap/signin**').then(async () => { // check for wrong credentials
         const error = await page.locator('.a-alert-content').first().innerText();
