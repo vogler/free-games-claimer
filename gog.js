@@ -1,4 +1,5 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
+import chalk from 'chalk';
 import { resolve, jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
 
@@ -102,7 +103,7 @@ try {
     const match_all = text.match(/Claim (.*) and don't miss the|Success! (.*) was added to/);
     const title = match_all[1] ? match_all[1] : match_all[2];
     const url = await banner.locator('a').first().getAttribute('href');
-    console.log(`Current free game: ${title} - ${url}`);
+    console.log(`Current free game: ${chalk.blue(title)} - ${url}`);
     db.data[user][title] ||= { title, time: datetime(), url };
     if (cfg.dryrun) process.exit(1);
     // await page.locator('#giveaway:not(.is-loading)').waitFor(); // otherwise screenshot is sometimes with loading indicator instead of game title; #TODO fix, skipped due to timeout, see #240
