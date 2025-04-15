@@ -258,10 +258,14 @@ try {
               const r2 = page2.waitForResponse(r => r.request().method() == 'POST' && r.url().startsWith('https://redeem.gog.com/'));
               await page2.click('[type="submit"]'); // click Redeem
               const r2t = await (await r2).text();
+              const reason2 = JSON.parse(r2t).reason;
               if (r2t == '{}') {
                 redeem_action = 'redeemed';
                 console.log('  Redeemed successfully.');
                 db.data[user][title].status = 'claimed and redeemed';
+              } else if (reason2?.includes('captcha')) {
+                redeem_action = 'redeem (got captcha)';
+                console.error('  Got captcha; could not redeem!');
               } else {
                 console.debug(`  Response 2: ${r2t}`);
                 console.log('  Unknown Response 2 - please report in https://github.com/vogler/free-games-claimer/issues/5');
@@ -271,7 +275,7 @@ try {
             console.error(`  Redeem on ${store} is experimental!`);
             // await page2.pause();
             if (page2.url().startsWith('https://login.')) {
-              console.error('  Not logged in! Use the browser to login manually. Waiting for 60s.');
+              console.error('  Not logged in! Please redeem the code above manually. You can now login in the browser for next time. Waiting for 60s.');
               await page2.waitForTimeout(60 * 1000);
               redeem_action = 'redeem (login)';
             } else {
@@ -308,6 +312,7 @@ try {
               }
             }
           } else if (store == 'legacy games') {
+            // await page2.pause();
             await page2.fill('[name=coupon_code]', code);
             await page2.fill('[name=email]', cfg.lg_email);
             await page2.fill('[name=email_validate]', cfg.lg_email);
