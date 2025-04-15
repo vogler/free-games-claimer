@@ -131,23 +131,25 @@ try {
   // bottom to top: oldest to newest games
   internal.reverse();
   external.reverse();
-  const checkTimeLeft = async url => {
-    // console.log('  Checking time left for game:', url);
-    const check = async p => {
-      console.log(' ', await p.locator('.availability-date').innerText());
-      const dueDateOrg = await p.locator('.availability-date .tw-bold').innerText();
-      const dueDate = datetime(new Date(Date.parse(dueDateOrg + ' 17:00')));
-      console.log('  Due date:', dueDate);
-    };
-    if (page.url() == url) {
-      await check(page);
-    } else {
-      const p = await context.newPage();
+  const sameOrNewPage = async url => new Promise(async (resolve, _reject) => {
+    const isNew = page.url() != url;
+    let p = page;
+    if (isNew) {
+      p = await context.newPage();
       await p.goto(url, { waitUntil: 'domcontentloaded' });
-      await check(p);
-      p.close();
     }
-  };
+    resolve([p, isNew]);
+  });
+  const skipBasedOnTime = async url => {
+    // console.log('  Checking time left for game:', url);
+    const [p, isNew] = await sameOrNewPage(url);
+    const dueDateOrg = await p.locator('.availability-date .tw-bold').innerText();
+    const dueDate = new Date(Date.parse(dueDateOrg + ' 17:00'));
+    const daysLeft = (dueDate.getTime() - Date.now())/1000/60/60/24;
+    console.log(' ', await p.locator('.availability-date').innerText(), '->', daysLeft.toFixed(2));
+    if (isNew) await p.close();
+    return daysLeft > cfg.pg_timeLeft;
+  }
   console.log('Number of free unclaimed games (Prime Gaming):', internal.length);
   // claim games in internal store
   for (const card of internal) {
@@ -156,7 +158,7 @@ try {
     const slug = await (await card.$('a')).getAttribute('href');
     const url = 'https://gaming.amazon.com' + slug.split('?')[0];
     console.log('Current free game:', title);
-    if (cfg.pg_timeLeft) await checkTimeLeft(url);
+    if (cfg.pg_timeLeft && await skipBasedOnTime(url)) continue;
     if (cfg.dryrun) continue;
     if (cfg.interactive && !await confirm()) continue;
     await (await card.$('.tw-button:has-text("Claim")')).click();
@@ -184,7 +186,7 @@ try {
     const item_text = await page.innerText('[data-a-target="DescriptionItemDetails"]');
     const store = item_text.toLowerCase().replace(/.* on /, '').slice(0, -1);
     console.log('  External store:', store);
-    if (cfg.pg_timeLeft) await checkTimeLeft(url);
+    if (cfg.pg_timeLeft && await skipBasedOnTime(url)) continue;
     if (cfg.dryrun) continue;
     if (cfg.interactive && !await confirm()) continue;
     await Promise.any([page.click('[data-a-target="buy-box"] .tw-button:has-text("Get game")'), page.click('[data-a-target="buy-box"] .tw-button:has-text("Claim")'), page.click('.tw-button:has-text("Complete Claim")'), page.waitForSelector('div:has-text("Link game account")'), page.waitForSelector('.thank-you-title:has-text("Success")')]); // waits for navigation
