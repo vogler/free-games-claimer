@@ -42,6 +42,11 @@ const gh = await (await fetch('https://api.github.com/repos/vogler/free-games-cl
 log('Local commit:', sha, new Date(date));
 log('Online commit:', gh.sha, new Date(gh.commit.committer.date));
 
+// git describe --all --long --dirty
+// --> heads/main-0-gdee47d2-dirty
+// git describe --tags --long --dirty
+// --> v1.7-35-gdee47d2-dirty
+
 if (sha == gh.sha) {
   log('Running the latest version!');
 } else {
