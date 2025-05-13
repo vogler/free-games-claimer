@@ -1,3 +1,5 @@
+name: Sonar
+
 on:
   # Trigger analysis when pushing in main or pull requests, and when creating a pull request.
   push:
@@ -5,7 +7,10 @@ on:
       - main
   pull_request:
       types: [opened, synchronize, reopened]
-name: Sonar
+
+permissions:
+  contents: read
+
 jobs:
   sonarcloud:
     runs-on: ubuntu-latest

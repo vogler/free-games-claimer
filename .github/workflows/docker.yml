@@ -17,6 +17,9 @@ on:
     branches:
       - "main" # only PRs against main
 
+permissions:
+  contents: read
+
 jobs:
   docker:
     runs-on: ubuntu-latest

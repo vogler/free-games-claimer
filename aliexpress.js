@@ -40,7 +40,7 @@ const auth = async (url) => {
   console.log('auth', url);
   await page.goto(url, { waitUntil: 'domcontentloaded' });
   // redirects to https://login.aliexpress.com/?return_url=https%3A%2F%2Fwww.aliexpress.com%2Fp%2Fcoin-pc-index%2Findex.html
-  await Promise.any([page.waitForURL(/.*login.aliexpress.com.*/).then(async () => {
+  await Promise.any([page.waitForURL(/.*login\.aliexpress.com.*/).then(async () => {
     // manual login
     console.error('Not logged in! Will wait for 120s for you to login...');
     // await page.waitForTimeout(120*1000);
