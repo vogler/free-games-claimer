@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 env:
  BRANCH: ${{ github.head_ref || github.ref_name }} # head_ref/base_ref are only set for PRs, for branches ref_name will be used
