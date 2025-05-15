@@ -36,13 +36,13 @@ Data (including json files with claimed games, codes to redeem, screenshots) is 
 
 1. [Install Node.js](https://nodejs.org/en/download)
 2. Clone/download this repository and `cd` into it in a terminal
-3. Run `npm install`
+3. Run `npm install && npx patchright install chromium`
 4. Run `pip install apprise` (or use [pipx](https://github.com/pypa/pipx) if you have [problems](https://stackoverflow.com/questions/75608323/how-do-i-solve-error-externally-managed-environment-every-time-i-use-pip-3)) to install [apprise](https://github.com/caronc/apprise) if you want notifications
 5. To get updates: `git pull; npm install`
 6. Run `node epic-games`, `node prime-gaming`, `node gog`...
 
-During `npm install` Playwright will download its Firefox to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
-If you are missing some dependencies for the browser on your system, you can use `sudo npx playwright install firefox --with-deps`.
+Patchright/Playwright will download its Chromium to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
+If you are missing some dependencies for the browser on your system, you can use `sudo npx patchright install chromium --with-deps`.
 
 If you don't want to use Docker for quasi-headless mode, you could run inside a virtual machine, on a server, or you wake your PC at night to avoid being interrupted.
 </details>

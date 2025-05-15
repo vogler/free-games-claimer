@@ -27,6 +27,7 @@
     "fingerprint-injector": "^2.1.66",
     "lowdb": "^7.0.1",
     "otplib": "^12.0.1",
+    "patchright": "^1.52.3",
     "playwright-firefox": "^1.52.0",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
