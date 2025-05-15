@@ -1,9 +1,10 @@
 # start with `docker compose up`
+version: "3.7"
+
 services:
-  free-games-claimer:
+  free-games-claimer: # Service Example with localdata and variables
     container_name: fgc # is printed in front of every output line
     image: ghcr.io/vogler/free-games-claimer # otherwise image name will be free-games-claimer-free-games-claimer
-    build: .
     ports:
       # - "5900:5900" # VNC server
       - "6080:6080" # noVNC (browser-based VNC client)
@@ -11,5 +12,43 @@ services:
       - fgc:/fgc/data
     # command: bash -c "node epic-games; node gog"
     environment:
-      # - EMAIL=foo@bar.org
-      # - NOTIFY='tgram://...'
+      - VNC_PASSWORD="vnc password"
+      - EMAIL="user name"
+      - PASSWORD="password"
+      - EG_OTPKEY="epic otp"
+
+####
+# OR
+####
+
+  free-games-claimer-secrets: # Service Example with Secrets support
+    container_name: fgc # is printed in front of every output line
+    image: ghcr.io/vogler/free-games-claimer # otherwise image name will be free-games-claimer-free-games-claimer
+    ports:
+      # - "5900:5900" # VNC server
+      - "6080:6080" # noVNC (browser-based VNC client)
+    volumes:
+      - fgc:/fgc/data
+    # command: bash -c "node epic-games; node gog"
+    environment:
+      - VNC_PASSWORD_FILE=/run/secrets/vnc_password
+      - EMAIL_FILE=/run/secrets/common_user
+      - PASSWORD_FILE=/run/secrets/common_password
+      - EG_OTPKEY_FILE=/run/secrets/epic_otp
+    secrets:
+      - user
+      - password
+      - epic_otp
+      - vnc_password
+
+# Secrets section is only needed if you are using docker secrets, not .env solution.
+# In this case use "free-games-claimer-secrets" from the services and "free-games-claimer" otherwise.
+secrets:
+  vnc_password:
+    file: .secrets/vnc_password
+  user:
+    file: .secrets/common_user
+  password:
+    file: .secrets/common_password
+  epic_otp:
+    file: .secrets/epic_otp
