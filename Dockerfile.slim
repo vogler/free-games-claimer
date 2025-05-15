@@ -1,0 +1,59 @@
+# FROM node:bullseye-slim # install-deps fails since it only supports Ubuntu
+# https://github.com/jlesage/docker-baseimage-gui
+# FROM jlesage/baseimage-gui:alpine-3.17-v4
+# 21MB base, 329MB, launching firefox fails, install-deps fails - apt-get: not found
+# FROM jlesage/baseimage-gui:ubuntu-20.04-v4
+# 48MB base, Node.js 10, but PW requires 14; after install curl and Node.js 19 via https://github.com/nodesource/distributions/ it only failed with running nightly firefox as root
+# FROM jlesage/baseimage-gui:debian-11-v4
+# 49MB base, Node.js 12, but PW requires 14
+# https://github.com/jlesage/docker-firefox
+FROM jlesage/firefox
+# 377MB base, 654MB, launching PW firefox fails with
+# browserType.launchPersistentContext: Failed to launch: Error: spawn /fgc/node_modules/playwright-core/.local-browsers/firefox-1372/firefox/firefox ENOENT
+# due to missing libs:
+# bash: ldd /fgc/node_modules/playwright-core/.local-browsers/firefox-1372/firefox/firefox
+# 	/lib/ld-linux-aarch64.so.1 (0xffffa7931000)
+# 	libpthread.so.0 => /lib/ld-linux-aarch64.so.1 (0xffffa7931000)
+# 	libdl.so.2 => /lib/ld-linux-aarch64.so.1 (0xffffa7931000)
+# 	libstdc++.so.6 => /usr/lib/libstdc++.so.6 (0xffffa7631000)
+# 	libm.so.6 => /lib/ld-linux-aarch64.so.1 (0xffffa7931000)
+# 	libgcc_s.so.1 => /usr/lib/libgcc_s.so.1 (0xffffa7600000)
+# 	libc.so.6 => /lib/ld-linux-aarch64.so.1 (0xffffa7931000)
+# ls /lib/ld-*
+# 	/lib/ld-musl-aarch64.so.1
+# -> try with   executablePath: '/usr/bin/firefox' in epic-games.js
+
+# docker build --tag fgc.slim -f Dockerfile.slim .
+# docker run --rm -it -p 5800:5800 -v $(realpath ./foo/fgc):/fgc/data -v $(realpath ./foo/firefox):/config:rw fgc.slim
+# -> stuck at dialog box 'Your Firefox profile cannot be loaded. It may be missing or inaccessible.'
+# -> Click OK via VNC -> Browser closed.
+
+# Install xterm.
+# RUN add-pkg xterm
+RUN add-pkg bash
+# RUN add-pkg curl
+# RUN curl -fsSL https://deb.nodesource.com/setup_19.x | bash -
+RUN add-pkg nodejs npm
+# RUN npx playwright install-deps firefox
+
+ENV HOME /fgc
+WORKDIR /fgc
+RUN mkdir /fgc/data
+COPY package*.json ./
+
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD true
+ENV PLAYWRIGHT_BROWSERS_PATH 0
+# If firefox is installed (~/.cache/ms-playwright/firefox-*) before `npm install` it may be a newer version than in package.json and playwright will not find it; system deps are installed sep. via apt above to avoid having to pin the version there.
+RUN npm install
+RUN npx playwright install firefox
+
+COPY . .
+
+# Show browser instead of running headless
+ENV SHOW 1
+
+# Copy the start script.
+COPY startapp.sh /startapp.sh
+
+# Set the name of the application.
+RUN set-cont-env APP_NAME "fgc"
