@@ -1,9 +1,9 @@
 name: Build and push Docker image (amd64, arm64 to hub.docker.com and ghcr.io)
 
 on:
-  workflow_dispatch: # allow manual trigger
-  push: # build for each branch
-    # branches: ["main"]
+  workflow_dispatch: # allows manual trigger
+  push: # push on branch
+    branches: [main, dev]
     paths: # ignore changes to .md files
       - '**'
       - '!*.md'
