@@ -49,7 +49,7 @@ RUN apt-get update \
 # RUN npm --version
 
 RUN ln -s /usr/share/novnc/vnc_auto.html /usr/share/novnc/index.html
-RUN pip install apprise
+RUN pip install --no-cache-dir apprise
 
 WORKDIR /fgc
 COPY package*.json ./

@@ -3,7 +3,7 @@
 set -eo pipefail # exit on error, error on any fail in pipe (not just last cmd); add -x to print each cmd; see gist bash_strict_mode.md
 
 echo "Version: https://github.com/vogler/free-games-claimer/tree/${COMMIT}"
-[ ! -z $BRANCH ] && [ $BRANCH != "main" ] && echo "Branch: ${BRANCH}"
+[ -n "$BRANCH" ] && [ "$BRANCH" != "main" ] && echo "Branch: ${BRANCH}"
 echo "Build: $NOW"
 
 # Remove chromium profile lock.
@@ -17,7 +17,7 @@ rm -f /fgc/data/browser/SingletonLock
 mkdir -p /fgc/data/browser
 # fix for 'Incorrect response' after solving a captcha correctly - https://github.com/vogler/free-games-claimer/issues/261#issuecomment-1868385830
 # echo 'user_pref("privacy.resistFingerprinting", true);' > /fgc/data/browser/user.js
-cat << EOT > /fgc/data/browser/user.js
+cat << EOT >/fgc/data/browser/user.js
 user_pref("privacy.resistFingerprinting", true);
 // user_pref("privacy.resistFingerprinting.letterboxing", true);
 // user_pref("browser.contentblocking.category", "strict");
@@ -47,9 +47,9 @@ else
   pw="-passwd $VNC_PASSWORD"
   pwt="with password"
 fi
-x11vnc -display $DISPLAY -forever -shared -rfbport $VNC_PORT -bg $pw 2>/dev/null 1>&2
+x11vnc -display $DISPLAY -forever -shared -rfbport "$VNC_PORT" -bg "$pw" 2>/dev/null 1>&2
 echo "VNC is running on port $VNC_PORT ($pwt)"
-websockify -D --web "/usr/share/novnc/" $NOVNC_PORT "localhost:$VNC_PORT" 2>/dev/null 1>&2 &
+websockify -D --web "/usr/share/novnc/" "$NOVNC_PORT" "localhost:$VNC_PORT" 2>/dev/null 1>&2 &
 echo "noVNC (VNC via browser) is running on http://localhost:$NOVNC_PORT"
 echo
 exec tini -g -- "$@" # https://github.com/krallin/tini/issues/8 node/playwright respond to signals like ctrl-c, but unsure about zombie processes
