@@ -15,7 +15,10 @@ export default [
   {
     // files: ['*.js'],
     languageOptions: {
-      globals: globals.node,
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+      },
     },
     plugins: {
       '@stylistic/js': stylistic,

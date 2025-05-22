@@ -53,7 +53,6 @@ const page = context.pages().length ? context.pages()[0] : await context.newPage
 await page.setViewportSize({ width: cfg.width, height: cfg.height }); // TODO workaround for https://github.com/vogler/free-games-claimer/issues/277 until Playwright fixes it
 
 // some debug info about the page (screen dimensions, user agent, platform)
-// eslint-disable-next-line no-undef
 if (cfg.debug) console.debug(await page.evaluate(() => [(({ width, height, availWidth, availHeight }) => ({ width, height, availWidth, availHeight }))(window.screen), navigator.userAgent, navigator.platform, navigator.vendor])); // deconstruct screen needed since `window.screen` prints {}, `window.screen.toString()` '[object Screen]', and can't use some pick function without defining it on `page`
 if (cfg.debug_network) {
   // const filter = _ => true;

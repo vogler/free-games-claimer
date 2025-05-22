@@ -12,10 +12,10 @@ function onRawSIGINT(fn) {
     }
   });
 }
-console.log(1)
+console.log(1);
 onRawSIGINT(() => {
   console.log('raw'); process.exit(1);
 });
-console.log(2)
+console.log(2);
 
 // onRawSIGINT workaround for enquirer keeps the process from exiting here...
