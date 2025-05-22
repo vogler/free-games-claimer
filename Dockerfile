@@ -75,28 +75,26 @@ ENV BRANCH=${BRANCH}
 ENV NOW=${NOW}
 
 LABEL org.opencontainers.image.title="free-games-claimer" \
-      # org.opencontainers.image.name="free-games-claimer" \
       org.opencontainers.image.description="Automatically claims free games on the Epic Games Store, Amazon Prime Gaming and GOG" \
       org.opencontainers.image.url="https://github.com/vogler/free-games-claimer" \
       org.opencontainers.image.source="https://github.com/vogler/free-games-claimer"
-      # org.opencontainers.image.revision=${COMMIT} \
+      # org.opencontainers.image.name="free-games-claimer" \
       # org.opencontainers.image.ref.name=${BRANCH} \
       # org.opencontainers.image.base.name="ubuntu:jammy" \
-      # org.opencontainers.image.version="latest"
 
 # Configure VNC via environment variables:
-ENV VNC_PORT 5900
-ENV NOVNC_PORT 6080
+ENV VNC_PORT=5900
+ENV NOVNC_PORT=6080
 EXPOSE 5900
 EXPOSE 6080
 
 # Configure Xvfb via environment variables:
-ENV WIDTH 1920
-ENV HEIGHT 1080
-ENV DEPTH 24
+ENV WIDTH=1920
+ENV HEIGHT=1080
+ENV DEPTH=24
 
 # Show browser instead of running headless
-ENV SHOW 1
+ENV SHOW=1
 
 # Script to setup display server & VNC is always executed.
 ENTRYPOINT ["docker-entrypoint.sh"]
