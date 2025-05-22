@@ -74,10 +74,10 @@ ENV COMMIT=${COMMIT}
 ENV BRANCH=${BRANCH}
 ENV NOW=${NOW}
 
-LABEL org.opencontainers.image.title="free-games-claimer" \
-      org.opencontainers.image.description="Automatically claims free games on the Epic Games Store, Amazon Prime Gaming and GOG" \
-      org.opencontainers.image.url="https://github.com/vogler/free-games-claimer" \
-      org.opencontainers.image.source="https://github.com/vogler/free-games-claimer"
+# added by docker/metadata-action using data from GitHub
+# LABEL org.opencontainers.image.title="free-games-claimer" \
+#       org.opencontainers.image.url="https://github.com/vogler/free-games-claimer" \
+#       org.opencontainers.image.source="https://github.com/vogler/free-games-claimer"
       # org.opencontainers.image.name="free-games-claimer" \
       # org.opencontainers.image.ref.name=${BRANCH} \
       # org.opencontainers.image.base.name="ubuntu:jammy" \
