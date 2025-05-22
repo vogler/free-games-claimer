@@ -131,20 +131,18 @@ try {
   // bottom to top: oldest to newest games
   internal.reverse();
   external.reverse();
-  // TODO just use async, no need for Promise? -> type error since now Page | bool instead of any
-  // eslint-disable-next-line no-async-promise-executor
-  const sameOrNewPage = async url => new Promise(async (resolve, _reject) => {
+  const sameOrNewPage = async url => {
     const isNew = page.url() != url;
     let p = page;
     if (isNew) {
       p = await context.newPage();
       await p.goto(url, { waitUntil: 'domcontentloaded' });
     }
-    resolve([p, isNew]);
-  });
+    return { p, isNew };
+  };
   const skipBasedOnTime = async url => {
     // console.log('  Checking time left for game:', url);
-    const [p, isNew] = await sameOrNewPage(url);
+    const { p, isNew } = await sameOrNewPage(url);
     const dueDateOrg = await p.locator('.availability-date .tw-bold').innerText();
     const dueDate = new Date(Date.parse(dueDateOrg + ' 17:00'));
     const daysLeft = (dueDate.getTime() - Date.now()) / 1000 / 60 / 60 / 24;
