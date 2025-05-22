@@ -1,5 +1,5 @@
 # https://github.com/marketplace/actions/super-linter#get-started
-name: Lint
+name: Super-Linter
 
 on: # yamllint disable-line rule:truthy
   push: null
@@ -9,7 +9,7 @@ permissions: {}
 
 jobs:
   lint:
-    name: Lint
+    name: Super-Linter
     runs-on: ubuntu-latest
 
     permissions:
