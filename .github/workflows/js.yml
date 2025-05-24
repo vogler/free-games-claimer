@@ -1,4 +1,4 @@
-name: "JS CI: npm, deps, eslint, tests"
+name: "JS: npm, deps, eslint, tests"
 
 on:
   push:
@@ -14,8 +14,13 @@ jobs:
         run: npm install
 
       # check size of dependencies
-      - name: dep-size howfat
-        run: npx --yes howfat -d --reporter table --sort size-
+      # all tools gave different results locally
+      - name: dep-size node_modules
+        run: du -sh node_modules | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: dep-size howfat -d (inc. dev)
+        run: npx --yes howfat -d --reporter table --sort size- | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: dep-size howfat -d -p (inc. dev, peer)
+        run: npx --yes howfat -d -p --reporter table --sort size- | tee -a "$GITHUB_STEP_SUMMARY"
       - name: dep-size qnm
         run: npx --yes qnm doctor
       - name: dep-size cost-of-modules
@@ -29,6 +34,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
+          category: eslint
 
       - name: npm run lint
         # eslint exits 1 if it finds anything to report
