@@ -49,6 +49,7 @@ jobs:
       issues: write
       pull-requests: write
       security-events: write # needed for SARIF upload
+      actions: write # needed to commit fixes for workflows?
 
     steps:
       # Git Checkout
