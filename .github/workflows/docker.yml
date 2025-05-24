@@ -23,6 +23,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Set environment variables
         run: |
           echo "NOW=$(date -R)" >> "$GITHUB_ENV" # date -Iseconds; date +'%Y-%m-%dT%H:%M:%S'
@@ -49,6 +50,7 @@ jobs:
           # otherwise labels are not shown on GitHub due to multi-arch image: https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#adding-a-description-to-multi-arch-images
           # https://github.com/docker/metadata-action#annotations
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         # if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }} # does not work: Unrecognized named-value: 'secrets' - https://www.cloudtruth.com/blog/skipping-jobs-in-github-actions-when-secrets-are-unavailable-securely-inject-configuration-secrets-into-github
@@ -62,10 +64,12 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }} # actor is user that opened PR, was repository_owner before
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
       - name: Build and push
         uses: docker/build-push-action@v6
         if: ${{ env.IMAGE_TAG != '' }}
@@ -87,3 +91,19 @@ jobs:
           #   ghcr.io/${{ github.actor }}/free-games-claimer:${{env.IMAGE_TAG}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # https://gist.github.com/MichaelSimons/fb588539dcefd9b5fdf45ba04c302db6
+      - name: Docker (un)compressed sizes
+        run: |
+          echo '```console' >> "$GITHUB_STEP_SUMMARY"
+          echo '# Uncompressed size (max, not size on disk due to sharing):'
+          echo '$ docker image ls' >> "$GITHUB_STEP_SUMMARY"
+          docker image ls | tee -a "$GITHUB_STEP_SUMMARY"
+          echo
+          echo '# size = unique + shared:'
+          echo '$ docker system df -v' >> "$GITHUB_STEP_SUMMARY"
+          docker system df -v | tee -a "$GITHUB_STEP_SUMMARY"
+          echo
+          dockersize() { docker manifest inspect -v "$1" | jq -c 'if type == "array" then .[] else . end' |  jq -r '[ ( .Descriptor.platform | [ .os, .architecture, .variant, ."os.version" ] | del(..|nulls) | join("/") ), ( [ ( .OCIManifest // .SchemaV2Manifest ).layers[].size ] | add ) ] | join(" ")' | numfmt --to iec --format '%.2f' --field 2 | sort | column -t ; }
+          dockersize ghcr.io/${{ github.actor }}/free-games-claimer:${{env.IMAGE_TAG}}
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
