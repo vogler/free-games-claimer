@@ -8,7 +8,7 @@ on:
       - "**"
       - "!*.md"
       # - '!.github/**'
-  pull_request: # runs when opened/reopned or when the head branch is updated
+  pull_request: # runs when opened/reopened or when the head branch is updated
 
 permissions:
   contents: read

@@ -3,6 +3,14 @@
 # See all available variables at https://megalinter.io/latest/config-file/ and in
 # linters documentation
 
+# See .github/workflows/mega-linter.yml for GitHub config.
+
+# Run this locally via Docker:
+# npx mega-linter-runner -r v8 -f cupcake # run as configured here
+# npx mega-linter-runner -r v8 -f cupcake -e "'ENABLE=MARKDOWN,YAML'" -e "APPLY_FIXES=none" # only enable certain groups and disable automatic fixes (note that the '' are required for multiple values)
+# npx mega-linter-runner -r v8 -f cupcake -e "ENABLE_LINTERS=MARKDOWN_MARKDOWN_LINK_CHECK" # run a specific linter
+# https://github.com/oxsecurity/megalinter#cli-lint-mode most linters will respect .gitignore, but the ones running in 'project' mode will not and may take forever if not configured right
+
 # all, none, or list of linter keys
 APPLY_FIXES: all
 
@@ -26,17 +34,51 @@ SHOW_ELAPSED_TIME: true
 # ---
 # Custom config:
 
-# PRINT_ALPACA: false
+PRINT_ALPACA: false
+
+JAVASCRIPT_DEFAULT_STYLE: prettier # disables JAVASCRIPT_STANDARD in favor of JAVASCRIPT_PRETTIER - disabled below since I prefer my local eslint
+
+# DISABLE: # groups of linters/formatters
+#   - REPOSITORY # ignore this for now (at least locally) since all project-based and need extra config like .gitignore
 
 # npx mega-linter-runner -r v8 -f cupcake -e "ENABLE_LINTERS=MARKDOWN_MARKDOWN_LINK_CHECK" # run a specific linter locally
-DISABLE_LINTERS:
-  - MARKDOWN_MARKDOWN_LINK_CHECK # took 32s and only reported 0 (e.g. for localhost) or 403 (forbidden) for working links to settings or due to DDoS/bot protections
+DISABLE_LINTERS: # times are for running locally with 30GB swap, 65% pressure and several GB in data/ (relevant for project-mode linters that don't respect .gitignore)
+  - MARKDOWN_MARKDOWN_LINK_CHECK # 30s, only reported 0 (e.g. for localhost) or 403 (forbidden) for working links to settings or due to DDoS/bot protections
+  - JAVASCRIPT_STANDARD # don't like standard format
+  - JAVASCRIPT_PRETTIER # prefer my local eslint config
+  - REPOSITORY_TRIVY_SBOM # 11s, don't need SBOM
 
-# DISABLE_ERRORS_LINTERS: # error -> warning
-#   - MARKDOWN_MARKDOWN_LINK_CHECK
+DISABLE_ERRORS_LINTERS: # error -> warning
+  - DOCKERFILE_HADOLINT # mostly wants to pin versions for apt and pip installs and merge consecutive RUN instructions
+  - COPYPASTE_JSCPD # default threshold is 0% duplicates -> can make this error once sep. scripts are refactored
+  - SPELL_CSPELL # needs config in .cspell.json, but looks annoying since it also flags apt packages
+  - SPELL_LYCHEE # dead link checking, 9/332 errors all false positives (Forbidden etc.)
+  - JAVASCRIPT_ES # this uses old eslint 8.57.1 instead of local 9.26.0 and complains about stuff that newer version has no problem with
+  - REPOSITORY_CHECKOV # docker healthcheck not needed for CLI
+  - REPOSITORY_KICS # wants to pin GitHub Actions to commit sha etc.
+  - REPOSITORY_TRIVY # docker healthcheck not needed for CLI
 
-# DISABLE_LINTERS: JAVASCRIPT_STANDARD
+# Customizations via CLI arguments:
+
+# https://github.com/prantlf/jsonlint#command-line-interface
+JSON_JSONLINT_ARGUMENTS: --comments --trailing-commas --no-duplicate-keys
+
+# https://prettier.io/docs/options#trailing-commas
+# JSON_PRETTIER_ARGUMENTS: --trailing-comma all --parser jsonc # need to change parser too since the default json parser still strips trailing commas
+# -> let prettier remove trailing commas since e.g. npm will fail to JSON.parse package.json otherwise...
+
+# megalinter still expects the old .eslintrc file... https://github.com/oxsecurity/megalinter/issues/3570#issuecomment-2138193684
+JAVASCRIPT_ES_CONFIG_FILE: eslint.config.js
+JAVASCRIPT_ES_COMMAND_REMOVE_ARGUMENTS: ["--no-eslintrc"] # not a valid option for eslint with flat config
+# worked, but behaved differently than local `npm run lint` and complained about while(true) with break - probably due old version 8.57.1 (same with -r beta) instead of my local 9.26.0
+
+# https://github.com/oxsecurity/megalinter#cli-lint-mode
+REPOSITORY_SECRETLINT_ARGUMENTS: --secretlintignore .gitignore
+
+# https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html
+REPOSITORY_CHECKOV_ARGUMENTS: --skip-path node_modules --skip-path data
 
 # CI will comment on PRs etc., but for running locally (or downloading the results), we want more than the default megalinter-reports/megalinter.log as an overview:
 JSON_REPORTER: true # mega-linter-report.json
 MARKDOWN_SUMMARY_REPORTER: true # megalinter-report.md
+SARIF_REPORTER: true # mega-linter-report.sarif - results for supported lintes should be shown in GitHub Security tab - https://megalinter.io/latest/reporters/SarifReporter/

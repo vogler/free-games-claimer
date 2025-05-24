@@ -114,7 +114,7 @@ You can also put options in `data/config.env` which will be loaded by [dotenv](h
 The scripts will try to send notifications for successfully claimed games and any errors like needing to log in or encountered captchas (should not happen).
 
 [apprise](https://github.com/caronc/apprise) is used for notifications and offers many services including Pushover, Slack, Telegram, SMS, Email, desktop and custom notifications.
-You just need to set `NOTIFY` to the notification services you want to use, e.g. `NOTIFY='mailto://myemail:mypass@gmail.com' 'pbul://o.gn5kj6nfhv736I7jC3cj3QLRiyhgl98b'` - refer to their list of services and [examples](https://github.com/caronc/apprise#command-line-usage).
+You just need to set `NOTIFY` to the notification services you want to use, e.g. `NOTIFY='mailto://myemail@gmail.com' 'pbul://o.gn5kj6nfhv736I7jC3cj3QLRiyhgl98b'` - refer to their list of services and [examples](https://github.com/caronc/apprise#command-line-usage).
 
 ### Automatic login, two-factor authentication
 If you set the options for email, password and OTP key, there will be no prompts and logins should happen automatically. This is optional since all stores should stay logged in since cookies are refreshed.

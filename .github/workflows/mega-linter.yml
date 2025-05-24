@@ -1,9 +1,7 @@
 # MegaLinter GitHub Action configuration file
 # More info at https://megalinter.io
-# Run this locally via Docker:
-# npx mega-linter-runner -r v8 -f cupcake # run as configured in .mega-linter
-# npx mega-linter-runner -r v8 -f cupcake -e "'ENABLE=MARKDOWN,YAML'" -e "APPLY_FIXES=none" # only enable certain groups and disable automatic fixes (note that the '' are required for multiple values)
-# npx mega-linter-runner -r v8 -f cupcake -e "ENABLE_LINTERS=MARKDOWN_MARKDOWN_LINK_CHECK" # run a specific linter
+
+# See .mega-linter.yml for actual config and examples how to run this locally.
 ---
 name: MegaLinter
 
@@ -198,3 +196,10 @@ jobs:
           commit_message: "[MegaLinter] Apply linters fixes"
           commit_user_name: megalinter-bot
           commit_user_email: 129584137+megalinter-bot@users.noreply.github.com
+
+      # https://megalinter.io/latest/reporters/SarifReporter/
+      - name: Upload MegaLinter scan results to GitHub Security tab
+        if: success() || failure()
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "megalinter-reports/megalinter-report.sarif"

@@ -1,5 +1,9 @@
 {
   "ignorePaths": [
+    "**/data/**",
+    "docker.yml",
+    "Dockerfile",
+    ".jscpd.json",
     "**/node_modules/**",
     "**/vscode-extension/**",
     "**/.git/**",
@@ -11,6 +15,6 @@
   ],
   "language": "en",
   "noConfigSearch": true,
-  "words": ["megalinter", "oxsecurity"],
+  "words": ["megalinter", "oxsecurity", "ralf", "vogler", "DOCKERHUB"],
   "version": "0.2"
 }
