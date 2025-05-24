@@ -12,7 +12,7 @@
   "main": "index.js",
   "scripts": {
     "docker:build": "docker build . -t ghcr.io/vogler/free-games-claimer",
-    "docker": "cross-env-shell docker run --rm -it -p 5900:5900 -p 6080:6080 -v \\\"$INIT_CWD/data\\\":/fgc/data --name fgc ghcr.io/vogler/free-games-claimer",
+    "docker": "docker run --rm -it -p 6080:6080 -v fgc:/fgc/data --pull=always ghcr.io/vogler/free-games-claimer",
     "lint": "npx eslint ."
   },
   "type": "module",
@@ -21,7 +21,6 @@
   },
   "dependencies": {
     "chalk": "^5.4.1",
-    "cross-env": "^7.0.3",
     "dotenv": "^16.5.0",
     "enquirer": "^2.4.1",
     "fingerprint-injector": "^2.1.66",
