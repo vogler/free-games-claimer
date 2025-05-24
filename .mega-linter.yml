@@ -36,3 +36,7 @@ DISABLE_LINTERS:
 #   - MARKDOWN_MARKDOWN_LINK_CHECK
 
 # DISABLE_LINTERS: JAVASCRIPT_STANDARD
+
+# CI will comment on PRs etc., but for running locally (or downloading the results), we want more than the default megalinter-reports/megalinter.log as an overview:
+JSON_REPORTER: true # mega-linter-report.json
+MARKDOWN_SUMMARY_REPORTER: true # megalinter-report.md
