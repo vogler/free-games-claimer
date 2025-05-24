@@ -34,8 +34,14 @@ jobs:
 
       # https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github#example-workflow-that-runs-the-eslint-analysis-tool
       - name: eslint (sarif output)
-        # eslint exits 1 if it finds anything to report
-        run: npx eslint . --format node_modules/@microsoft/eslint-formatter-sarif/sarif.js -o results.sarif || true
+        # https://github.com/microsoft/sarif-js-sdk/issues/91
+        # @microsoft/eslint-formatter-sarif uses eslint@8.57.1 instead of my local eslint@9.27.0 despite it not needing it? -> just download the sarif.js file instead of having dep in package.json (only needed here anyway)
+        run: |
+          wget https://raw.githubusercontent.com/microsoft/sarif-js-sdk/refs/heads/main/packages/eslint-formatter-sarif/sarif.js -O node_modules/sarif.cjs
+          bun i utf8 lodash jschardet
+          bunx eslint . --format node_modules/sarif.cjs -o results.sarif
+        continue-on-error: true
+
       - name: upload eslint sarif output for Security tab and inline results
         uses: github/codeql-action/upload-sarif@v3
         with:
