@@ -13,7 +13,7 @@ on:
   pull_request:
     branches:
       - main
-      - master
+      - dev
 
 # Comment env block if you do not want to apply fixes
 env:
