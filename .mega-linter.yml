@@ -22,3 +22,17 @@ SHOW_ELAPSED_TIME: true
 
 # Uncomment if you want MegaLinter to detect errors but not block CI to pass
 # DISABLE_ERRORS: true
+
+# ---
+# Custom config:
+
+# PRINT_ALPACA: false
+
+# npx mega-linter-runner -r v8 -f cupcake -e "ENABLE_LINTERS=MARKDOWN_MARKDOWN_LINK_CHECK" # run a specific linter locally
+DISABLE_LINTERS:
+  - MARKDOWN_MARKDOWN_LINK_CHECK # took 32s and only reported 0 (e.g. for localhost) or 403 (forbidden) for working links to settings or due to DDoS/bot protections
+
+# DISABLE_ERRORS_LINTERS: # error -> warning
+#   - MARKDOWN_MARKDOWN_LINK_CHECK
+
+# DISABLE_LINTERS: JAVASCRIPT_STANDARD
