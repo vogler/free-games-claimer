@@ -71,8 +71,8 @@ jobs:
         if: ${{ env.IMAGE_TAG != '' }}
         with:
           context: .
-          # push: ${{ github.event_name != 'pull_request' }}
-          push: ${{ secrets.DOCKERHUB_USERNAME != '' }} # here we can access secrets
+          push: ${{ github.event_name != 'pull_request' }}
+          # push: ${{ secrets.DOCKERHUB_USERNAME != '' }} # here we can access secrets
           # TODO speed up by building in parallel? https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners
           platforms: linux/amd64,linux/arm64
           build-args: |
