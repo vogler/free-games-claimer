@@ -48,6 +48,7 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
+      security-events: write # needed for SARIF upload
 
     steps:
       # Git Checkout
@@ -200,6 +201,6 @@ jobs:
       # https://megalinter.io/latest/reporters/SarifReporter/
       - name: Upload MegaLinter scan results to GitHub Security tab
         if: success() || failure()
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "megalinter-reports/megalinter-report.sarif"
