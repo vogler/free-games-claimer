@@ -1,33 +1,27 @@
-# https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github#example-workflow-that-runs-the-eslint-analysis-tool
+name: "JS CI: npm, deps, eslint, tests"
 
-name: "ESLint analysis"
-
-# Run workflow each time code is pushed to your repository and on a schedule.
-# The scheduled workflow runs every Wednesday at 15:45 UTC.
 on:
   push:
-  schedule:
-    - cron: '45 15 * * 3'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      # required for all workflows
-      security-events: write
-      # only required for workflows in private repositories
-      actions: read
-      contents: read
+      security-events: write # required for sarif upload
     steps:
       - uses: actions/checkout@v4
-      - name: Run npm install
+      - name: npm install
         run: npm install
-      # Runs the ESlint code analysis
-      - name: Run ESLint
+
+      # https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github#example-workflow-that-runs-the-eslint-analysis-tool
+      - name: eslint (sarif output)
         # eslint exits 1 if it finds anything to report
-        run: node_modules/.bin/eslint build docs lib script spec-main -f node_modules/@microsoft/eslint-formatter-sarif/sarif.js -o results.sarif || true
-      # Uploads results.sarif to GitHub repository using the upload-sarif action
-      - uses: github/codeql-action/upload-sarif@v3
+        run: npx eslint . --format node_modules/@microsoft/eslint-formatter-sarif/sarif.js -o results.sarif || true
+      - name: upload eslint sarif output for Security tab and inline results
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          # Path to SARIF file relative to the root of the repository
           sarif_file: results.sarif
+
+      - name: npm run lint
+        # eslint exits 1 if it finds anything to report
+        run: npm run lint
