@@ -2,7 +2,7 @@
 # More info at https://megalinter.io
 # Run this locally via Docker:
 # npx mega-linter-runner -r v8 -f cupcake # run as configured in .mega-linter
-# npx mega-linter-runner -r v8 -f cupcake -e "ENABLE=MARKDOWN,YAML" -e "APPLY_FIXES=none" # only enable certain groups and disable automatic fixes
+# npx mega-linter-runner -r v8 -f cupcake -e "'ENABLE=MARKDOWN,YAML'" -e "APPLY_FIXES=none" # only enable certain groups and disable automatic fixes (note that the '' are required for multiple values)
 # npx mega-linter-runner -r v8 -f cupcake -e "ENABLE_LINTERS=MARKDOWN_MARKDOWN_LINK_CHECK" # run a specific linter
 ---
 name: MegaLinter
