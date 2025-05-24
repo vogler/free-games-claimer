@@ -6,5 +6,5 @@
     "source.fixAll.eslint": "explicit"
   },
   "eslint.experimental.useFlatConfig": true,
-  "eslint.codeActionsOnSave.rules": null,
+  "eslint.codeActionsOnSave.rules": null
 }
