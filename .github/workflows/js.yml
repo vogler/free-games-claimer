@@ -10,17 +10,19 @@ jobs:
       security-events: write # required for sarif upload
     steps:
       - uses: actions/checkout@v4
-      - name: npm install
-        run: npm install
+
+      - uses: oven-sh/setup-bun@v2
+      - name: bun install
+        run: bun install
 
       # check size of dependencies
       # all tools gave different results locally
       - name: dep-size node_modules
         run: du -sh node_modules | tee -a "$GITHUB_STEP_SUMMARY"
       - name: dep-size howfat -d (inc. dev) - ignores size of transitive deps
-        run: npx --yes howfat -d --reporter table --sort size-
+        run: bunx howfat -d --reporter table --sort size-
       - name: dep-size howfat -d -p (inc. dev, peer) - includes size of transitive deps per dep
-        run: npx --yes howfat -d -p --reporter table --sort size-
+        run: bunx howfat -d -p --reporter table --sort size-
       - name: dep-size qnm (flat list as in node_modules)
         run: |
           echo '```console' >> "$GITHUB_STEP_SUMMARY"
@@ -40,6 +42,6 @@ jobs:
           sarif_file: results.sarif
           category: eslint
 
-      - name: npm run lint
+      - name: bun lint
         # eslint exits 1 if it finds anything to report
-        run: npm run lint
+        run: bun lint
