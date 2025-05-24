@@ -1,4 +1,4 @@
-name: "JS: npm, deps, eslint, tests"
+name: "JS: deps, lint, tests"
 
 on:
   push:
