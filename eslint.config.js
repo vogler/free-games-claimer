@@ -9,7 +9,7 @@ export default [
   // object with just `ignores` applies to all configuration objects
   // had `ln -s .gitignore .eslintignore` before, but .eslintignore no longer supported
   {
-    ignores: ['data/**'],
+    ignores: ['data/**', 'megalinter-reports/**'],
   },
   js.configs.recommended, // TODO still needed?
   {

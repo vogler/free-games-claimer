@@ -17,7 +17,7 @@ rm -f /fgc/data/browser/SingletonLock
 mkdir -p /fgc/data/browser
 # fix for 'Incorrect response' after solving a captcha correctly - https://github.com/vogler/free-games-claimer/issues/261#issuecomment-1868385830
 # echo 'user_pref("privacy.resistFingerprinting", true);' > /fgc/data/browser/user.js
-cat << EOT >/fgc/data/browser/user.js
+cat <<EOT >/fgc/data/browser/user.js
 user_pref("privacy.resistFingerprinting", true);
 // user_pref("privacy.resistFingerprinting.letterboxing", true);
 // user_pref("browser.contentblocking.category", "strict");
@@ -41,11 +41,11 @@ export DISPLAY=:1 # need to export this, otherwise playwright complains with 'Lo
 Xvfb $DISPLAY -ac -screen 0 "${WIDTH}x${HEIGHT}x${DEPTH}" &
 echo "Xvfb display server created screen with resolution ${WIDTH}x${HEIGHT}"
 if [ -z "$VNC_PASSWORD" ]; then
-  pw="-nopw"
-  pwt="no password!"
+	pw="-nopw"
+	pwt="no password!"
 else
-  pw="-passwd $VNC_PASSWORD"
-  pwt="with password"
+	pw="-passwd $VNC_PASSWORD"
+	pwt="with password"
 fi
 x11vnc -display $DISPLAY -forever -shared -rfbport "$VNC_PORT" -bg "$pw" 2>/dev/null 1>&2
 echo "VNC is running on port $VNC_PORT ($pwt)"

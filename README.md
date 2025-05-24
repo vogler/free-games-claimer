@@ -50,7 +50,7 @@ If you don't want to use Docker for quasi-headless mode, you could run inside a 
 ## Usage
 All scripts start an automated Firefox instance, either with the browser GUI shown or hidden (_headless mode_). By default, you won't see any browser open on your host system.
 
-- When running inside Docker, the browser will be shown only inside the container. You can open http://localhost:6080 to interact with the browser running inside the container via noVNC (or use other VNC clients on port 5900).
+- When running inside Docker, the browser will be shown only inside the container. You can open <http://localhost:6080> to interact with the browser running inside the container via noVNC (or use other VNC clients on port 5900).
 - When running the scripts outside of Docker, the browser will be hidden by default; you can use `SHOW=1 ...` to show the UI (see options below).
 
 When running the first time, you have to login for each store you want to claim games on.
@@ -67,32 +67,32 @@ TODO: ~~On the first run, the script will guide you through configuration and sa
 
 Available options/variables and their default values:
 
-| Option          | Default      | Description                                                                  |
-|-----------------|--------------|------------------------------------------------------------------------------|
-| SHOW            | 1            | Show browser if 1. Default for Docker, not shown when running outside.       |
-| WIDTH           | 1280         | Width of the opened browser (and of screen for VNC in Docker).               |
-| HEIGHT          | 1280         | Height of the opened browser (and of screen for VNC in Docker).              |
-| VNC_PASSWORD    |              | VNC password for Docker. No password used by default!                        |
-| NOTIFY          |              | Notification services to use (Pushover, Slack, Telegram...), see below.      |
-| NOTIFY_TITLE    |              | Optional title for notifications, e.g. for Pushover.                         |
-| BROWSER_DIR     | data/browser | Directory for browser profile, e.g. for multiple accounts.                   |
-| TIMEOUT         | 60           | Timeout for any page action. Should be fine even on slow machines.           |
-| LOGIN_TIMEOUT   | 180          | Timeout for login in seconds. Will wait twice (prompt + manual login).       |
-| EMAIL           |              | Default email for any login.                                                 |
-| PASSWORD        |              | Default password for any login.                                              |
-| EG_EMAIL        |              | Epic Games email for login. Overrides EMAIL.                                 |
-| EG_PASSWORD     |              | Epic Games password for login. Overrides PASSWORD.                           |
-| EG_OTPKEY       |              | Epic Games MFA OTP key.                                                      |
-| EG_PARENTALPIN  |              | Epic Games Parental Controls PIN.                                            |
-| PG_EMAIL        |              | Prime Gaming email for login. Overrides EMAIL.                               |
-| PG_PASSWORD     |              | Prime Gaming password for login. Overrides PASSWORD.                         |
-| PG_OTPKEY       |              | Prime Gaming MFA OTP key.                                                    |
-| PG_REDEEM       | 0            | Prime Gaming: try to redeem keys on external stores ([experimental](https://github.com/vogler/free-games-claimer/issues/5)).  |
-| PG_CLAIMDLC     | 0            | Prime Gaming: try to claim DLCs ([experimental](https://github.com/vogler/free-games-claimer/issues/55)).  |
-| GOG_EMAIL       |              | GOG email for login. Overrides EMAIL.                                        |
-| GOG_PASSWORD    |              | GOG password for login. Overrides PASSWORD.                                  |
-| GOG_NEWSLETTER  | 0            | Do not unsubscribe from newsletter after claiming a game if 1.               |
-| LG_EMAIL        |              | Legacy Games: email to use for redeeming (if not set, defaults to PG_EMAIL). |
+| Option         | Default      | Description                                                                                                                  |
+|----------------|--------------|------------------------------------------------------------------------------------------------------------------------------|
+| SHOW           | 1            | Show browser if 1. Default for Docker, not shown when running outside.                                                       |
+| WIDTH          | 1280         | Width of the opened browser (and of screen for VNC in Docker).                                                               |
+| HEIGHT         | 1280         | Height of the opened browser (and of screen for VNC in Docker).                                                              |
+| VNC_PASSWORD   |              | VNC password for Docker. No password used by default!                                                                        |
+| NOTIFY         |              | Notification services to use (Pushover, Slack, Telegram...), see below.                                                      |
+| NOTIFY_TITLE   |              | Optional title for notifications, e.g. for Pushover.                                                                         |
+| BROWSER_DIR    | data/browser | Directory for browser profile, e.g. for multiple accounts.                                                                   |
+| TIMEOUT        | 60           | Timeout for any page action. Should be fine even on slow machines.                                                           |
+| LOGIN_TIMEOUT  | 180          | Timeout for login in seconds. Will wait twice (prompt + manual login).                                                       |
+| EMAIL          |              | Default email for any login.                                                                                                 |
+| PASSWORD       |              | Default password for any login.                                                                                              |
+| EG_EMAIL       |              | Epic Games email for login. Overrides EMAIL.                                                                                 |
+| EG_PASSWORD    |              | Epic Games password for login. Overrides PASSWORD.                                                                           |
+| EG_OTPKEY      |              | Epic Games MFA OTP key.                                                                                                      |
+| EG_PARENTALPIN |              | Epic Games Parental Controls PIN.                                                                                            |
+| PG_EMAIL       |              | Prime Gaming email for login. Overrides EMAIL.                                                                               |
+| PG_PASSWORD    |              | Prime Gaming password for login. Overrides PASSWORD.                                                                         |
+| PG_OTPKEY      |              | Prime Gaming MFA OTP key.                                                                                                    |
+| PG_REDEEM      | 0            | Prime Gaming: try to redeem keys on external stores ([experimental](https://github.com/vogler/free-games-claimer/issues/5)). |
+| PG_CLAIMDLC    | 0            | Prime Gaming: try to claim DLCs ([experimental](https://github.com/vogler/free-games-claimer/issues/55)).                    |
+| GOG_EMAIL      |              | GOG email for login. Overrides EMAIL.                                                                                        |
+| GOG_PASSWORD   |              | GOG password for login. Overrides PASSWORD.                                                                                  |
+| GOG_NEWSLETTER | 0            | Do not unsubscribe from newsletter after claiming a game if 1.                                                               |
+| LG_EMAIL       |              | Legacy Games: email to use for redeeming (if not set, defaults to PG_EMAIL).                                                 |
 
 See `src/config.js` for all options.
 
@@ -114,7 +114,7 @@ You can also put options in `data/config.env` which will be loaded by [dotenv](h
 The scripts will try to send notifications for successfully claimed games and any errors like needing to log in or encountered captchas (should not happen).
 
 [apprise](https://github.com/caronc/apprise) is used for notifications and offers many services including Pushover, Slack, Telegram, SMS, Email, desktop and custom notifications.
-You just need to set `NOTIFY` to the notification services you want to use, e.g. `NOTIFY='mailto://myemail:mypass@gmail.com' 'pbul://o.gn5kj6nfhv736I7jC3cj3QLRiyhgl98b'` - refer to their list of services and [examples](https://github.com/caronc/apprise#command-line-usage).
+You just need to set `NOTIFY` to the notification services you want to use, e.g. `NOTIFY='mailto://myemail@gmail.com' 'pbul://o.gn5kj6nfhv736I7jC3cj3QLRiyhgl98b'` - refer to their list of services and [examples](https://github.com/caronc/apprise#command-line-usage).
 
 ### Automatic login, two-factor authentication
 If you set the options for email, password and OTP key, there will be no prompts and logins should happen automatically. This is optional since all stores should stay logged in since cookies are refreshed.
@@ -160,6 +160,7 @@ If you want it to run regularly, you have to schedule the runs yourself:
 
 - Linux/macOS: `crontab -e` ([example](https://github.com/vogler/free-games-claimer/discussions/56))
 - macOS: [launchd](https://stackoverflow.com/questions/132955/how-do-i-set-a-task-to-run-every-so-often)
+<!-- markdownlint-disable-next-line line-length -->
 - Windows: [task scheduler](https://active-directory-wp.com/docs/Usage/How_to_add_a_cron_job_on_Windows/Scheduled_tasks_and_cron_jobs_on_Windows/index.html) ([example](https://github.com/vogler/free-games-claimer/wiki/%5BHowTo%5D-Schedule-runs-on-Windows)), [other options](https://stackoverflow.com/questions/132971/what-is-the-windows-version-of-cron), or just put the command in a `.bat` file in Autostart if you restart often...
 - any OS: use a process manager like [pm2](https://pm2.keymetrics.io/docs/usage/restart-strategies/)
 - Docker Compose `command: bash -c "node epic-games; node prime-gaming; node gog; echo sleeping; sleep 1d"` additionally add `restart: unless-stopped` to it.
@@ -182,6 +183,7 @@ Tried [epicgames-freebies-claimer](https://github.com/Revadike/epicgames-freebie
 Played around with Puppeteer before, now trying newer [Playwright](https://playwright.dev) which is pretty similar.
 Playwright Inspector and `codegen` to generate scripts are nice, but failed to generate the right code for clicking a button in an iframe.
 
+<!-- markdownlint-disable-next-line line-length -->
 Added [main.spec.ts](https://github.com/vogler/epicgames-claimer/commit/e5ce7916ab6329cfc7134677c4d89c2b3fa3ba97#diff-d18d03e9c407a20e05fbf03cbd6f9299857740544fb6b50d6a70b9c6fbc35831) which was the test script generated by `npx playwright codegen` with manual fix for clicking buttons in the created iframe. Can be executed by `npx playwright test`. The test runner has options `--debug` and `--timeout` and can execute TypeScript which is nice. However, this only worked up to the button 'I Agree', and then showed an hcaptcha.
 
 Added [main.captcha.js](https://github.com/vogler/epicgames-claimer/commit/e5ce7916ab6329cfc7134677c4d89c2b3fa3ba97#diff-d18d03e9c407a20e05fbf03cbd6f9299857740544fb6b50d6a70b9c6fbc35831) which uses beta of `playwright-extra@next` and `@extra/recaptcha@next` (from [comment on puppeteer-extra](https://github.com/berstend/puppeteer-extra/pull/303#issuecomment-775277480)).
