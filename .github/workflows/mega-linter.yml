@@ -63,7 +63,8 @@ jobs:
 
         # You can override MegaLinter flavor used to have faster performances
         # More info at https://megalinter.io/latest/flavors/
-        uses: oxsecurity/megalinter@v8
+        # uses: oxsecurity/megalinter@v8 # default (127 linters)
+        uses: oxsecurity/megalinter/flavors/cupcake@v8.7.0 # most common, was recommended in output (88 linters)
 
         id: ml
 
