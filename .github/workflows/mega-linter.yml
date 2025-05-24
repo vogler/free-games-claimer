@@ -205,3 +205,11 @@ jobs:
         with:
           sarif_file: "megalinter-reports/megalinter-report.sarif"
           category: mega-linter
+
+      # https://github.blog/news-insights/product-news/supercharging-github-actions-with-job-summaries/
+      - name: Add job summary
+        if: success() || failure()
+        run: cat "megalinter-reports/megalinter-report.md" >> "$GITHUB_STEP_SUMMARY"
+
+      # logs and artifacts are retained for 90 days, workflow run history is retained for 400 days... https://docs.github.com/en/actions/administering-github-actions/usage-limits-billing-and-administration#artifact-and-log-retention-policy
+
