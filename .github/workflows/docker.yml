@@ -95,14 +95,14 @@ jobs:
       # https://gist.github.com/MichaelSimons/fb588539dcefd9b5fdf45ba04c302db6
       - name: Docker (un)compressed sizes
         run: |
-          IMG=ghcr.io/${{ github.actor }}/free-games-claimer:${{env.IMAGE_TAG}}
-          log() { echo "\$ $@"; "$@"; }
+          REP=ghcr.io/${{ github.actor }}/free-games-claimer
+          IMG=$REP:${{env.IMAGE_TAG}}
+          log() { echo "\n\$ $@"; "$@"; }
           emd() { echo "$@" | tee -a "$GITHUB_STEP_SUMMARY"; }
           cmd() { echo "\$ $@" | tee -a "$GITHUB_STEP_SUMMARY"; "$@" | tee -a "$GITHUB_STEP_SUMMARY"; }
           emd '```console'
-          emd "# Compressed (download) sizes:"
-          dockersize() { docker manifest inspect -v "$1" | jq -c 'if type == "array" then .[] else . end' |  jq -r '[ ( .Descriptor.platform | [ .os, .architecture, .variant, ."os.version" ] | del(..|nulls) | join("/") ), ( [ ( .OCIManifest // .SchemaV2Manifest ).layers[].size ] | add ) ] | join(" ")' | numfmt --to iec --format '%.2f' --field 2 | sort | column -t ; }
-          cmd dockersize "$IMG"
+          download-size() { docker manifest inspect -v "$1" | jq -c 'if type == "array" then .[] else . end' |  jq -r '[ ( .Descriptor.platform | [ .os, .architecture, .variant, ."os.version" ] | del(..|nulls) | join("/") ), ( [ ( .OCIManifest // .SchemaV2Manifest ).layers[].size ] | add ) ] | join(" ")' | numfmt --to iec --format '%.2f' --field 2 | sort | column -t ; }
+          cmd download-size "$IMG"
           ## don't need the following in job summary, but nice to have in full log
           log docker buildx history inspect
           # log docker buildx du
@@ -110,8 +110,9 @@ jobs:
           log docker pull "$IMG"
           # log docker image rm moby/buildkit # failed
           # log docker image rm tonistiigi/binfmt
-          emd '# Uncompressed size (max, not size on disk due to sharing):'
-          cmd docker image ls --tree
-          emd '# size = unique + shared:'
-          cmd docker system df -v
+          # emd '# Uncompressed size (max, not size on disk due to sharing):'
+          # cmd docker image ls # below has more details
+          emd '# uncompressed size = unique + shared:'
+          local-size() { docker system df -v | grep "$1" -B1; }
+          cmd local-size "$REP"
           emd '```'
