@@ -93,6 +93,9 @@ ENV DEPTH=24
 # Show browser instead of running headless
 ENV SHOW=1
 
+# mega-linter (KICS, Trivy) complained about it missing - usually this checks some API endpoint, for a container that runs ~1min a healthcheck doesn't make that much sense since playwright has timeouts for everything. Could react to SIGUSR1 and actually check something - for now we just check that node is running...
+HEALTHCHECK --interval=10s --timeout=5s CMD pgrep node
+
 # Script to setup display server & VNC is always executed.
 ENTRYPOINT ["docker-entrypoint.sh"]
 # Default command to run. This is replaced by appending own command, e.g. `docker run ... node prime-gaming` to only run this script.
