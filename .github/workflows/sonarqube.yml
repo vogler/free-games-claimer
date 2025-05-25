@@ -4,9 +4,9 @@ name: SonarQube Scan
 on:
   push:
     paths:
-      - '**.js'
-      - '**.ts'
-      - 'package.json'
+      - "**.js"
+      - "**.ts"
+      - "package.json"
   pull_request:
     types: [opened, synchronize, reopened]
 
