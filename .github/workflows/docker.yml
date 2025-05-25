@@ -97,7 +97,7 @@ jobs:
         run: |
           REP=ghcr.io/${{ github.actor }}/free-games-claimer
           IMG=$REP:${{env.IMAGE_TAG}}
-          log() { echo "\n\$ $@"; "$@"; }
+          log() { echo -e "\n\$ $@"; "$@"; }
           emd() { echo "$@" | tee -a "$GITHUB_STEP_SUMMARY"; }
           cmd() { echo "\$ $@" | tee -a "$GITHUB_STEP_SUMMARY"; "$@" | tee -a "$GITHUB_STEP_SUMMARY"; }
           emd '```console'
