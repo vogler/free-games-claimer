@@ -6,28 +6,16 @@ echo "Version: https://github.com/vogler/free-games-claimer/tree/${COMMIT}"
 [ -n "$BRANCH" ] && [ "$BRANCH" != "main" ] && echo "Branch: ${BRANCH}"
 echo "Build: $NOW"
 
+BROWSER="${BROWSER_DIR:-data/browser}"
+
 # Remove chromium profile lock.
 # When running in docker and then killing it, on the next run chromium displayed a dialog to unlock the profile which made the script time out.
 # Maybe due to changed hostname of container or due to how the docker container kills playwright - didn't check.
 # https://bugs.chromium.org/p/chromium/issues/detail?id=367048
-rm -f /fgc/data/browser/SingletonLock
-
-# Firefox preferences are stored in $BROWSER_DIR/pref.js and can be overridden by a file user.js
-# Since this file has to be in the volume (data/browser), we can't do this in Dockerfile.
-mkdir -p /fgc/data/browser
-# fix for 'Incorrect response' after solving a captcha correctly - https://github.com/vogler/free-games-claimer/issues/261#issuecomment-1868385830
-# echo 'user_pref("privacy.resistFingerprinting", true);' > /fgc/data/browser/user.js
-cat <<EOT >/fgc/data/browser/user.js
-user_pref("privacy.resistFingerprinting", true);
-// user_pref("privacy.resistFingerprinting.letterboxing", true);
-// user_pref("browser.contentblocking.category", "strict");
-// user_pref("webgl.disabled", true);
-EOT
-# TODO disable session restore message?
+rm -f /fgc/$BROWSER/SingletonLock
 
 # Remove X server display lock, fix for `docker compose up` which reuses container which made it fail after initial run, https://github.com/vogler/free-games-claimer/issues/31
-# echo $DISPLAY
-# ls -l /tmp/.X11-unix/
+# Maybe no longer needed after adding #478's -nolisten unix below
 rm -f /tmp/.X1-lock
 
 # 6000+SERVERNUM is the TCP port Xvfb is listening on:
@@ -36,10 +24,11 @@ rm -f /tmp/.X1-lock
 # Options passed directly to the Xvfb server:
 # -ac disables host-based access control mechanisms
 # −screen NUM WxHxD creates the screen and sets its width, height, and depth
+# -nolisten unix tells the server not to use Unix domain sockets, thus avoiding the need to create /tmp/.X11-unix
 
 export DISPLAY=:1 # need to export this, otherwise playwright complains with 'Looks like you launched a headed browser without having a XServer running.'
 Xvfb $DISPLAY -ac -screen 0 "${WIDTH}x${HEIGHT}x${DEPTH}" &
-echo "Xvfb display server created screen with resolution ${WIDTH}x${HEIGHT}"
+echo "Xvfb display server created screen with resolution ${WIDTH}x${HEIGHT} -nolisten unix"
 if [ -z "$VNC_PASSWORD" ]; then
 	pw="-nopw"
 	pwt="no password!"

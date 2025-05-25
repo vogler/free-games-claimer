@@ -31,7 +31,8 @@ const context = await chromium.launchPersistentContext(cfg.dir.browser, {
   args: [
     '--hide-crash-restore-bubble',
   ],
-  chromiumSandbox: true, // https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/issues/52
+  // The following makes the browser crash in docker with 'Chromium sandboxing failed!':
+  // chromiumSandbox: true, // https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/issues/52
 });
 
 // console.log(context.browser().browserType()); // browser is null...
