@@ -5,17 +5,11 @@
 ---
 name: MegaLinter
 
-# Trigger mega-linter at every push. Action will also be visible from
-# Pull Requests to main
+# Run on push in any branch and changes in PRs.
 on:
-  # Comment this line to trigger action only on pull-requests
-  # (not recommended if you don't pay for GH Actions)
   push:
-
   pull_request:
-    branches:
-      - main
-      - dev
+    types: [opened, synchronize, reopened]
 
 # Comment env block if you do not want to apply fixes
 env:

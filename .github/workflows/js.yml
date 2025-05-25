@@ -1,7 +1,10 @@
 name: "JS: deps, lint, tests"
 
+# Run on push in any branch and changes in PRs.
 on:
   push:
+pull_request:
+  types: [opened, synchronize, reopened]
 
 jobs:
   build:
