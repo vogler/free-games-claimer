@@ -52,7 +52,15 @@ RUN ln -s /usr/share/novnc/vnc_auto.html /usr/share/novnc/index.html
 RUN pip install --no-cache-dir apprise
 
 WORKDIR /fgc
-COPY package*.json ./
+# add user fgc to not run the application as root in the end
+ARG USER=fgc
+RUN useradd -ms /bin/bash fgc
+# adjust permissions, otherwise can only read /fgc/data, but not write
+# normally this would be mounted, but since this only happens later we need to create /fgc/data first
+# also need to chown ., otherwise we can't create node_modules inside as fgc
+RUN mkdir data && chown -R fgc:fgc .
+USER fgc
+COPY --chown=fgc:fgc package*.json ./
 
 # Playwright installs patched firefox to ~/.cache/ms-playwright/firefox-*
 # Requires some system deps to run (see inlined install-deps above).
@@ -61,7 +69,7 @@ RUN npm install
 # From 1.38 Playwright will no longer install browser automatically for playwright, but apparently still for playwright-firefox: https://github.com/microsoft/playwright/releases/tag/v1.38.0
 # RUN npx playwright install firefox
 
-COPY . .
+COPY --chown=fgc:fgc . .
 
 # Shell scripts need Linux line endings. On Windows, git might be configured to check out dos/CRLF line endings, so we convert them for those people in case they want to build the image. They could also use --config core.autocrlf=input
 RUN dos2unix ./*.sh && chmod +x ./*.sh
