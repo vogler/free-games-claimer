@@ -31,7 +31,7 @@ jobs:
           emd() { echo "$*" | tee -a "$GITHUB_STEP_SUMMARY"; }
           cmd() { echo "\$ $*" | tee -a "$GITHUB_STEP_SUMMARY"; "$*" | tee -a "$GITHUB_STEP_SUMMARY"; }
           emd '```console'
-          cmd npx --yes qnm doctor
+          cmd bunx --yes qnm doctor
           emd '```'
       # - name: dep-size cost-of-modules # this says total 8.37MB while du says 75MB...
       #   run: npx --yes npx cost-of-modules --include-dev --no-install
