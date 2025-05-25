@@ -67,9 +67,11 @@ COPY . .
 RUN dos2unix ./*.sh && chmod +x ./*.sh
 COPY docker-entrypoint.sh /usr/local/bin/
 
+# set by .github/workflows/docker.yml
 ARG COMMIT=""
 ARG BRANCH=""
 ARG NOW=""
+# need as env vars to log in docker-entrypoint.sh
 ENV COMMIT=${COMMIT}
 ENV BRANCH=${BRANCH}
 ENV NOW=${NOW}
