@@ -1,4 +1,4 @@
-name: Sonar
+name: SonarQube Scan
 
 # Run on push in any branch and changes in PRs.
 on:
@@ -10,25 +10,25 @@ permissions:
   contents: read
 
 jobs:
-  sonarcloud:
+  sonarqube:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting. Otherwise sonarcloud will show a warning.
           fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          cache: "npm"
-      - name: Install dev dependencies which includde ESLint + plugins
-        run: npm install --only=dev
-      - name: Run ESLint
+
+      - uses: oven-sh/setup-bun@v2
+      - name: bun install
+        run: bun install
+
+      - name: eslint (json output)
         continue-on-error: true
-        run: npx eslint . -f json -o eslint_report.json
-      - name: Fix ESLint paths
+        run: bun eslint . -f json -o eslint_report.json
+      - name: fix paths for SonarCloud
         run: sed -i 's+/home/runner/work/free-games-claimer/free-games-claimer+/github/workspace+g' eslint_report.json
-      - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@master
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@5.2.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -43,7 +43,7 @@ jobs:
         run: |
           wget https://raw.githubusercontent.com/microsoft/sarif-js-sdk/refs/heads/main/packages/eslint-formatter-sarif/sarif.js -O node_modules/sarif.cjs
           bun i utf8 lodash jschardet
-          bunx eslint . --format node_modules/sarif.cjs -o results.sarif
+          bun eslint . --format node_modules/sarif.cjs -o results.sarif
         continue-on-error: true
 
       - name: upload eslint sarif output for Security tab and inline results
