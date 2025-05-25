@@ -25,10 +25,11 @@ jobs:
         run: bunx howfat -d -p --reporter table --sort size-
       - name: dep-size qnm (flat list as in node_modules)
         run: |
-          echo '```console' >> "$GITHUB_STEP_SUMMARY"
-          echo '$ npx --yes qnm doctor' >> "$GITHUB_STEP_SUMMARY"
-          npx --yes qnm doctor | tee -a "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          emd() { echo "$@" | tee -a "$GITHUB_STEP_SUMMARY"; }
+          cmd() { echo "\$ $@" | tee -a "$GITHUB_STEP_SUMMARY"; "$@" | tee -a "$GITHUB_STEP_SUMMARY"; }
+          emd '```console'
+          cmd npx --yes qnm doctor
+          emd '```'
       # - name: dep-size cost-of-modules # this says total 8.37MB while du says 75MB...
       #   run: npx --yes npx cost-of-modules --include-dev --no-install
 
