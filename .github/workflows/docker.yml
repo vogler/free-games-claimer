@@ -96,6 +96,7 @@ jobs:
       - name: Docker (un)compressed sizes
         run: |
           IMG=ghcr.io/${{ github.actor }}/free-games-claimer:${{env.IMAGE_TAG}}
+          log() { echo "\$ $@"; "$@"; }
           emd() { echo "$@" | tee -a "$GITHUB_STEP_SUMMARY"; }
           cmd() { echo "\$ $@" | tee -a "$GITHUB_STEP_SUMMARY"; "$@" | tee -a "$GITHUB_STEP_SUMMARY"; }
           emd '```console'
@@ -103,12 +104,12 @@ jobs:
           dockersize() { docker manifest inspect -v "$1" | jq -c 'if type == "array" then .[] else . end' |  jq -r '[ ( .Descriptor.platform | [ .os, .architecture, .variant, ."os.version" ] | del(..|nulls) | join("/") ), ( [ ( .OCIManifest // .SchemaV2Manifest ).layers[].size ] | add ) ] | join(" ")' | numfmt --to iec --format '%.2f' --field 2 | sort | column -t ; }
           cmd dockersize "$IMG"
           ## don't need the following in job summary, but nice to have in full log
-          docker buildx history inspect
-          docker buildx du
+          log docker buildx history inspect
+          # log docker buildx du
           ## not needed locally, but in CI with buildx `docker image ls` just lists moby/buildkit and tonistiigi/binfmt since the multi-arch build is pushed to registry instead of loaded locally, so we need to pull it first (cached anyway)
-          docker pull "$IMG"
-          docker image rm moby/buildkit
-          docker image rm tonistiigi/binfmt
+          log docker pull "$IMG"
+          # log docker image rm moby/buildkit # failed
+          # log docker image rm tonistiigi/binfmt
           emd '# Uncompressed size (max, not size on disk due to sharing):'
           cmd docker image ls --tree
           emd '# size = unique + shared:'
