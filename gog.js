@@ -47,6 +47,7 @@ try {
   await Promise.any([signIn.waitFor(), page.waitForSelector('#menuUsername')]);
   while (await signIn.isVisible()) {
     console.error('Not signed in anymore.');
+    if (cfg.nowait) process.exit(1);
     await signIn.click();
     // it then creates an iframe for the login
     await page.waitForSelector('#GalaxyAccountsFrameContainer iframe'); // TODO needed?

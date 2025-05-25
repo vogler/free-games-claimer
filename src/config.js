@@ -9,8 +9,9 @@ export const cfg = {
   debug_network: process.env.DEBUG_NETWORK == '1', // log network requests and responses
   record: process.env.RECORD == '1', // `recordHar` (network) + `recordVideo`
   time: process.env.TIME == '1', // log duration of each step
+  interactive: process.env.INTERACTIVE == '1', // confirm to claim, enter to skip
   dryrun: process.env.DRYRUN == '1', // don't claim anything
-  interactive: process.env.INTERACTIVE == '1', // confirm to claim, default skip
+  nowait: process.env.NOWAIT == '1', // fail fast instead of waiting for user input
   show: process.env.SHOW == '1', // run non-headless
   get headless() {
     return !this.debug && !this.show;
