@@ -44,6 +44,7 @@ try {
   page.click('[aria-label="Cookies usage disclaimer banner"] button:has-text("Accept Cookies")').catch(_ => { }); // to not waste screen space when non-headless, TODO does not work reliably, need to wait for something else first?
   while (await page.locator('button:has-text("Sign in")').count() > 0) {
     console.error('Not signed in anymore.');
+    if (cfg.nowait) process.exit(1);
     await page.click('button:has-text("Sign in")');
     if (!cfg.debug) context.setDefaultTimeout(cfg.login_timeout); // give user some extra time to log in
     console.info(`Login timeout is ${cfg.login_timeout / 1000} seconds!`);
@@ -131,25 +132,25 @@ try {
   // bottom to top: oldest to newest games
   internal.reverse();
   external.reverse();
-  const sameOrNewPage = async url => new Promise(async (resolve, _reject) => {
+  const sameOrNewPage = async url => {
     const isNew = page.url() != url;
     let p = page;
     if (isNew) {
       p = await context.newPage();
       await p.goto(url, { waitUntil: 'domcontentloaded' });
     }
-    resolve([p, isNew]);
-  });
+    return { p, isNew };
+  };
   const skipBasedOnTime = async url => {
     // console.log('  Checking time left for game:', url);
-    const [p, isNew] = await sameOrNewPage(url);
+    const { p, isNew } = await sameOrNewPage(url);
     const dueDateOrg = await p.locator('.availability-date .tw-bold').innerText();
     const dueDate = new Date(Date.parse(dueDateOrg + ' 17:00'));
-    const daysLeft = (dueDate.getTime() - Date.now())/1000/60/60/24;
+    const daysLeft = (dueDate.getTime() - Date.now()) / 1000 / 60 / 60 / 24;
     console.log(' ', await p.locator('.availability-date').innerText(), '->', daysLeft.toFixed(2));
     if (isNew) await p.close();
     return daysLeft > cfg.pg_timeLeft;
-  }
+  };
   console.log('\nNumber of free unclaimed games (Prime Gaming):', internal.length);
   // claim games in internal store
   for (const card of internal) {
@@ -300,7 +301,7 @@ try {
                 if (j?.events?.cart.length && j.events.cart[0]?.data?.reason == 'UserAlreadyOwnsContent') {
                   redeem_action = 'already redeemed';
                   console.error('  error: UserAlreadyOwnsContent');
-                } else if (true) { // TODO what's returned on success?
+                } else { // TODO what's returned on success?
                   redeem_action = 'redeemed';
                   db.data[user][title].status = 'claimed and redeemed?';
                   console.log('  Redeemed successfully? Please report if not in https://github.com/vogler/free-games-claimer/issues/5');
@@ -366,7 +367,7 @@ try {
     await loot.waitFor();
 
     process.stdout.write('Loading all DLCs on page...');
-    await scrollUntilStable(() => loot.locator('[data-a-target="item-card"]').count())
+    await scrollUntilStable(() => loot.locator('[data-a-target="item-card"]').count());
 
     console.log('\nNumber of already claimed DLC:', await loot.locator('p:has-text("Collected")').count());
 

@@ -9,6 +9,12 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "*eslint*"
+    #   - dependency-name: "@stylistic/eslint-plugin-js"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
     # commit-message:
     #   prefix: "npm"
     #   include: "scope"

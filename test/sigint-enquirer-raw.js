@@ -7,19 +7,19 @@ import { prompt, handleSIGINT } from '../src/util.js';
 // });
 handleSIGINT();
 
-function onRawSIGINT(fn) {
-  const { stdin, stdout } = process;
-  stdin.setRawMode(true);
-  stdin.resume();
-  stdin.on('data', data => {
-    const key = data.toString('utf-8');
-    if (key === '\u0003') { // ctrl + c
-      fn();
-    } else {
-      stdout.write(key);
-    }
-  });
-}
+// function onRawSIGINT(fn) {
+//   const { stdin, stdout } = process;
+//   stdin.setRawMode(true);
+//   stdin.resume();
+//   stdin.on('data', data => {
+//     const key = data.toString('utf-8');
+//     if (key === '\u0003') { // ctrl + c
+//       fn();
+//     } else {
+//       stdout.write(key);
+//     }
+//   });
+// }
 // onRawSIGINT(() => {
 //   console.log('raw'); process.exit(1);
 // });

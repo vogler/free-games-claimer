@@ -49,7 +49,7 @@ RUN apt-get update \
 # RUN npm --version
 
 RUN ln -s /usr/share/novnc/vnc_auto.html /usr/share/novnc/index.html
-RUN pip install apprise
+RUN pip install --no-cache-dir apprise
 
 WORKDIR /fgc
 COPY package*.json ./
@@ -67,36 +67,36 @@ COPY . .
 RUN dos2unix ./*.sh && chmod +x ./*.sh
 COPY docker-entrypoint.sh /usr/local/bin/
 
+# set by .github/workflows/docker.yml
 ARG COMMIT=""
 ARG BRANCH=""
 ARG NOW=""
+# need as env vars to log in docker-entrypoint.sh
 ENV COMMIT=${COMMIT}
 ENV BRANCH=${BRANCH}
 ENV NOW=${NOW}
 
-LABEL org.opencontainers.image.title="free-games-claimer" \
-      org.opencontainers.image.name="free-games-claimer" \
-      org.opencontainers.image.description="Automatically claims free games on the Epic Games Store, Amazon Prime Gaming and GOG" \
-      org.opencontainers.image.url="https://github.com/vogler/free-games-claimer" \
-      org.opencontainers.image.source="https://github.com/vogler/free-games-claimer" \
-      org.opencontainers.image.revision=${COMMIT} \
-      org.opencontainers.image.ref.name=${BRANCH} \
-      org.opencontainers.image.base.name="ubuntu:jammy" \
-      org.opencontainers.image.version="latest"
+# added by docker/metadata-action using data from GitHub
+# LABEL org.opencontainers.image.title="free-games-claimer" \
+#       org.opencontainers.image.url="https://github.com/vogler/free-games-claimer" \
+#       org.opencontainers.image.source="https://github.com/vogler/free-games-claimer"
 
 # Configure VNC via environment variables:
-ENV VNC_PORT 5900
-ENV NOVNC_PORT 6080
+ENV VNC_PORT=5900
+ENV NOVNC_PORT=6080
 EXPOSE 5900
 EXPOSE 6080
 
 # Configure Xvfb via environment variables:
-ENV WIDTH 1920
-ENV HEIGHT 1080
-ENV DEPTH 24
+ENV WIDTH=1920
+ENV HEIGHT=1080
+ENV DEPTH=24
 
 # Show browser instead of running headless
-ENV SHOW 1
+ENV SHOW=1
+
+# mega-linter (KICS, Trivy) complained about it missing - usually this checks some API endpoint, for a container that runs ~1min a healthcheck doesn't make that much sense since playwright has timeouts for everything. Could react to SIGUSR1 and check something in JS - for now we just check that node is running and noVNC is reachable...
+HEALTHCHECK --interval=5s --timeout=5s CMD pgrep node && curl --fail http://localhost:6080 || exit 1
 
 # Script to setup display server & VNC is always executed.
 ENTRYPOINT ["docker-entrypoint.sh"]

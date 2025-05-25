@@ -5,68 +5,115 @@ on:
   push: # push on branch
     branches: [main, dev]
     paths: # ignore changes to .md files
-      - '**'
-      - '!*.md'
+      - "**"
+      - "!*.md"
       # - '!.github/**'
-  pull_request: # runs when opened/reopned or when the head branch is updated
+  pull_request: # runs when opened/reopened or when the head branch is updated
 
 permissions:
   contents: read
   packages: write
 
 env:
- BRANCH: ${{ github.head_ref || github.ref_name }} # head_ref/base_ref are only set for PRs, for branches ref_name will be used
+  BRANCH: ${{ github.head_ref || github.ref_name }} # head_ref/base_ref are only set for PRs, for branches ref_name will be used
 
 jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v4
-      -
-        name: Set environment variables
+
+      - name: Set environment variables
         run: |
-          echo "NOW=$(date -R)" >> $GITHUB_ENV # date -Iseconds; date +'%Y-%m-%dT%H:%M:%S'
+          echo "NOW=$(date -R)" >> "$GITHUB_ENV" # date -Iseconds; date +'%Y-%m-%dT%H:%M:%S'
           if [[ "$BRANCH" == "main" ]]; then
-            echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+            echo "IMAGE_TAG=latest" >> "$GITHUB_ENV"
           else
-            echo "IMAGE_TAG=$BRANCH" >> $GITHUB_ENV
+            echo "IMAGE_TAG=$BRANCH" >> "$GITHUB_ENV"
           fi
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      -
-        name: Login to Docker Hub
+      - name: Extract metadata for Docker (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/free-games-claimer
+            ghcr.io/${{ github.actor }}/free-games-claimer
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            # use docker tag 'latest' for the default branch (default is to only use it for the latest git tag)
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
+        env:
+          # otherwise labels are not shown on GitHub due to multi-arch image: https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#adding-a-description-to-multi-arch-images
+          # https://github.com/docker/metadata-action#annotations
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         # if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }} # does not work: Unrecognized named-value: 'secrets' - https://www.cloudtruth.com/blog/skipping-jobs-in-github-actions-when-secrets-are-unavailable-securely-inject-configuration-secrets-into-github
+        if: github.event_name != 'pull_request' # don't try to login since PRs don't have access to secrets and need to set them in their fork
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      -
-        name: Login to GitHub Container Registry
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }} # actor is user that opened PR, was repository_owner before
           password: ${{ secrets.GITHUB_TOKEN }}
-      -
-        name: Build and push
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
         uses: docker/build-push-action@v6
         if: ${{ env.IMAGE_TAG != '' }}
         with:
           context: .
-          push: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+          push: ${{ github.event_name != 'pull_request' }}
+          # push: ${{ secrets.DOCKERHUB_USERNAME != '' }} # here we can access secrets
+          # TODO speed up by building in parallel? https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners
+          platforms: linux/amd64,linux/arm64
           build-args: |
             COMMIT=${{ github.sha }}
             BRANCH=${{ env.BRANCH }}
             NOW=${{ env.NOW }}
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/free-games-claimer:${{env.IMAGE_TAG}}
-            ghcr.io/${{ github.actor }}/free-games-claimer:${{env.IMAGE_TAG}}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          # tags: |
+          #   ${{ secrets.DOCKERHUB_USERNAME }}/free-games-claimer:${{env.IMAGE_TAG}}
+          #   ghcr.io/${{ github.actor }}/free-games-claimer:${{env.IMAGE_TAG}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # https://gist.github.com/MichaelSimons/fb588539dcefd9b5fdf45ba04c302db6
+      - name: Docker (un)compressed sizes
+        run: |
+          REP=ghcr.io/${{ github.actor }}/free-games-claimer
+          IMG=$REP:${{env.IMAGE_TAG}}
+          log() { echo -e "\n\$ $*"; "$@"; }
+          emd() { echo "$*" | tee -a "$GITHUB_STEP_SUMMARY"; }
+          cmd() { echo "\$ $*" | tee -a "$GITHUB_STEP_SUMMARY"; "$@" | tee -a "$GITHUB_STEP_SUMMARY"; }
+          emd '```console'
+          download-size() { docker manifest inspect -v "$1" | jq -c 'if type == "array" then .[] else . end' |  jq -r '[ ( .Descriptor.platform | [ .os, .architecture, .variant, ."os.version" ] | del(..|nulls) | join("/") ), ( [ ( .OCIManifest // .SchemaV2Manifest ).layers[].size ] | add ) ] | join(" ")' | numfmt --to iec --format '%.2f' --field 2 | sort | column -t ; }
+          cmd download-size "$IMG"
+          ## don't need the following in job summary, but nice to have in full log
+          log docker buildx history inspect
+          # log docker buildx du
+          ## not needed locally, but in CI with buildx `docker image ls` just lists moby/buildkit and tonistiigi/binfmt since the multi-arch build is pushed to registry instead of loaded locally, so we need to pull it first (cached anyway)
+          log docker pull "$IMG"
+          # log docker image rm moby/buildkit # failed
+          # log docker image rm tonistiigi/binfmt
+          # emd '# Uncompressed size (max, not size on disk due to sharing):'
+          # cmd docker image ls # below has more details
+          emd '# uncompressed size = unique + shared:'
+          local-size() { docker system df -v | grep "$1" -B1; }
+          cmd local-size "$REP"
+          emd '```'
+        continue-on-error: true
