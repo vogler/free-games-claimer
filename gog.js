@@ -1,6 +1,6 @@
 import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
 import chalk from 'chalk';
-import { resolve, jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT } from './src/util.js';
+import { resolve, jsonDb, datetime, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'gog', ...a);
@@ -106,6 +106,7 @@ try {
     console.log(`Current free game: ${chalk.blue(title)} - ${url}`);
     db.data[user][title] ||= { title, time: datetime(), url };
     if (cfg.dryrun) process.exit(1);
+    if (cfg.interactive && !await confirm()) process.exit(0);
     // await page.locator('#giveaway:not(.is-loading)').waitFor(); // otherwise screenshot is sometimes with loading indicator instead of game title; #TODO fix, skipped due to timeout, see #240
     await banner.screenshot({ path: screenshot(`${filenamify(title)}.png`) }); // overwrites every time - only keep first?
 

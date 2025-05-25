@@ -3,7 +3,7 @@ import { authenticator } from 'otplib';
 import chalk from 'chalk';
 import path from 'path';
 import { existsSync, writeFileSync, appendFileSync } from 'fs';
-import { resolve, jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list, handleSIGINT } from './src/util.js';
+import { resolve, jsonDb, datetime, stealth, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'epic-games', ...a);
@@ -260,6 +260,7 @@ try {
         if (cfg.time) console.timeEnd('claim game');
         continue;
       }
+      if (cfg.interactive && !await confirm()) continue;
 
       // Playwright clicked before button was ready to handle event, https://github.com/vogler/free-games-claimer/issues/84#issuecomment-1474346591
       await iframe.locator('button:has-text("Place Order"):not(:has(.payment-loading--loading))').click({ delay: 11 });
