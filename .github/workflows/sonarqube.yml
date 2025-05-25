@@ -3,6 +3,10 @@ name: SonarQube Scan
 # Run on push in any branch and changes in PRs.
 on:
   push:
+    paths:
+      - '**.js'
+      - '**.ts'
+      - 'package.json'
   pull_request:
     types: [opened, synchronize, reopened]
 
