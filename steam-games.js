@@ -1,36 +1,24 @@
-import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
-import { jsonDb, prompt } from './src/util.js';
+// import { firefox } from 'playwright-firefox';
+import { chromium } from 'patchright';
+import { datetime, filenamify, jsonDb, prompt } from './src/util.js';
 import { cfg } from './src/config.js';
 
 const db = await jsonDb('steam-games.json', {});
 
 const user = cfg.steam_id || await prompt({ message: 'Enter Steam community id ("View my profile", then copy from URL)' });
 
-// using https://github.com/apify/fingerprint-suite worked, but has no launchPersistentContext...
-// from https://github.com/apify/fingerprint-suite/issues/162
-import { FingerprintInjector } from 'fingerprint-injector';
-import { FingerprintGenerator } from 'fingerprint-generator';
-
-const { fingerprint, headers } = new FingerprintGenerator().getFingerprint({
-  devices: ['desktop'],
-  operatingSystems: ['windows'],
-});
-
-const context = await firefox.launchPersistentContext(cfg.dir.browser, {
+const context = await chromium.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   // viewport: { width: cfg.width, height: cfg.height },
   locale: 'en-US', // ignore OS locale to be sure to have english text for locators -> done via /en in URL
-  userAgent: fingerprint.navigator.userAgent,
-  viewport: {
-    width: fingerprint.screen.width,
-    height: fingerprint.screen.height,
-  },
-  extraHTTPHeaders: {
-    'accept-language': headers['accept-language'],
-  },
+  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
+  recordHar: cfg.record ? { path: `data/record/steam-${filenamify(datetime())}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
+  handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
+  // https://peter.sh/experiments/chromium-command-line-switches/
+  args: [
+    '--hide-crash-restore-bubble',
+  ],
 });
-// await stealth(context);
-await new FingerprintInjector().attachFingerprintToPlaywright(context, { fingerprint, headers });
 
 context.setDefaultTimeout(cfg.debug ? 0 : cfg.timeout);
 
