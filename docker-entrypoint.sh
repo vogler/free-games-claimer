@@ -27,8 +27,8 @@ rm -f /tmp/.X1-lock
 # -nolisten unix tells the server not to use Unix domain sockets, thus avoiding the need to create /tmp/.X11-unix
 
 export DISPLAY=:1 # need to export this, otherwise playwright complains with 'Looks like you launched a headed browser without having a XServer running.'
-Xvfb $DISPLAY -ac -screen 0 "${WIDTH}x${HEIGHT}x${DEPTH}" &
-echo "Xvfb display server created screen with resolution ${WIDTH}x${HEIGHT} -nolisten unix"
+Xvfb $DISPLAY -ac -screen 0 "${WIDTH}x${HEIGHT}x${DEPTH}" -nolisten unix +extension GLX +extension RENDER &
+echo "Xvfb display server created screen with resolution ${WIDTH}x${HEIGHT}"
 if [ -z "$VNC_PASSWORD" ]; then
 	pw="-nopw"
 	pwt="no password!"
