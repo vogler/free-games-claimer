@@ -12,7 +12,7 @@ BROWSER="${BROWSER_DIR:-data/browser}"
 # When running in docker and then killing it, on the next run chromium displayed a dialog to unlock the profile which made the script time out.
 # Maybe due to changed hostname of container or due to how the docker container kills playwright - didn't check.
 # https://bugs.chromium.org/p/chromium/issues/detail?id=367048
-rm -f /fgc/$BROWSER/SingletonLock
+rm -f "/fgc/$BROWSER/SingletonLock"
 
 # Remove X server display lock, fix for `docker compose up` which reuses container which made it fail after initial run, https://github.com/vogler/free-games-claimer/issues/31
 # Maybe no longer needed after adding #478's -nolisten unix below
