@@ -12,6 +12,7 @@
   "main": "index.js",
   "scripts": {
     "docker:build": "docker build . -t ghcr.io/vogler/free-games-claimer",
+    "docker:build-log": "(docker buildx build --progress=plain . -t ghcr.io/vogler/free-games-claimer; docker image ls) 2>&1 | tee data/docker-build.log",
     "docker": "docker run --rm -it -p 6080:6080 -v fgc:/fgc/data --pull=always ghcr.io/vogler/free-games-claimer",
     "lint": "npx eslint ."
   },
