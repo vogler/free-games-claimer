@@ -1,9 +1,9 @@
-import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
+// import { firefox } from 'playwright-firefox';
+import { chromium } from 'patchright';
 import { datetime, filenamify, prompt, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
 
-// using https://github.com/apify/fingerprint-suite worked, but has no launchPersistentContext...
-// from https://github.com/apify/fingerprint-suite/issues/162
+// can probably be removed and hard-code headers for mobile view
 import { FingerprintInjector } from 'fingerprint-injector';
 import { FingerprintGenerator } from 'fingerprint-generator';
 
@@ -12,13 +12,14 @@ const { fingerprint, headers } = new FingerprintGenerator().getFingerprint({
   operatingSystems: ['android'],
 });
 
-const context = await firefox.launchPersistentContext(cfg.dir.browser, {
+const context = await chromium.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   // viewport: { width: cfg.width, height: cfg.height },
   locale: 'en-US', // ignore OS locale to be sure to have english text for locators -> done via /en in URL
   recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
   recordHar: cfg.record ? { path: `data/record/aliexpress-${filenamify(datetime())}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
+  // e.g. for coins, mobile view is needed, otherwise it just says to install the app
   userAgent: fingerprint.navigator.userAgent,
   viewport: {
     width: fingerprint.screen.width,
@@ -27,6 +28,10 @@ const context = await firefox.launchPersistentContext(cfg.dir.browser, {
   extraHTTPHeaders: {
     'accept-language': headers['accept-language'],
   },
+  // https://peter.sh/experiments/chromium-command-line-switches/
+  args: [
+    '--hide-crash-restore-bubble',
+  ],
 });
 handleSIGINT(context);
 // await stealth(context);
@@ -81,11 +86,14 @@ const urls = {
 };
 
 const coins = async () => {
-  // await auth(urls.coins);
-  await Promise.any([page.locator('.checkin-button').click(), page.locator('.addcoin').waitFor()]);
-  console.log('Coins:', await page.locator('.mycoin-content-right-money').innerText());
-  console.log('Streak:', await page.locator('.title-box').innerText());
-  console.log('Tomorrow:', await page.locator('.addcoin').innerText());
+  const collectBtn = page.locator('div:has-text("Collect")').first();
+  const moreBtn = page.locator('div:has-text("Earn more coins")').first();
+  await Promise.any([collectBtn.click(), moreBtn.waitFor()]);
+  console.log(await page.locator('.marquee-content:has-text(" coins")').first().innerText());
+  const n = (await page.locator('.marquee-item:has-text(" coins")').first().innerText()).replace(' coins', '');
+  console.log('Coins:', n);
+  // console.log('Streak:', await page.locator('.title-box').innerText());
+  // console.log('Tomorrow:', await page.locator('.addcoin').innerText());
 };
 
 // const grow = async () => {

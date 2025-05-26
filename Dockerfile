@@ -1,5 +1,5 @@
 # FROM mcr.microsoft.com/playwright:v1.20.0
-# Partially from https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.focal
+# Partially from https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.jammy
 FROM ubuntu:jammy
 
 # Configuration variables are at the end!
@@ -8,9 +8,9 @@ FROM ubuntu:jammy
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Install up-to-date node & npm, deps for virtual screen & noVNC, firefox, pip for apprise.
+# Install nodejs and deps for virtual display, noVNC, chromium, and pip for installing apprise.
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y curl ca-certificates gnupg \
+    && apt-get install -y --no-install-recommends curl ca-certificates gnupg \
     && mkdir -p /etc/apt/keyrings \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
     && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
@@ -23,43 +23,38 @@ RUN apt-get update \
       novnc websockify \
       dos2unix \
       python3-pip \
-    # && npx playwright install-deps firefox \
-    && apt-get install --no-install-recommends -y \
-      libgtk-3-0 \
-      libasound2 \
-      libxcomposite1 \
-      libpangocairo-1.0-0 \
-      libpango-1.0-0 \
+    # RUN npx patchright install-deps chromium
+    # ^ installing deps manually instead saved ~130MB:
+    && apt-get install -y --no-install-recommends \
+      libnss3 \
+      libnspr4 \
       libatk1.0-0 \
-      libcairo-gobject2 \
+      libatk-bridge2.0-0 \
+      libcups2 \
+      libxkbcommon0 \
+      libatspi2.0-0 \
+      libxcomposite1 \
+      libgbm1 \
+      libpango-1.0-0 \
       libcairo2 \
-      libgdk-pixbuf-2.0-0 \
-      libdbus-glib-1-2 \
-      libxcursor1 \
+      libasound2 \
     && apt-get autoremove -y \
+    # https://www.perplexity.ai/search/what-files-do-i-need-to-remove-imjwdphNSUWK98WzsmQswA
     && apt-get clean \
     && rm -rf \
+      /var/lib/apt/lists/* \
+      /var/cache/* \
+      /var/tmp/* \
       /tmp/* \
       /usr/share/doc/* \
-      /var/cache/* \
-      /var/lib/apt/lists/* \
-      /var/tmp/*
-
-# RUN node --version
-# RUN npm --version
-
-RUN ln -s /usr/share/novnc/vnc_auto.html /usr/share/novnc/index.html
-RUN pip install --no-cache-dir apprise
+    && ln -s /usr/share/novnc/vnc_auto.html /usr/share/novnc/index.html \
+    && pip install --no-cache-dir apprise
 
 WORKDIR /fgc
 COPY package*.json ./
 
-# Playwright installs patched firefox to ~/.cache/ms-playwright/firefox-*
-# Requires some system deps to run (see inlined install-deps above).
-RUN npm install
-# Old: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD + install firefox (had to be done after `npm install` to get the correct version). Now: playwright-firefox as npm dep and `npm install` will only install that.
-# From 1.38 Playwright will no longer install browser automatically for playwright, but apparently still for playwright-firefox: https://github.com/microsoft/playwright/releases/tag/v1.38.0
-# RUN npx playwright install firefox
+# --no-shell to avoid installing chromium_headless_shell (307MB) since headless mode could be detected without patching the browser itself
+RUN npm install && npx patchright install chromium --no-shell && du -h -d1 ~/.cache/ms-playwright
 
 COPY . .
 

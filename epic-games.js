@@ -1,9 +1,10 @@
-import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
+// import { chromium } from 'playwright-chromium';
+import { chromium } from 'patchright';
 import { authenticator } from 'otplib';
 import chalk from 'chalk';
 import path from 'path';
-import { existsSync, writeFileSync, appendFileSync } from 'fs';
-import { resolve, jsonDb, datetime, stealth, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
+import { existsSync, writeFileSync } from 'fs';
+import { resolve, jsonDb, datetime, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'epic-games', ...a);
@@ -17,35 +18,27 @@ const db = await jsonDb('epic-games.json', {});
 
 if (cfg.time) console.time('startup');
 
-const browserPrefs = path.join(cfg.dir.browser, 'prefs.js');
-if (existsSync(browserPrefs)) {
-  console.log('Adding webgl.disabled to', browserPrefs);
-  appendFileSync(browserPrefs, 'user_pref("webgl.disabled", true);'); // apparently Firefox removes duplicates (and sorts), so no problem appending every time
-} else {
-  console.log(browserPrefs, 'does not exist yet, will patch it on next run. Restart the script if you get a captcha.');
-}
-
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await firefox.launchPersistentContext(cfg.dir.browser, {
-  headless: cfg.headless,
+const context = await chromium.launchPersistentContext(cfg.dir.browser, {
+  // channel: 'chrome', // recommended, but `npx patchright install chrome` clashes with system Chrome - https://github.com/Kaliiiiiiiiii-Vinyzu/patchright-nodejs#best-practice----use-chrome-without-fingerprint-injection
+  headless: false, // don't use cfg.headless headless here since SHOW=0 will lead to captcha
   viewport: { width: cfg.width, height: cfg.height },
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
-  // userAgent firefox (macOS): Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:106.0) Gecko/20100101 Firefox/106.0
-  // userAgent firefox (docker): Mozilla/5.0 (X11; Linux aarch64; rv:109.0) Gecko/20100101 Firefox/115.0
-  locale: 'en-US', // ignore OS locale to be sure to have english text for locators
+  // locale: 'en-US', // ignore OS locale to be sure to have english text for locators
   recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
   recordHar: cfg.record ? { path: `data/record/eg-${filenamify(datetime())}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
-  // user settings for firefox have to be put in $BROWSER_DIR/user.js
-  args: [ // https://wiki.mozilla.org/Firefox/CommandLineOptions
-    // '-kiosk',
+  // https://peter.sh/experiments/chromium-command-line-switches/
+  args: [
+    '--hide-crash-restore-bubble',
   ],
+  // The following makes the browser crash in docker with 'Chromium sandboxing failed!':
+  // chromiumSandbox: true, // https://github.com/Kaliiiiiiiiii-Vinyzu/patchright/issues/52
 });
 
-handleSIGINT(context);
+// console.log(context.browser().browserType()); // browser is null...
+if (cfg.debug) console.log(chromium.executablePath());
 
-// Without stealth plugin, the website shows an hcaptcha on login with username/password and in the last step of claiming a game. It may have other heuristics like unsuccessful logins as well. After <6h (TBD) it resets to no captcha again. Getting a new IP also resets.
-await stealth(context);
+handleSIGINT(context);
 
 if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
@@ -150,7 +143,7 @@ try {
   // debug showed that in those cases the href was still correct, so we `goto` the urls instead of clicking.
   // Alternative: parse the json loaded to build the page https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions
   // i.e. filter data.Catalog.searchStore.elements for .promotions.promotionalOffers being set and build URL with .catalogNs.mappings[0].pageSlug or .urlSlug if not set to some wrong id like it was the case for spirit-of-the-north-f58a66 - this is also what's done here: https://github.com/claabs/epicgames-freegames-node/blob/938a9653ffd08b8284ea32cf01ac8727d25c5d4c/src/puppet/free-games.ts#L138-L213
-  const urlSlugs = await Promise.all((await game_loc.elementHandles()).map(a => a.getAttribute('href')));
+  const urlSlugs = await Promise.all((await game_loc.all()).map(a => a.getAttribute('href')));
   const urls = urlSlugs.map(s => 'https://store.epicgames.com' + s);
   console.log('Free games:', urls);
 

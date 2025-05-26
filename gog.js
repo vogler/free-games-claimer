@@ -1,4 +1,5 @@
-import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
+// import { firefox } from 'playwright-firefox';
+import { chromium } from 'patchright';
 import chalk from 'chalk';
 import { resolve, jsonDb, datetime, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
@@ -17,13 +18,17 @@ if (cfg.width < 1280) { // otherwise 'Sign in' and #menuUsername are hidden (but
 }
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await firefox.launchPersistentContext(cfg.dir.browser, {
+const context = await chromium.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
   locale: 'en-US', // ignore OS locale to be sure to have english text for locators -> done via /en in URL
   recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
   recordHar: cfg.record ? { path: `data/record/gog-${filenamify(datetime())}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
+  // https://peter.sh/experiments/chromium-command-line-switches/
+  args: [
+    '--hide-crash-restore-bubble',
+  ],
 });
 
 handleSIGINT(context);
@@ -44,9 +49,11 @@ try {
 
   // page.click('#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll').catch(_ => { }); // does not work reliably, solved by setting CookieConsent above
   const signIn = page.locator('a:has-text("Sign in")').first();
-  await Promise.any([signIn.waitFor(), page.waitForSelector('#menuUsername')]);
-  while (await signIn.isVisible()) {
-    console.error('Not signed in anymore.');
+  // TODO for the below signIn.waitFor(), patchright failed most of the time with: locator.waitFor: JSHandles can be evaluated only in the context they were created!
+  // await Promise.any([signIn.waitFor(), page.waitForSelector('#menuUsername')]);
+  const username = page.locator('#menuUsername').first();
+  while (await signIn.isVisible() && !await username.isVisible()) {
+    console.error('Not signed!');
     if (cfg.nowait) process.exit(1);
     await signIn.click();
     // it then creates an iframe for the login
@@ -59,10 +66,14 @@ try {
     const email = cfg.gog_email || await prompt({ message: 'Enter email' });
     const password = email && (cfg.gog_password || await prompt({ type: 'password', message: 'Enter password' }));
     if (email && password) {
-      iframe.locator('a[href="/logout"]').click().catch(_ => { }); // Click 'Change account' (email from previous login is set in some cookie)
-      await iframe.locator('#login_username').fill(email);
+      // iframe.locator('a[href="/logout"]').click().catch(_ => { }); // Click 'Change account' (email from previous login is set in some cookie)
+      // TODO above didn't work with patchright
+      if (!await iframe.locator('#login_username').isDisabled()) {
+        await iframe.locator('#login_username').fill(email);
+      }
       await iframe.locator('#login_password').fill(password);
       await iframe.locator('#login_login').click();
+      await page.waitForTimeout(2000); // TODO patchright waits forever for MFA locator otherwise
       // handle MFA, but don't await it
       iframe.locator('form[name=second_step_authentication]').waitFor().then(async () => {
         console.log('Two-Step Verification - Enter security code');
@@ -97,6 +108,7 @@ try {
   db.data[user] ||= {};
 
   const banner = page.locator('#giveaway');
+  await page.waitForTimeout(2000); // TODO patchright sometimes missed banner otherwise
   if (!await banner.count()) {
     console.log('Currently no free giveaway!');
   } else {
