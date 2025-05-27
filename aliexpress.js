@@ -88,7 +88,8 @@ const urls = {
 const coins = async () => {
   const collectBtn = page.locator('div:has-text("Collect")').first();
   const moreBtn = page.locator('div:has-text("Earn more coins")').first();
-  await Promise.any([collectBtn.click(), moreBtn.waitFor()]);
+  // await Promise.any([collectBtn.click(), moreBtn.waitFor()]); // this somehow did not make it click the collect button... try moreBtn.isVisible()?
+  await collectBtn.click().catch(_ => moreBtn.waitFor()); // TODO change this since it's going to delay by timeout if already collected
   console.log(await page.locator('.marquee-content:has-text(" coins")').first().innerText());
   const n = (await page.locator('.marquee-item:has-text(" coins")').first().innerText()).replace(' coins', '');
   console.log('Coins:', n);
