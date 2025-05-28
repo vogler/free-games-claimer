@@ -47,37 +47,35 @@ const auth = async url => {
   // redirects to https://login.aliexpress.com/?return_url=https%3A%2F%2Fwww.aliexpress.com%2Fp%2Fcoin-pc-index%2Findex.html
   await Promise.any([page.waitForURL(/.*login\.aliexpress.com.*/).then(async () => {
     // manual login
-    console.error('Not logged in! Will wait for 120s for you to login...');
-    // await page.waitForTimeout(120*1000);
+    console.error('Not logged in! Will wait for 120s for you to login in the browser or terminal...');
+    context.setDefaultTimeout(120*1000);
     // or try automated
     page.locator('span:has-text("Switch account")').click().catch(_ => {}); // sometimes no longer logged in, but previous user/email is pre-selected -> in this case we want to go back to the classic login
-    const login = page.locator('.login-container');
+    const login = page.locator('#root'); // not universal: .content, .nfm-login
     const email = cfg.ae_email || await prompt({ message: 'Enter email' });
     const emailInput = login.locator('input[label="Email or phone number"]');
     await emailInput.fill(email);
     await emailInput.blur(); // otherwise Continue button stays disabled
     const continueButton = login.locator('button:has-text("Continue")');
     await continueButton.click({ force: true }); // normal click waits for button to no longer be covered by their suggestion menu, so we have to force click somewhere for the menu to close and then click
-    await continueButton.click();
     const password = email && (cfg.ae_password || await prompt({ type: 'password', message: 'Enter password' }));
     await login.locator('input[label="Password"]').fill(password);
     await login.locator('button:has-text("Sign in")').click();
-    const error = login.locator('.error-text');
-    error.waitFor().then(async _ => console.error('Login error:', await error.innerText()));
-    await page.waitForURL(url);
+    const error = login.locator('.nfm-login-input-error-text');
+    error.waitFor().then(async _ => console.error('Login error (please restart):', await error.innerText())).catch(_ => console.log('No login error.'));
+    await page.waitForURL(u => u.toString().startsWith(url)); // e.g. https://m.aliexpress.com/p/coin-index/index.html?_immersiveMode=true&from=pc302
+    // TODO the following won't be executed anymore due to the navigation - patchright issue?
+    context.setDefaultTimeout(cfg.debug ? 0 : cfg.timeout);
+    console.log('Logged in!'); // this should still be printed, but isn't...
     // await page.addLocatorHandler(page.getByRole('button', { name: 'Accept cookies' }), btn => btn.click());
-    page.getByRole('button', { name: 'Accept cookies' }).click().then(_ => console.log('Accepted cookies')).catch(_ => { });
-  }), page.locator('#nav-user-account').waitFor()]).catch(_ => {});
-
-  // await page.locator('#nav-user-account').hover();
-  // console.log('Logged in as:', await page.locator('.welcome-name').innerText());
+    // page.getByRole('button', { name: 'Accept cookies' }).click().then(_ => console.log('Accepted cookies')).catch(_ => { });
+  }), page.locator('.app-game').waitFor()]);
 };
 
 // copied URLs from AliExpress app on tablet which has menu for the used webview
 const urls = {
-  // works with desktop view, but stuck at 100% loading in mobile view:
-  coins: 'https://www.aliexpress.com/p/coin-pc-index/index.html',
   // only work with mobile view:
+  coins: 'https://www.aliexpress.com/p/coin-pc-index/index.html',
   grow: 'https://m.aliexpress.com/p/ae_fruit/index.html', // firefox: stuck at 60% loading, chrome: loads, but canvas
   gogo: 'https://m.aliexpress.com/p/gogo-match-cc/index.html', // closes firefox?!
   // only show notification to install the app
@@ -86,10 +84,14 @@ const urls = {
 };
 
 const coins = async () => {
-  const collectBtn = page.locator('div:has-text("Collect")').first();
-  const moreBtn = page.locator('div:has-text("Earn more coins")').first();
-  // await Promise.any([collectBtn.click(), moreBtn.waitFor()]); // this somehow did not make it click the collect button... try moreBtn.isVisible()?
-  await collectBtn.click().catch(_ => moreBtn.waitFor()); // TODO change this since it's going to delay by timeout if already collected
+  console.log('Checking coins...');
+  const collectBtn = page.locator('.signVersion-panel div:has-text("Collect")').first();
+  const moreBtn = page.locator('.signVersion-panel div:has-text("Earn more coins")').first();
+  await Promise.any([
+    collectBtn.click().then(_ => console.log('Collected coins for today!')),
+    moreBtn.waitFor().then(_ => console.log('No more coins to collect today!'))
+  ]); // sometimes did not make it click the collect button... moreBtn.isVisible() as alternative also didn't work
+  // await collectBtn.click().catch(_ => moreBtn.waitFor()); // TODO change this since it's going to delay by timeout if already collected
   console.log(await page.locator('.marquee-content:has-text(" coins")').first().innerText());
   const n = (await page.locator('.marquee-item:has-text(" coins")').first().innerText()).replace(' coins', '');
   console.log('Coins:', n);
