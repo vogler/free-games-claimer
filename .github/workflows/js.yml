@@ -35,10 +35,10 @@ jobs:
           emd() { echo "$*" | tee -a "$GITHUB_STEP_SUMMARY"; }
           cmd() { echo "\$ $*" | tee -a "$GITHUB_STEP_SUMMARY"; "$@" | tee -a "$GITHUB_STEP_SUMMARY"; }
           emd '```console'
-          cmd bunx --yes qnm doctor
+          cmd bunx qnm doctor
           emd '```'
       # - name: dep-size cost-of-modules # this says total 8.37MB while du says 75MB...
-      #   run: npx --yes npx cost-of-modules --include-dev --no-install
+      #   run: bunx cost-of-modules --include-dev --no-install
 
       # https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github#example-workflow-that-runs-the-eslint-analysis-tool
       - name: eslint (sarif output)
