@@ -6,11 +6,16 @@
 </p>
 
 Claims free games periodically on
-- <img alt="logo epic-games" src="https://github.com/user-attachments/assets/82e9e9bf-b6ac-4f20-91db-36d2c8429cb6" width="32" align="middle" /> [Epic Games Store](https://www.epicgames.com/store/free-games)
+- <img alt="logo epic-games" src="https://github.com/user-attachments/assets/82e9e9bf-b6ac-4f20-91db-36d2c8429cb6" width="32" align="middle" /> [Epic Games Store](https://www.epicgames.com/store/free-games) - currently only without Docker
 - <img alt="logo prime-gaming" src="https://github.com/user-attachments/assets/7627a108-20c6-4525-a1d8-5d221ee89d6e" width="32" align="middle" /> [Amazon Prime Gaming](https://gaming.amazon.com)
 - <img alt="logo gog" src="https://github.com/user-attachments/assets/49040b50-ee14-4439-8e3c-e93cafd7c3a5" width="32" align="middle" /> [GOG](https://www.gog.com)
-- <img alt="logo unrealengine" src="https://github.com/user-attachments/assets/3582444b-f23b-448d-bf31-01668cd0313a" width="32" align="middle" /> [Unreal Engine (Assets)](https://www.unrealengine.com/marketplace/en-US/assets?count=20&sortBy=effectiveDate&sortDir=DESC&start=0&tag=4910) ([experimental](https://github.com/vogler/free-games-claimer/issues/44), same login as Epic Games)
 <!-- - <img src="https://www.freepnglogos.com/uploads/xbox-logo-picture-png-14.png" width="32"/> [Xbox Live Games with Gold](https://www.xbox.com/en-US/live/gold#gameswithgold) ([experimental](https://github.com/vogler/free-games-claimer/issues/19)) -->
+and some other free stuff (WIP):
+- AliExpress coins (reduce prices)
+- Google Play points - WIP
+- Assets on fab.com (previously unrealengine.com, same login as Epic Games) - WIP
+- Microsoft Rewards: points can be spent on e.g. Xbox Game Pass - WIP
+<!-- - <img alt="logo unrealengine" src="https://github.com/user-attachments/assets/3582444b-f23b-448d-bf31-01668cd0313a" width="32" align="middle" /> [Unreal Engine (Assets)](https://www.unrealengine.com/marketplace/en-US/assets?count=20&sortBy=effectiveDate&sortDir=DESC&start=0&tag=4910) ([experimental](https://github.com/vogler/free-games-claimer/issues/44), same login as Epic Games) -->
 
 Pull requests welcome :)
 
@@ -18,37 +23,46 @@ Pull requests welcome :)
 
 _Works on Windows/macOS/Linux._
 
-Raspberry Pi (3, 4, Zero 2): [requires 64-bit OS](https://github.com/vogler/free-games-claimer/issues/3) like Raspberry Pi OS or Ubuntu (Raspbian won't work since it's 32-bit).
+Raspberry Pi (and other SBC): [requires 64-bit OS](https://github.com/vogler/free-games-claimer/issues/3) like Raspberry Pi OS or Ubuntu (Raspbian won't work), but not recommended since it's too slow and may be unreliable.
 
-## How to run
-Easy option: [install Docker](https://docs.docker.com/get-docker/) (or [podman](https://podman-desktop.io/)) and run this command in a terminal:
+## How to run this?
+
+### Container
+
+You can [install Docker](https://docs.docker.com/get-docker/) and run this command in a terminal:
 ```sh
 docker run --rm -it -p 6080:6080 -v fgc:/fgc/data --pull=always ghcr.io/vogler/free-games-claimer
 ```
 
-_This currently gives you a captcha challenge for epic-games. Until [issue #183](https://github.com/vogler/free-games-claimer/issues/183) is fixed, it is recommended to just run `node epic-games` without docker (see below)._
+_This currently gives you a captcha challenge for epic-games. Until [issue #183](https://github.com/vogler/free-games-claimer/issues/183) is fixed, it is recommended to just run `node epic-games` without Docker on a desktop machine (not headless, see below)._
 
-This will run `node epic-games; node prime-gaming; node gog` - if you only want to claim games for one of the stores, you can override the default command by appending e.g. `node epic-games` at the end of the `docker run` command, or if you want several `bash -c "node epic-games.js; node gog.js"`.
+This will run `node epic-games; node prime-gaming; node gog` - if you only want to claim games for one of the stores, you can override the default command by appending e.g. `node epic-games` at the end of the `docker run` command, or if you want several, `bash -c "node epic-games.js; node gog.js"`.
 Data (including json files with claimed games, codes to redeem, screenshots) is stored in the Docker volume `fgc`.
 
-<details>
-  <summary>I want to run without Docker or develop locally.</summary>
+There's also a `docker-compose.yml` which you can use as an alternative with `docker compose up` (or if you need it for Portainer, your NAS, Unraid, ...).
+
+<!-- <details>
+  <summary>I want to run without Docker or develop locally.</summary> -->
+
+### Without Docker
 
 1. [Install Node.js](https://nodejs.org/en/download)
 2. Clone/download this repository and `cd` into it in a terminal
-3. Run `npm install && npx patchright install chromium`
-4. Run `pip install apprise` (or use [pipx](https://github.com/pypa/pipx) if you have [problems](https://stackoverflow.com/questions/75608323/how-do-i-solve-error-externally-managed-environment-every-time-i-use-pip-3)) to install [apprise](https://github.com/caronc/apprise) if you want notifications
+3. Run `npm install && npx patchright install chromium` to install dependencies
+4. Optional: notifications are handled by [apprise](https://github.com/caronc/apprise). See its docs for setup instructions (e.g. `pipx install apprise` ([uv](https://github.com/astral-sh/uv) and [pipx](https://github.com/pypa/pipx) are recommended over [pip](https://stackoverflow.com/questions/75608323/how-do-i-solve-error-externally-managed-environment-every-time-i-use-pip-3))
 5. To get updates: `git pull; npm install`
 6. Run `node epic-games`, `node prime-gaming`, `node gog`...
 
 Patchright/Playwright will download its Chromium to a cache in home ([doc](https://playwright.dev/docs/browsers#managing-browser-binaries)).
-If you are missing some dependencies for the browser on your system, you can use `sudo npx patchright install chromium --with-deps`.
+If you are missing some dependencies for the browser on your system, you can use `npx patchright install chromium --with-deps`.
 
-If you don't want to use Docker for quasi-headless mode, you could run inside a virtual machine, on a server, or you wake your PC at night to avoid being interrupted.
-</details>
+If you don't want to use Docker for quasi-headless mode, you could run inside a virtual machine, on a server (as long as it has a (virtual) display), or you wake your PC at night to avoid being interrupted.
+<!-- </details> -->
 
 ## Usage
-All scripts start an automated Firefox instance, either with the browser GUI shown or hidden (_headless mode_). By default, you won't see any browser open on your host system.
+
+All scripts start an automated Chromium instance, either with the browser GUI shown or hidden (_headless mode_). By default, you won't see any browser open on your host system.
+Epic Games is an exception which will always show the browser since otherwise you would get a captcha challenge.
 
 - When running inside Docker, the browser will be shown only inside the container. You can open <http://localhost:6080> to interact with the browser running inside the container via noVNC (or use other VNC clients on port 5900).
 - When running the scripts outside of Docker, the browser will be hidden by default; you can use `SHOW=1 ...` to show the UI (see options below).
@@ -61,6 +75,7 @@ There will be prompts in the terminal asking you to enter email, password, and a
 After login, the script will continue claiming the current games. If it still waits after you are already logged in, you can restart it (and open an issue). If you run the scripts regularly, you should not have to login again.
 
 ### Configuration / Options
+
 Options are set via [environment variables](https://kinsta.com/knowledgebase/what-is-an-environment-variable/) which allow for flexible configuration.
 
 TODO: ~~On the first run, the script will guide you through configuration and save all settings to `data/config.env`. You can edit this file directly or run `node fgc config` to run the configuration assistant again.~~
@@ -97,9 +112,11 @@ Available options/variables and their default values:
 See `src/config.js` for all options.
 
 #### How to set options
+
 You can add options directly in the command or put them in a file to load.
 
 ##### Docker
+
 You can pass variables using `-e VAR=VAL`.
 For example, `docker run -e EMAIL=foo@bar.baz -e NOTIFY='tgram://bottoken/ChatID' ...`.
 Alternatively, you can pass a file with `--env-file fgc.env` where `fgc.env` is a file on your host system (see [docs](https://docs.docker.com/engine/reference/commandline/run/#env)).
@@ -107,16 +124,19 @@ You can also `docker cp` your configuration file to `/fgc/data/config.env` in th
 If you are using [docker compose](https://docs.docker.com/compose/environment-variables/) (or Portainer etc.), you can put options in the `environment:` section.
 
 ##### Without Docker
+
 On Linux/macOS you can prefix the variables you want to set, for example `EMAIL=foo@bar.baz SHOW=1 node epic-games` will show the browser and skip asking you for your login email. On Windows you have to use `set`, [example](https://github.com/vogler/free-games-claimer/issues/314).
 You can also put options in `data/config.env` which will be loaded by [dotenv](https://github.com/motdotla/dotenv).
 
 ### Notifications
+
 The scripts will try to send notifications for successfully claimed games and any errors like needing to log in or encountered captchas (should not happen).
 
 [apprise](https://github.com/caronc/apprise) is used for notifications and offers many services including Pushover, Slack, Telegram, SMS, Email, desktop and custom notifications.
 You just need to set `NOTIFY` to the notification services you want to use, e.g. `NOTIFY='mailto://myemail@gmail.com' 'pbul://o.gn5kj6nfhv736I7jC3cj3QLRiyhgl98b'` - refer to their list of services and [examples](https://github.com/caronc/apprise#command-line-usage).
 
 ### Automatic login, two-factor authentication
+
 If you set the options for email, password and OTP key, there will be no prompts and logins should happen automatically. This is optional since all stores should stay logged in since cookies are refreshed.
 To get the OTP key, it is easiest to follow the store's guide for adding an authenticator app. You should also scan the shown QR code with your favorite app to have an alternative method for 2FA.
 
@@ -128,9 +148,11 @@ To get the OTP key, it is easiest to follow the store's guide for adding an auth
 Beware that storing passwords and OTP keys as clear text may be a security risk. Use a unique/generated password! TODO: maybe at least offer to base64 encode for storage.
 
 ### Epic Games Store
+
 Run `node epic-games` (locally or in Docker).
 
 ### Amazon Prime Gaming
+
 Run `node prime-gaming` (locally or in Docker).
 
 Claiming the Amazon Games works out-of-the-box, however, for games on external stores you need to either link your account or redeem a key.
@@ -145,7 +167,9 @@ Claiming the Amazon Games works out-of-the-box, however, for games on external s
 <!-- Run `node xbox` (locally or in docker). -->
 
 ### Run periodically
+
 #### How often?
+
 Epic Games usually has two free games _every week_, before Christmas every day.
 Prime Gaming has new games _every month_ or more often during Prime days.
 GOG usually has one new game every couples of weeks.
@@ -169,7 +193,7 @@ TODO: ~~add some server-mode where the script just keeps running and claims game
 
 ### Problems?
 
-Check the open [issues](https://github.com/vogler/free-games-claimer/issues) and comment there or open a new issue.
+Check the open [issues](https://github.com/vogler/free-games-claimer/issues) and comment there or open a new issue (if it is something new).
 
 If you're a developer, you can use `PWDEBUG=1 ...` to [inspect](https://playwright.dev/docs/inspector) which opens a debugger where you can step through the script.
 
