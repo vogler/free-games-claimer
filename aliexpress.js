@@ -48,7 +48,7 @@ const auth = async url => {
   await Promise.any([page.waitForURL(/.*login\.aliexpress.com.*/).then(async () => {
     // manual login
     console.error('Not logged in! Will wait for 120s for you to login in the browser or terminal...');
-    context.setDefaultTimeout(120*1000);
+    context.setDefaultTimeout(120 * 1000);
     // or try automated
     page.locator('span:has-text("Switch account")').click().catch(_ => {}); // sometimes no longer logged in, but previous user/email is pre-selected -> in this case we want to go back to the classic login
     const login = page.locator('#root'); // not universal: .content, .nfm-login
@@ -89,7 +89,7 @@ const coins = async () => {
   const moreBtn = page.locator('.signVersion-panel div:has-text("Earn more coins")').first();
   await Promise.any([
     collectBtn.click().then(_ => console.log('Collected coins for today!')),
-    moreBtn.waitFor().then(_ => console.log('No more coins to collect today!'))
+    moreBtn.waitFor().then(_ => console.log('No more coins to collect today!')),
   ]); // sometimes did not make it click the collect button... moreBtn.isVisible() as alternative also didn't work
   // await collectBtn.click().catch(_ => moreBtn.waitFor()); // TODO change this since it's going to delay by timeout if already collected
   console.log(await page.locator('.marquee-content:has-text(" coins")').first().innerText());
