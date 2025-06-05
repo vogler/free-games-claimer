@@ -9,8 +9,9 @@ export const cfg = {
   debug_network: process.env.DEBUG_NETWORK == '1', // log network requests and responses
   record: process.env.RECORD == '1', // `recordHar` (network) + `recordVideo`
   time: process.env.TIME == '1', // log duration of each step
+  interactive: process.env.INTERACTIVE == '1', // confirm to claim, enter to skip
   dryrun: process.env.DRYRUN == '1', // don't claim anything
-  interactive: process.env.INTERACTIVE == '1', // confirm to claim, default skip
+  nowait: process.env.NOWAIT == '1', // fail fast instead of waiting for user input
   show: process.env.SHOW == '1', // run non-headless
   get headless() {
     return !this.debug && !this.show;
@@ -33,6 +34,7 @@ export const cfg = {
   eg_password: process.env.EG_PASSWORD || process.env.PASSWORD,
   eg_otpkey: process.env.EG_OTPKEY,
   eg_parentalpin: process.env.EG_PARENTALPIN,
+  eg_mobile: process.env.EG_MOBILE != '0', // claim mobile games
   // auth prime-gaming
   pg_email: process.env.PG_EMAIL || process.env.EMAIL,
   pg_password: process.env.PG_PASSWORD || process.env.PASSWORD,
@@ -49,5 +51,5 @@ export const cfg = {
   pg_redeem: process.env.PG_REDEEM == '1', // prime-gaming: redeem keys on external stores
   lg_email: process.env.LG_EMAIL || process.env.PG_EMAIL || process.env.EMAIL, // prime-gaming: external: legacy-games: email to use for redeeming
   pg_claimdlc: process.env.PG_CLAIMDLC == '1', // prime-gaming: claim in-game content
-  pg_timeLeft: process.env.PG_TIMELEFT == '1', // prime-gaming: list time left to claim
+  pg_timeLeft: Number(process.env.PG_TIMELEFT), // prime-gaming: check time left to claim and skip game if there are more than PG_TIMELEFT days left to claim it
 };

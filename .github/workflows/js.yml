@@ -1,0 +1,61 @@
+name: "JS: deps, lint, tests"
+
+# Run on push in any branch and changes in PRs.
+on:
+  push:
+    paths:
+      - "**.js"
+      - "**.ts"
+      - "package.json"
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write # required for sarif upload
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+      - name: bun install
+        run: bun install
+
+      # check size of dependencies
+      # all tools gave different results locally
+      - name: dep-size node_modules
+        run: du -sh node_modules | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: dep-size howfat -d (inc. dev) - ignores size of transitive deps
+        run: bunx howfat -d --reporter table --sort size-
+      - name: dep-size howfat -d -p (inc. dev, peer) - includes size of transitive deps per dep
+        run: bunx howfat -d -p --reporter table --sort size-
+      - name: dep-size qnm (flat list as in node_modules)
+        run: |
+          emd() { echo "$*" | tee -a "$GITHUB_STEP_SUMMARY"; }
+          cmd() { echo "\$ $*" | tee -a "$GITHUB_STEP_SUMMARY"; "$@" | tee -a "$GITHUB_STEP_SUMMARY"; }
+          emd '```console'
+          cmd bunx qnm doctor
+          emd '```'
+      # - name: dep-size cost-of-modules # this says total 8.37MB while du says 75MB...
+      #   run: bunx cost-of-modules --include-dev --no-install
+
+      # https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github#example-workflow-that-runs-the-eslint-analysis-tool
+      - name: eslint (sarif output)
+        # https://github.com/microsoft/sarif-js-sdk/issues/91
+        # @microsoft/eslint-formatter-sarif uses eslint@8.57.1 instead of my local eslint@9.27.0 despite it not needing it? -> just download the sarif.js file instead of having dep in package.json (only needed here anyway)
+        run: |
+          wget https://raw.githubusercontent.com/microsoft/sarif-js-sdk/refs/heads/main/packages/eslint-formatter-sarif/sarif.js -O node_modules/sarif.cjs
+          bun i utf8 lodash jschardet
+          bun eslint . --format node_modules/sarif.cjs -o results.sarif
+        continue-on-error: true
+
+      - name: upload eslint sarif output for Security tab and inline results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: eslint
+
+      - name: bun lint
+        # eslint exits 1 if it finds anything to report
+        run: bun lint

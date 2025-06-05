@@ -1,6 +1,12 @@
 node_modules/
 data/
 *.env
+megalinter-reports/
+
+# the above is just copied from .gitignore - violating DRY...
+# however, generally, we want .dockerignore to be a *strict* superset of .gitignore, so we can't just `ln -s .gitignore .dockerignore`
+# could generate this in CI and append the extra entries from below, but then it wouldn't work for local builds without running some script...
+# also, the rules are slightly different: https://zzz.buzz/2018/05/23/differences-of-rules-between-gitignore-and-dockerignore/
 
 .gitignore
 .github/

@@ -13,3 +13,8 @@ await enquirer.prompt({
   name: 'username',
   message: 'What is your username?',
 });
+await enquirer.prompt({
+  type: 'input',
+  name: 'username',
+  message: 'What is your username 2?',
+});
