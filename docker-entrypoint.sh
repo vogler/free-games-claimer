@@ -30,7 +30,8 @@ else
 	pwt="with password"
 fi
 # TurboVNC server replaces Xvfb+x11vnc
-/opt/TurboVNC/bin/vncserver $DISPLAY -geometry "${WIDTH}x${HEIGHT}" -depth ${DEPTH} -rfbport ${VNC_PORT} $pw -vgl -log /fgc/data/TurboVNC.log -xstartup /usr/bin/ratpoison 2>/dev/null # -noxstartup -novnc /usr/share/novnc/
+# shellcheck disable=SC2086
+/opt/TurboVNC/bin/vncserver $DISPLAY -geometry "${WIDTH}x${HEIGHT}" -depth "${DEPTH}" -rfbport "${VNC_PORT}" $pw -vgl -log /fgc/data/TurboVNC.log -xstartup /usr/bin/ratpoison 2>/dev/null # -noxstartup -novnc /usr/share/novnc/
 echo "TurboVNC is running on port $VNC_PORT ($pwt) with resolution ${WIDTH}x${HEIGHT}"
 # TODO keep websockify just for custom NOVNC_PORT? https://www.perplexity.ai/search/how-to-specify-the-novnc-port-rfv96C9tTZufnyFPRye5xA#0
 websockify -D --web "/usr/share/novnc/" "$NOVNC_PORT" "localhost:$VNC_PORT" 2>/dev/null 1>&2 &
