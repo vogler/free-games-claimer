@@ -10,7 +10,8 @@ const context = await chromium.launchPersistentContext(cfg.dir.browser, {
   // https://peter.sh/experiments/chromium-command-line-switches/
   args: [
     '--hide-crash-restore-bubble',
-    '--ignore-gpu-blocklist', // required for OpenGL to be enabled
+    '--ignore-gpu-blocklist', // required for OpenGL: Disabled -> Enabled & WebGL: Software only -> Hardware accelerated
+    '--enable-unsafe-webgpu', // required for WebGPU: Disabled -> Hardware accelerated
   ],
 });
 
