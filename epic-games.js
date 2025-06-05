@@ -6,6 +6,7 @@ import path from 'path';
 import { existsSync, writeFileSync } from 'fs';
 import { resolve, jsonDb, datetime, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
+import { getGames } from './src/epic-games-mobile.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'epic-games', ...a);
 
@@ -146,6 +147,15 @@ try {
   // i.e. filter data.Catalog.searchStore.elements for .promotions.promotionalOffers being set and build URL with .catalogNs.mappings[0].pageSlug or .urlSlug if not set to some wrong id like it was the case for spirit-of-the-north-f58a66 - this is also what's done here: https://github.com/claabs/epicgames-freegames-node/blob/938a9653ffd08b8284ea32cf01ac8727d25c5d4c/src/puppet/free-games.ts#L138-L213
   const urlSlugs = await Promise.all((await game_loc.all()).map(a => a.getAttribute('href')));
   const urls = urlSlugs.map(s => 'https://store.epicgames.com' + s);
+
+  // Free mobile games - https://github.com/vogler/free-games-claimer/issues/474
+  // https://egs-platform-service.store.epicgames.com/api/v2/public/discover/home?count=10&country=DE&locale=en&platform=android&start=0&store=EGS
+  if (cfg.eg_mobile) {
+    console.log('Including mobile games...');
+    const mobileGames = await getGames();
+    urls.push(...mobileGames.map(x => x.url));
+  }
+
   console.log('Free games:', urls);
 
   for (const url of urls) {
