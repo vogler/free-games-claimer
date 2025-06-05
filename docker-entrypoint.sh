@@ -18,26 +18,21 @@ rm -f "/fgc/$BROWSER/SingletonLock"
 # Maybe no longer needed after adding #478's -nolisten unix below
 rm -f /tmp/.X1-lock
 
-# 6000+SERVERNUM is the TCP port Xvfb is listening on:
-# SERVERNUM=$(echo "$DISPLAY" | sed 's/:\([0-9][0-9]*\).*/\1/')
-
-# Options passed directly to the Xvfb server:
-# -ac disables host-based access control mechanisms
-# −screen NUM WxHxD creates the screen and sets its width, height, and depth
-# -nolisten unix tells the server not to use Unix domain sockets, thus avoiding the need to create /tmp/.X11-unix
-
 export DISPLAY=:1 # need to export this, otherwise playwright complains with 'Looks like you launched a headed browser without having a XServer running.'
-Xvfb $DISPLAY -ac -screen 0 "${WIDTH}x${HEIGHT}x${DEPTH}" -nolisten unix +extension GLX +extension RENDER &
-echo "Xvfb display server created screen with resolution ${WIDTH}x${HEIGHT}"
 if [ -z "$VNC_PASSWORD" ]; then
-	pw="-nopw"
+	pw="-SecurityTypes None"
 	pwt="no password!"
 else
-	pw="-passwd $VNC_PASSWORD"
+	# pw="-passwd $VNC_PASSWORD" # not supported anymore
+	pw="-rfbauth ~/.vnc/passwd"
+	mkdir ~/.vnc/
+	echo "$VNC_PASSWORD" | /opt/TurboVNC/bin/vncpasswd -f > ~/.vnc/passwd
 	pwt="with password"
 fi
-x11vnc -display $DISPLAY -forever -shared -rfbport "$VNC_PORT" -bg "$pw" 2>/dev/null 1>&2
-echo "VNC is running on port $VNC_PORT ($pwt)"
+# TurboVNC server replaces Xvfb+x11vnc
+/opt/TurboVNC/bin/vncserver $DISPLAY -geometry "${WIDTH}x${HEIGHT}" -depth ${DEPTH} -rfbport ${VNC_PORT} $pw -vgl -log /fgc/data/TurboVNC.log -xstartup /usr/bin/startxfce4 2>/dev/null # -noxstartup -novnc /usr/share/novnc/
+echo "TurboVNC is running on port $VNC_PORT ($pwt) with resolution ${WIDTH}x${HEIGHT}"
+# TODO keep websockify just for custom NOVNC_PORT? https://www.perplexity.ai/search/how-to-specify-the-novnc-port-rfv96C9tTZufnyFPRye5xA#0
 websockify -D --web "/usr/share/novnc/" "$NOVNC_PORT" "localhost:$VNC_PORT" 2>/dev/null 1>&2 &
 echo "noVNC (VNC via browser) is running on http://localhost:$NOVNC_PORT"
 echo
