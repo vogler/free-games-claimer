@@ -23,7 +23,7 @@ RUN apt-get update \
     # update lists and install
     && apt-get update \
     && apt-get install --no-install-recommends -y \
-      virtualgl turbovnc xfce4 \
+      virtualgl turbovnc ratpoison \
       novnc websockify \
       tini \
       nodejs \
@@ -45,8 +45,7 @@ RUN apt-get update \
       libcairo2 \
       libasound2 \
       # needed for TurboVNC if not installing xfce4:
-      # libxdamage1 \ 
-      # libxrandr2 \
+      libxdamage1 \ 
     && apt-get autoremove -y \
     # https://www.perplexity.ai/search/what-files-do-i-need-to-remove-imjwdphNSUWK98WzsmQswA
     && apt-get clean \
