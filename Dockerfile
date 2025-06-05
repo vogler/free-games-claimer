@@ -1,6 +1,5 @@
-# FROM mcr.microsoft.com/playwright:v1.20.0
-# Partially from https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.jammy
-FROM ubuntu:jammy
+# Partially from https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.noble
+FROM ubuntu:noble
 
 # Configuration variables are at the end!
 
@@ -8,17 +7,17 @@ FROM ubuntu:jammy
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Install nodejs and deps for virtual display, noVNC, chromium, and pip for installing apprise.
+# Install nodejs and deps for virtual display, noVNC, chromium, and pipx for installing apprise.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl ca-certificates gnupg \
     && mkdir -p /etc/apt/keyrings \
     # Node.js
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list \
     # TurboVNC & VirtualGL instead of Xvfb+X11vnc
     && curl --proto "=https" --tlsv1.2 -fsSL https://packagecloud.io/dcommander/virtualgl/gpgkey | gpg --dearmor -o /etc/apt/trusted.gpg.d/VirtualGL.gpg \
     && curl --proto "=https" --tlsv1.2 -fsSL  https://packagecloud.io/dcommander/turbovnc/gpgkey | gpg --dearmor -o /etc/apt/trusted.gpg.d/TurboVNC.gpg \
-    && curl --proto "=https" --tlsv1.2 -fsSL https://raw.githubusercontent.com/VirtualGL/repo/main/VirtualGL.list >  /etc/apt/sources.list.d/VirtualGL.list \
+    && curl --proto "=https" --tlsv1.2 -fsSL https://raw.githubusercontent.com/VirtualGL/repo/main/VirtualGL.list > /etc/apt/sources.list.d/VirtualGL.list \
     && curl --proto "=https" --tlsv1.2 -fsSL https://raw.githubusercontent.com/TurboVNC/repo/main/TurboVNC.list > /etc/apt/sources.list.d/TurboVNC.list \
     # update lists and install
     && apt-get update \
@@ -28,7 +27,7 @@ RUN apt-get update \
       tini \
       nodejs \
       dos2unix \
-      python3-pip \
+      pipx \
     # RUN npx patchright install-deps chromium
     # ^ installing deps manually instead saved ~130MB:
     && apt-get install -y --no-install-recommends \
@@ -43,7 +42,7 @@ RUN apt-get update \
       libgbm1 \
       libpango-1.0-0 \
       libcairo2 \
-      libasound2 \
+      libasound2t64 \
       # needed for TurboVNC if not installing xfce4:
       libxdamage1 \ 
     && apt-get autoremove -y \
@@ -56,7 +55,7 @@ RUN apt-get update \
       /tmp/* \
       /usr/share/doc/* \
     && ln -s /usr/share/novnc/vnc_auto.html /usr/share/novnc/index.html \
-    && pip install --no-cache-dir apprise
+    && pipx install apprise
 
 WORKDIR /fgc
 COPY package*.json ./
