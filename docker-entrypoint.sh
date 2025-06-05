@@ -35,6 +35,6 @@ fi
 echo "TurboVNC is running on port $VNC_PORT ($pwt) with resolution ${WIDTH}x${HEIGHT}"
 # TODO keep websockify just for custom NOVNC_PORT? https://www.perplexity.ai/search/how-to-specify-the-novnc-port-rfv96C9tTZufnyFPRye5xA#0
 websockify -D --web "/usr/share/novnc/" "$NOVNC_PORT" "localhost:$VNC_PORT" 2>/dev/null 1>&2 &
-echo "noVNC (VNC via browser) is running on http://localhost:$NOVNC_PORT"
+echo "noVNC (VNC via browser) is running on http://localhost:$NOVNC_PORT/?autoconnect=true"
 echo
 exec tini -g -- "$@" # https://github.com/krallin/tini/issues/8 node/playwright respond to signals like ctrl-c, but unsure about zombie processes

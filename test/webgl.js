@@ -4,6 +4,7 @@ import { cfg } from '../src/config.js';
 
 const context = await chromium.launchPersistentContext(cfg.dir.browser, {
   headless: false, // don't use cfg.headless headless here since SHOW=0 will lead to captcha
+  viewport: { width: cfg.width, height: cfg.height },
   locale: 'en-US', // ignore OS locale to be sure to have english text for locators
   recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved

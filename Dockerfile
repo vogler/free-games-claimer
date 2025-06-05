@@ -1,4 +1,5 @@
 # Partially from https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.noble
+# Ubuntu 24.04 LTS (Noble Numbat)
 FROM ubuntu:noble
 
 # Configuration variables are at the end!
