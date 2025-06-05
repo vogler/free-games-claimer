@@ -26,7 +26,7 @@ else
 	# pw="-passwd $VNC_PASSWORD" # not supported anymore
 	pw="-rfbauth ~/.vnc/passwd"
 	mkdir ~/.vnc/
-	echo "$VNC_PASSWORD" | /opt/TurboVNC/bin/vncpasswd -f > ~/.vnc/passwd
+	echo "$VNC_PASSWORD" | /opt/TurboVNC/bin/vncpasswd -f >~/.vnc/passwd
 	pwt="with password"
 fi
 # TurboVNC server replaces Xvfb+x11vnc
