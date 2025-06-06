@@ -103,12 +103,12 @@ try {
         console.error('Incorrect response for captcha!');
       }).catch(_ => { });
       await page.fill('#email', email);
-      // await page.click('button[type="submit"]'); login was split in two steps for some time, now email and password are on the same form again
+      await page.click('button#continue'); // login was split in two steps for some time, then email and password on the same form, now two steps again...
       const password = email && (cfg.eg_password || await prompt({ type: 'password', message: 'Enter password' }));
       if (!password) await notifyBrowserLogin();
       else {
         await page.fill('#password', password);
-        await page.click('button[type="submit"]');
+        await page.click('button#sign-in');
       }
       const error = page.locator('#form-error-message');
       error.waitFor().then(async () => {
