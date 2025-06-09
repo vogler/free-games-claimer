@@ -363,7 +363,7 @@ try {
   // https://github.com/vogler/free-games-claimer/issues/55
   if (cfg.pg_claimdlc) {
     console.log('Trying to claim in-game content...');
-    await page.click('button[data-type="InGameLoot"]');
+    await page.click('button[data-type="All"]');
     const loot = page.locator('div[data-a-target="offer-list-IN_GAME_LOOT"]');
     await loot.waitFor();
 
