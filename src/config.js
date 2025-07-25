@@ -41,6 +41,21 @@ export const cfg = {
   gog_email: process.env.GOG_EMAIL || process.env.EMAIL,
   gog_password: process.env.GOG_PASSWORD || process.env.PASSWORD,
   gog_newsletter: process.env.GOG_NEWSLETTER == '1', // do not unsubscribe from newsletter after claiming a game
+  // OTP only via GOG_EMAIL, can't add app...
+  // auth xbox
+  xbox_email: process.env.XBOX_EMAIL || process.env.EMAIL,
+  xbox_password: process.env.XBOX_PASSWORD || process.env.PASSWORD,
+  xbox_otpkey: process.env.XBOX_OTPKEY,
+  // experimmental - likely to change
+  pg_redeem: process.env.PG_REDEEM == '1', // prime-gaming: redeem keys on external stores
+  pg_claimdlc: process.env.PG_CLAIMDLC == '1', // prime-gaming: claim in-game content
+
+  steam_username: process.env.STEAM_USERNAME,
+  steam_password: process.env.STEAM_PASSWORD || process.env.PASSWORD,
+  steam_json: process.env.STEAM_JSON == '0',
+  steam_json_url: process.env.STEAM_JSON_URL || 'https://raw.githubusercontent.com/vogler/free-games-claimer/main/steam-games.json',
+  steam_gamerpower: true,
+  steam_gamerpower_url: process.env.STEAM_GAMERPOWER_URL || 'https://www.gamerpower.com/api/giveaways?platform=steam&type=game',
   // auth AliExpress
   ae_email: process.env.AE_EMAIL || process.env.EMAIL,
   ae_password: process.env.AE_PASSWORD || process.env.PASSWORD,
