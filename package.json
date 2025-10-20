@@ -27,7 +27,7 @@
     "fingerprint-injector": "^2.1.66",
     "lowdb": "^7.0.1",
     "otplib": "^12.0.1",
-    "playwright-firefox": "^1.52.0",
+    "playwright-firefox": "^1.56.1",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "devDependencies": {
