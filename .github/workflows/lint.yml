@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0
 
       - name: Super-linter
-        uses: super-linter/super-linter/slim@v7.4.0 # x-release-please-version
+        uses: super-linter/super-linter/slim@v8.2.1 # x-release-please-version
         # TODO need to create problem matchers for each linter? https://github.com/rhysd/actionlint/blob/v1.7.7/docs/usage.md#problem-matchers
         env:
           # To report GitHub Actions status checks
