@@ -21,7 +21,7 @@ jobs:
         # Disabling shallow clone is recommended for improving relevancy of reporting. Otherwise sonarcloud will show a warning.
         fetch-depth: 0
     -
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         cache: 'npm'
     -
