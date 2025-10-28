@@ -100,10 +100,8 @@ try {
       else {
         await page.fill('#password', password);
         console.info('Filled in email and password.');
-        await page.waitForTimeout(2000); // Waits for 2 seconds
         console.info('Submitting login form...');
         await page.click('button[type="submit"]');
-        await page.waitForTimeout(5000); // Waits for 2 seconds
       }
       // find h1 with text 'Is this the right account?'
       const accountHeader = page.locator('h1:has-text("Is this the right account?")');
@@ -123,7 +121,6 @@ try {
         // TODO locator for text (email or app?)
         const otp = cfg.eg_otpkey && authenticator.generate(cfg.eg_otpkey) || await prompt({ type: 'text', message: 'Enter two-factor sign in code', validate: n => n.toString().length == 6 || 'The code must be 6 digits!' }); // can't use type: 'number' since it strips away leading zeros and codes sometimes have them
         await page.locator('input[name="code-input-0"]').pressSequentially(otp.toString());
-        await page.waitForTimeout(3000); // Waits for 3 seconds
         await page.click('button[type="submit"]');
       }).catch(_ => { });
     }
@@ -138,13 +135,13 @@ try {
 
   // Detect free games
   const game_loc = page.locator('a:has(span:text-is("Free Now"))');
-  await game_loc.last().waitFor().catch(_ => {
-    // rarely there are no free games available -> catch Timeout
-    // TODO would be better to wait for alternative like 'coming soon' instead of waiting for timeout
-    // see https://github.com/vogler/free-games-claimer/issues/210#issuecomment-1727420943
-    console.error('Seems like currently there are no free games available in your region...');
-    // urls below should then be an empty list
-  });
+  // await game_loc.last().waitFor().catch(_ => {
+  //   // rarely there are no free games available -> catch Timeout
+  //   // TODO would be better to wait for alternative like 'coming soon' instead of waiting for timeout
+  //   // see https://github.com/vogler/free-games-claimer/issues/210#issuecomment-1727420943
+  //   console.error('Seems like currently there are no free games available in your region...');
+  //   // urls below should then be an empty list
+  // });
   // clicking on `game_sel` sometimes led to a 404, see https://github.com/vogler/free-games-claimer/issues/25
   // debug showed that in those cases the href was still correct, so we `goto` the urls instead of clicking.
   // Alternative: parse the json loaded to build the page https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions
