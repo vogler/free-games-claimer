@@ -1,4 +1,4 @@
-import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
+import { chromium } from 'patchright';
 import chalk from 'chalk';
 import { resolve, jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
@@ -17,13 +17,10 @@ if (cfg.width < 1280) { // otherwise 'Sign in' and #menuUsername are hidden (but
 }
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await firefox.launchPersistentContext(cfg.dir.browser, {
-  headless: cfg.headless,
-  viewport: { width: cfg.width, height: cfg.height },
-  locale: 'en-US', // ignore OS locale to be sure to have english text for locators -> done via /en in URL
-  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
-  recordHar: cfg.record ? { path: `data/record/gog-${filenamify(datetime())}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
-  handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
+const context = await chromium.launchPersistentContext(cfg.dir.browser, {
+  channel: 'chrome',
+  headless: false,
+  viewport: null,
 });
 
 handleSIGINT(context);

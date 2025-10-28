@@ -1,4 +1,4 @@
-import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
+import { chromium } from 'patchright';
 import { authenticator } from 'otplib';
 import chalk from 'chalk';
 import { resolve, jsonDb, datetime, stealth, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
@@ -14,13 +14,10 @@ console.log(datetime(), 'started checking prime-gaming');
 const db = await jsonDb('prime-gaming.json', {});
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await firefox.launchPersistentContext(cfg.dir.browser, {
-  headless: cfg.headless,
-  viewport: { width: cfg.width, height: cfg.height },
-  locale: 'en-US', // ignore OS locale to be sure to have english text for locators
-  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
-  recordHar: cfg.record ? { path: `data/record/pg-${filenamify(datetime())}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
-  handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
+const context = await chromium.launchPersistentContext(cfg.dir.browser, {
+  channel: 'chrome',
+  headless: false,
+  viewport: null,
 });
 
 handleSIGINT(context);
@@ -145,11 +142,11 @@ try {
     const [p, isNew] = await sameOrNewPage(url);
     const dueDateOrg = await p.locator('.availability-date .tw-bold').innerText();
     const dueDate = new Date(Date.parse(dueDateOrg + ' 17:00'));
-    const daysLeft = (dueDate.getTime() - Date.now())/1000/60/60/24;
+    const daysLeft = (dueDate.getTime() - Date.now()) / 1000 / 60 / 60 / 24;
     console.log(' ', await p.locator('.availability-date').innerText(), '->', daysLeft.toFixed(2));
     if (isNew) await p.close();
     return daysLeft > cfg.pg_timeLeft;
-  }
+  };
   console.log('\nNumber of free unclaimed games (Prime Gaming):', internal.length);
   // claim games in internal store
   for (const card of internal) {
@@ -366,7 +363,7 @@ try {
     await loot.waitFor();
 
     process.stdout.write('Loading all DLCs on page...');
-    await scrollUntilStable(() => loot.locator('[data-a-target="item-card"]').count())
+    await scrollUntilStable(() => loot.locator('[data-a-target="item-card"]').count());
 
     console.log('\nNumber of already claimed DLC:', await loot.locator('p:has-text("Collected")').count());
 
