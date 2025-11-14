@@ -59,7 +59,7 @@ COPY package*.json ./
 RUN npm install
 # Old: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD + install firefox (had to be done after `npm install` to get the correct version). Now: playwright-firefox as npm dep and `npm install` will only install that.
 # From 1.38 Playwright will no longer install browser automatically for playwright, but apparently still for playwright-firefox: https://github.com/microsoft/playwright/releases/tag/v1.38.0
-# RUN npx playwright install firefox
+RUN npx playwright install chrome
 
 COPY . .
 
@@ -101,4 +101,5 @@ ENV SHOW 1
 # Script to setup display server & VNC is always executed.
 ENTRYPOINT ["docker-entrypoint.sh"]
 # Default command to run. This is replaced by appending own command, e.g. `docker run ... node prime-gaming` to only run this script.
-CMD node epic-games; node prime-gaming; node gog
+# CMD node epic-games; node prime-gaming; node gog
+CMD node epic-games;
