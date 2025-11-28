@@ -58,7 +58,7 @@ try {
       // await page.check('[name=rememberMe]'); // no longer exists
       await page.click('input[type="submit"]');
       page.waitForURL('**/ap/signin**').then(async () => { // check for wrong credentials
-        const error = await page.locator('.a-alert-content').first().innerText();
+        const error = await page.locator('a-alert-content').first().innerText();
         if (!error.trim.length) return;
         console.error('Login error:', error);
         await notify(`prime-gaming: login: ${error}`);
