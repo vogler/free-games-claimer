@@ -95,7 +95,7 @@ try {
   try {
     const userElement = await page.$('[data-a-target="FirstName"]');
     if (userElement) {
-      const user = await userElement.innerText();
+      const user = await userElement.evaluate(el => el.textContent.trim());
       console.log(`Signed in as ${user}`);
     } else {
       console.warn('User name element not found.');
