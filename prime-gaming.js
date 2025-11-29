@@ -92,8 +92,17 @@ try {
     await page.waitForURL(`${BASE_URL}/claims/home?signedIn=true`);
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
-  user = await page.locator('[data-a-target="user-dropdown-first-name-text"]').first().innerText();
-  console.log(`Signed in as ${user}`);
+try {
+  const userLocator = page.locator('[data-a-target="FirstName"]').first();
+  if (await userLocator.count() > 0) {
+    const user = await userLocator.innerText();
+    console.log(`Signed in as ${user}`);
+  } else {
+    console.warn("User dropdown element not found. Possibly not signed in.");
+  }
+} catch (err) {
+  console.error("Error while trying to read user name:", err);
+}
   // await page.click('button[aria-label="User dropdown and more options"]');
   // const twitch = await page.locator('[data-a-target="TwitchDisplayName"]').first().innerText();
   // console.log(`Twitch user name is ${twitch}`);
