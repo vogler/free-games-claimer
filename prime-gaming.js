@@ -93,6 +93,9 @@ try {
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
   try {
+    // Open dropdown so element is in the DOM
+    await page.locator('[data-a-target="amazon-dropdown-header-interactable"]').click();
+    // Now query username
     const userElement = await page.$('[data-a-target="FirstName"]');
     if (userElement) {
       const user = await userElement.evaluate(el => el.textContent.trim());
