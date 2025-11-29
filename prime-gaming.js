@@ -93,15 +93,21 @@ try {
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
   try {
-    // Open dropdown so element is in the DOM
-    await page.locator('[data-a-target="amazon-dropdown-header-interactable"]').click();
+    // Click the profile dropdown to reveal the menu
+    const dropdownButton = page.locator('[data-a-target="amazon-dropdown-header-interactable"]');
+    if (await dropdownButton.isVisible()) {
+      await dropdownButton.click();
+      // Wait for the FirstName element to be attached
+      await page.waitForSelector('[data-a-target="FirstName"]', { timeout: 5000 });
+    }
     // Now query username
     const userElement = await page.$('[data-a-target="FirstName"]');
     if (userElement) {
       const user = await userElement.evaluate(el => el.textContent.trim());
       console.log(`Signed in as ${user}`);
+      db.data[user] ||= {};
     } else {
-      console.warn('User name element not found.');
+      console.warn('User name element not found even after opening dropdown.');
     }
   } catch (err) {
     console.error('Error while trying to read user name:', err);
