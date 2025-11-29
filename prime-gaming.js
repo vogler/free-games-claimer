@@ -93,12 +93,12 @@ try {
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
   try {
-    const userLocator = page.locator('[data-a-target="FirstName"]');
-    if (await userLocator.isVisible()) {
-      const user = await userLocator.innerText();
+    const userElement = await page.$('[data-a-target="FirstName"]');
+    if (userElement) {
+      const user = await userElement.innerText();
       console.log(`Signed in as ${user}`);
     } else {
-      console.warn('User name element not visible. Possibly not signed in.');
+      console.warn('User name element not found.');
     }
   } catch (err) {
     console.error('Error while trying to read user name:', err);
