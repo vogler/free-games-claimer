@@ -82,7 +82,7 @@ try {
         process.exit(1);
       }
     }
-    await page.waitForURL('https://gaming.amazon.com/home?signedIn=true');
+    await page.waitForURL(/https:\/\/(gaming\.amazon\.com\/home|luna\.amazon\..*\/claims\/home)\?.*signedIn=true/);
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
   user = await page.locator('[data-a-target="user-dropdown-first-name-text"]').first().innerText();
@@ -131,6 +131,7 @@ try {
   // bottom to top: oldest to newest games
   internal.reverse();
   external.reverse();
+  const origin = new URL(page.url()).origin;
   const sameOrNewPage = async url => new Promise(async (resolve, _reject) => {
     const isNew = page.url() != url;
     let p = page;
@@ -156,7 +157,7 @@ try {
     await card.scrollIntoViewIfNeeded();
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     const slug = await (await card.$('a')).getAttribute('href');
-    const url = 'https://gaming.amazon.com' + slug.split('?')[0];
+    const url = slug.startsWith('http') ? slug : origin + slug.split('?')[0];
     console.log('Current free game:', chalk.blue(title));
     if (cfg.pg_timeLeft && await skipBasedOnTime(url)) continue;
     if (cfg.dryrun) continue;
@@ -174,7 +175,7 @@ try {
   for (const card of external) { // need to get data incl. URLs in this loop and then navigate in another, otherwise .all() would update after coming back and .elementHandles() like above would lead to error due to page navigation: elementHandle.$: Protocol error (Page.adoptNode)
     const title = await card.locator('.item-card-details__body__primary').innerText();
     const slug = await card.locator('a:has-text("Claim")').first().getAttribute('href');
-    const url = 'https://gaming.amazon.com' + slug.split('?')[0];
+    const url = slug.startsWith('http') ? slug : origin + slug.split('?')[0];
     // await (await card.$('text=Claim')).click(); // goes to URL of game, no need to wait
     external_info.push({ title, url });
   }
