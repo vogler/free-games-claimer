@@ -173,8 +173,7 @@ try {
         const gpSlug = gpMatch ? gpMatch[1] : gpUrl.split('/').pop();
         const found = url && url.includes(gpSlug);
         if (!found) {
-          console.error(`[GamerPower] ERROR: ${gpUrl} does NOT match GOG's current giveaway!`);
-          console.error(`[GamerPower] GOG's current giveaway: ${url}`);
+          throw new Error(`[GamerPower] ${gpUrl} does NOT match GOG's current giveaway: ${url}`);
         } else {
           console.log(`[GamerPower] OK: ${gpUrl}`);
         }

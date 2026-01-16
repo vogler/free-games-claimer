@@ -222,8 +222,7 @@ try {
       const gpUrlNormalized = gpUrl.split('?')[0].replace(/\/$/, '');
       const found = urls.some(url => url.split('?')[0].replace(/\/$/, '') === gpUrlNormalized);
       if (!found) {
-        console.error(`[GamerPower] ERROR: ${gpUrl} is NOT in Epic's free games list!`);
-        console.error(`[GamerPower] Epic's free games: ${urls.join(', ')}`);
+        throw new Error(`[GamerPower] ${gpUrl} is NOT in Epic's free games list! Epic's free games: ${urls.join(', ')}`);
       } else {
         console.log(`[GamerPower] OK: ${gpUrl}`);
       }
