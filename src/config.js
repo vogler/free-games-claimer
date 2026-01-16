@@ -35,6 +35,7 @@ export const cfg = {
   eg_otpkey: process.env.EG_OTPKEY,
   eg_parentalpin: process.env.EG_PARENTALPIN,
   eg_mobile: process.env.EG_MOBILE != '0', // claim mobile games
+  eg_check_gp: process.env.EG_CHECK_GP == '1', // check GamerPower for free Epic Games
   // auth prime-gaming
   pg_email: process.env.PG_EMAIL || process.env.EMAIL,
   pg_password: process.env.PG_PASSWORD || process.env.PASSWORD,

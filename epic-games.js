@@ -7,17 +7,73 @@ import { existsSync, writeFileSync } from 'fs';
 import { resolve, jsonDb, datetime, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
 import { getMobileGames } from './src/epic-games-mobile.js';
+import { gpUrlToStoreUrls } from './src/gp.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'epic-games', ...a);
 
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
 const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
+const GAMERPOWER_API_URL = 'https://www.gamerpower.com/api/giveaways?platform=epic-games-store&type=game';
 
 console.log(datetime(), 'started checking epic-games');
 
 const db = await jsonDb('epic-games.json', {});
 
+function extractGameIdFromUrl(url) {
+  // Epic Games URLs look like: https://store.epicgames.com/en-US/p/game-name
+  const match = url.match(/\/p\/([^/?]+)/);
+  return match ? match[1] : url.split('/').pop();
+}
+
+function isGpGameAlreadyClaimed(storeUrl) {
+  const game_id = extractGameIdFromUrl(storeUrl);
+
+  // Check if any user has claimed this game
+  for (const [username, games] of Object.entries(db.data)) {
+    if (games[game_id]?.status === 'claimed' || games[game_id]?.status === 'existed') {
+      console.log(`[GamerPower] Already claimed by ${username}: ${storeUrl} -> ${game_id}`);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// ============================================================================
+// Check GamerPower for unclaimed games (before starting browser)
+// ============================================================================
+
+async function getUnclaimedGpUrls() {
+  if (!cfg.eg_check_gp) return [];
+
+  // gpUrlToStoreUrls handles fetching API and resolving URLs (opens browser only if needed)
+  const allGpGames = await gpUrlToStoreUrls(GAMERPOWER_API_URL);
+
+  // Filter to Epic Games store URLs only
+  const epicGames = allGpGames.filter(g => g.storeUrl.includes('store.epicgames.com'));
+  console.log(`[GamerPower] ${epicGames.length} Epic Games store URLs`);
+
+  // Filter out already claimed games
+  const unclaimed = epicGames.filter(g => !isGpGameAlreadyClaimed(g.storeUrl));
+  console.log(`[GamerPower] ${unclaimed.length} unclaimed games`);
+
+  return unclaimed.map(g => g.storeUrl);
+}
+
+// ============================================================================
+// Main Script
+// ============================================================================
+
 if (cfg.time) console.time('startup');
+
+// Check GamerPower first (before starting main browser)
+const gpUrls = await getUnclaimedGpUrls();
+
+// If EG_CHECK_GP is enabled and no unclaimed games, exit early without opening browser
+if (cfg.eg_check_gp && gpUrls.length === 0) {
+  console.log('No unclaimed GamerPower giveaways. Exiting.');
+  process.exit(0);
+}
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
 const context = await chromium.launchPersistentContext(cfg.dir.browser, {
@@ -156,6 +212,22 @@ try {
     console.log('Including mobile games...');
     const mobileGames = await getMobileGames(context);
     urls.push(...mobileGames.map(x => x.url));
+  }
+
+  // GamerPower games - verify they are included in the free games list
+  if (cfg.eg_check_gp && gpUrls.length > 0) {
+    console.log(`Verifying ${gpUrls.length} GamerPower giveaways are in Epic's free games list...`);
+    for (const gpUrl of gpUrls) {
+      // Normalize URLs for comparison (remove trailing slashes, query params)
+      const gpUrlNormalized = gpUrl.split('?')[0].replace(/\/$/, '');
+      const found = urls.some(url => url.split('?')[0].replace(/\/$/, '') === gpUrlNormalized);
+      if (!found) {
+        console.error(`[GamerPower] ERROR: ${gpUrl} is NOT in Epic's free games list!`);
+        console.error(`[GamerPower] Epic's free games: ${urls.join(', ')}`);
+      } else {
+        console.log(`[GamerPower] OK: ${gpUrl}`);
+      }
+    }
   }
 
   console.log('Free games:', urls);
