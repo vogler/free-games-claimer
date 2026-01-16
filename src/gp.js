@@ -21,9 +21,20 @@ async function fetchGamerPowerGiveaways(apiUrl) {
     throw new Error(`Failed to fetch GamerPower data: ${response.statusText}`);
   }
 
-  const items = await response.json();
-  console.log(`[GamerPower] Fetched ${items.length} giveaways`);
-  return items;
+  const data = await response.json();
+
+  // API returns {status: 0, status_message: "..."} when no giveaways available
+  if (!Array.isArray(data)) {
+    const NO_GIVEAWAYS_MSG = 'No active giveaways available at the moment, please try again later.';
+    if (data.status_message === NO_GIVEAWAYS_MSG) {
+      console.log('[GamerPower] No active giveaways available');
+      return [];
+    }
+    throw new Error(`GamerPower API error: ${data.status_message || JSON.stringify(data)}`);
+  }
+
+  console.log(`[GamerPower] Fetched ${data.length} giveaways`);
+  return data;
 }
 
 /**
