@@ -108,6 +108,7 @@ Available options/variables and their default values:
 | GOG_EMAIL      |              | GOG email for login. Overrides EMAIL.                                                                                        |
 | GOG_PASSWORD   |              | GOG password for login. Overrides PASSWORD.                                                                                  |
 | GOG_NEWSLETTER | 0            | Do not unsubscribe from newsletter after claiming a game if 1.                                                               |
+| GOG_CHECK_GP   | 0            | Check GamerPower API before opening browser. Exits early if no unclaimed giveaways.                                          |
 | LG_EMAIL       |              | Legacy Games: email to use for redeeming (if not set, defaults to PG_EMAIL).                                                 |
 
 See `src/config.js` for all options.
