@@ -8,12 +8,14 @@ import { resolve, jsonDb, datetime, filenamify, prompt, confirm, notify, html_ga
 import { cfg } from './src/config.js';
 import { getMobileGames } from './src/epic-games-mobile.js';
 import { gpUrlToStoreUrls } from './src/gp.js';
+import { getUsername, setUsername, writeAccountsDb } from './src/accounts.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'epic-games', ...a);
 
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
 const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
 const GAMERPOWER_API_URL = 'https://www.gamerpower.com/api/giveaways?platform=epic-games-store&type=game';
+const PLATFORM = 'epic-games';
 
 console.log(datetime(), 'started checking epic-games');
 
@@ -26,16 +28,17 @@ function extractGameIdFromUrl(url) {
 }
 
 function isGpGameAlreadyClaimed(storeUrl) {
+  const username = getUsername(PLATFORM, cfg.eg_email);
+  if (!username) return false; // Username not known yet
+  
   const game_id = extractGameIdFromUrl(storeUrl);
-
-  // Check if any user has claimed this game
-  for (const [username, games] of Object.entries(db.data)) {
-    if (games[game_id]?.status === 'claimed' || games[game_id]?.status === 'existed') {
-      console.log(`[GamerPower] Already claimed by ${username}: ${storeUrl} -> ${game_id}`);
-      return true;
-    }
+  const games = db.data[username];
+  
+  if (games?.[game_id]?.status === 'claimed' || games?.[game_id]?.status === 'existed') {
+    console.log(`[GamerPower] Already claimed by ${username}: ${storeUrl} -> ${game_id}`);
+    return true;
   }
-
+  
   return false;
 }
 
@@ -56,7 +59,7 @@ async function getUnclaimedGpUrls() {
   // Filter out already claimed games
   const unclaimed = epicGames.filter(g => !isGpGameAlreadyClaimed(g.storeUrl));
   console.log(`[GamerPower] ${unclaimed.length} unclaimed games`);
-
+  
   return unclaimed.map(g => g.storeUrl);
 }
 
@@ -66,10 +69,15 @@ async function getUnclaimedGpUrls() {
 
 if (cfg.time) console.time('startup');
 
+// EG_CHECK_GP requires EG_EMAIL to be set for claimed status tracking
+if (cfg.eg_check_gp && !cfg.eg_email) {
+  throw new Error('EG_CHECK_GP requires EG_EMAIL to be set');
+}
+
 // Check GamerPower first (before starting main browser)
 const gpUrls = await getUnclaimedGpUrls();
 
-// If EG_CHECK_GP is enabled and no unclaimed games, exit early without opening browser
+// If EG_CHECK_GP is enabled and no unclaimed giveaways, exit early without opening browser
 if (cfg.eg_check_gp && gpUrls.length === 0) {
   console.log('No unclaimed GamerPower giveaways. Exiting.');
   process.exit(0);
@@ -186,7 +194,14 @@ try {
   }
   user = await page.locator('egs-navigation').getAttribute('displayname'); // 'null' if !isloggedin
   console.log(`Signed in as ${user}`);
+  
+  // Save email -> username mapping if email is configured
+  if (cfg.eg_email) {
+    setUsername(PLATFORM, cfg.eg_email, user);
+    await writeAccountsDb();
+  }
   db.data[user] ||= {};
+  
   if (cfg.time) console.timeEnd('login');
   if (cfg.time) console.time('claim all games');
 

@@ -4,31 +4,37 @@ import chalk from 'chalk';
 import { resolve, jsonDb, datetime, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
 import { gpUrlToStoreUrls } from './src/gp.js';
+import { getUsername, setUsername, writeAccountsDb } from './src/accounts.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'gog', ...a);
 
 const URL_CLAIM = 'https://www.gog.com/en';
 const GAMERPOWER_API_URL = 'https://www.gamerpower.com/api/giveaways?platform=gog&type=game';
+const PLATFORM = 'gog';
 
 console.log(datetime(), 'started checking gog');
 
 const db = await jsonDb('gog.json', {});
 
 function isGpGameAlreadyClaimed(storeUrl) {
+  const username = getUsername(PLATFORM, cfg.gog_email);
+  if (!username) return false; // Username not known yet
+  
   // GOG URLs look like: https://www.gog.com/en/game/game-name
   const match = storeUrl.match(/\/game\/([^/?]+)/);
   const game_id = match ? match[1] : storeUrl.split('/').pop();
-
-  // Check if any user has claimed this game (GOG db uses title as key)
-  for (const [username, games] of Object.entries(db.data)) {
-    for (const [title, info] of Object.entries(games)) {
-      if (info.url?.includes(game_id) && (info.status === 'claimed' || info.status === 'existed')) {
-        console.log(`[GamerPower] Already claimed by ${username}: ${storeUrl}`);
-        return true;
-      }
+  
+  // GOG db uses title as key, check if any game URL contains the game_id
+  const games = db.data[username];
+  if (!games) return false;
+  
+  for (const [title, info] of Object.entries(games)) {
+    if (info.url?.includes(game_id) && (info.status === 'claimed' || info.status === 'existed')) {
+      console.log(`[GamerPower] Already claimed by ${username}: ${storeUrl}`);
+      return true;
     }
   }
-
+  
   return false;
 }
 
@@ -49,10 +55,15 @@ async function getUnclaimedGpUrls() {
   return unclaimed.map(g => g.storeUrl);
 }
 
+// GOG_CHECK_GP requires GOG_EMAIL to be set for claimed status tracking
+if (cfg.gog_check_gp && !cfg.gog_email) {
+  throw new Error('GOG_CHECK_GP requires GOG_EMAIL to be set');
+}
+
 // Check GamerPower first (before starting browser)
 const gpUrls = await getUnclaimedGpUrls();
 
-// If GOG_CHECK_GP is enabled and no unclaimed games, exit early without opening browser
+// If GOG_CHECK_GP is enabled and no unclaimed giveaways, exit early without opening browser
 if (cfg.gog_check_gp && gpUrls.length === 0) {
   console.log('No unclaimed GamerPower giveaways. Exiting.');
   process.exit(0);
@@ -151,6 +162,12 @@ try {
   }
   user = await page.locator('#menuUsername').first().textContent(); // innerText is uppercase due to styling!
   console.log(`Signed in as ${user}`);
+  
+  // Save email -> username mapping if email is configured
+  if (cfg.gog_email) {
+    setUsername(PLATFORM, cfg.gog_email, user);
+    await writeAccountsDb();
+  }
   db.data[user] ||= {};
 
   const banner = page.locator('#giveaway');
