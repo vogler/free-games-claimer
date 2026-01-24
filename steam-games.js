@@ -97,9 +97,19 @@ async function fetchGamerPowerGiveaways() {
     throw new Error(`Failed to fetch GamerPower data: ${response.statusText}`);
   }
 
-  const items = await response.json();
-  console.log(`Fetched ${items.length} giveaways from GamerPower`);
-  return items;
+  const data = await response.json();
+
+  // Handle "no active giveaways" response: {"status":0,"status_message":"No active giveaways available..."}
+  if (!Array.isArray(data)) {
+    if (data.status === 0 && data.status_message) {
+      console.log(`GamerPower: ${data.status_message}`);
+      return [];
+    }
+    throw new Error(`Unexpected GamerPower response: ${JSON.stringify(data)}`);
+  }
+
+  console.log(`Fetched ${data.length} giveaways from GamerPower`);
+  return data;
 }
 
 function filterUnclaimedGiveaways(giveaways) {
