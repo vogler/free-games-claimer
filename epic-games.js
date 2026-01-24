@@ -27,18 +27,22 @@ function extractGameIdFromUrl(url) {
   return match ? match[1] : url.split('/').pop();
 }
 
+// Statuses that indicate a game doesn't need to be claimed
+const DONE_STATUSES = ['claimed', 'existed', 'manual', 'unavailable-in-region'];
+
 function isGpGameAlreadyClaimed(storeUrl) {
   const username = getUsername(PLATFORM, cfg.eg_email);
   if (!username) return false; // Username not known yet
-  
+
   const game_id = extractGameIdFromUrl(storeUrl);
   const games = db.data[username];
-  
-  if (games?.[game_id]?.status === 'claimed' || games?.[game_id]?.status === 'existed') {
-    console.log(`[GamerPower] Already claimed by ${username}: ${storeUrl} -> ${game_id}`);
+  const status = games?.[game_id]?.status;
+
+  if (status && DONE_STATUSES.includes(status)) {
+    console.log(`[GamerPower] Already claimed by ${username}: ${storeUrl} -> ${game_id} (${status})`);
     return true;
   }
-  
+
   return false;
 }
 
@@ -59,7 +63,7 @@ async function getUnclaimedGpUrls() {
   // Filter out already claimed games
   const unclaimed = epicGames.filter(g => !isGpGameAlreadyClaimed(g.storeUrl));
   console.log(`[GamerPower] ${unclaimed.length} unclaimed games`);
-  
+
   return unclaimed.map(g => g.storeUrl);
 }
 
@@ -194,14 +198,14 @@ try {
   }
   user = await page.locator('egs-navigation').getAttribute('displayname'); // 'null' if !isloggedin
   console.log(`Signed in as ${user}`);
-  
+
   // Save email -> username mapping if email is configured
   if (cfg.eg_email) {
     setUsername(PLATFORM, cfg.eg_email, user);
     await writeAccountsDb();
   }
   db.data[user] ||= {};
-  
+
   if (cfg.time) console.timeEnd('login');
   if (cfg.time) console.time('claim all games');
 
@@ -248,8 +252,10 @@ try {
 
   for (const url of urls) {
     if (cfg.time) console.time('claim game');
-    if (db.data[user][url.split('/').pop()]?.status == 'claimed') {
-      console.log('Already claimed, skipping:', url);
+    const urlGameId = url.split('/').pop();
+    const status = db.data[user][urlGameId]?.status;
+    if (status && DONE_STATUSES.includes(status)) {
+      console.log(`Already ${status}, skipping:`, url);
       if (cfg.time) console.timeEnd('claim game');
       continue;
     }
