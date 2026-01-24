@@ -47,16 +47,31 @@ function getCachedUrl(giveawayUrl) {
 }
 
 /**
+ * Strips query parameters from a URL
+ * @param {string} url - The URL to clean
+ * @returns {string} - URL without query parameters
+ */
+function stripQueryParams(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.origin + parsed.pathname;
+  } catch {
+    return url.split('?')[0];
+  }
+}
+
+/**
  * Caches a resolved giveaway URL
  * @param {string} giveawayUrl - The GamerPower open_giveaway_url
- * @param {string} storeUrl - The resolved store URL
+ * @param {string} storeUrl - The resolved store URL (will be cleaned of query params)
  */
 function cacheUrl(giveawayUrl, storeUrl) {
+  const cleanUrl = stripQueryParams(storeUrl);
   gpCache.data[giveawayUrl] = {
-    storeUrl,
+    storeUrl: cleanUrl,
     time: datetime()
   };
-  console.log(`[GamerPower] Cached: ${giveawayUrl} -> ${storeUrl}`);
+  console.log(`[GamerPower] Cached: ${giveawayUrl} -> ${cleanUrl}`);
 }
 
 /**
