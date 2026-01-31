@@ -14,6 +14,7 @@ const screenshot = (...a) => resolve(cfg.dir.screenshots, 'epic-games', ...a);
 
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
 const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
+// https://www.gamerpower.com/giveaways/epic-store/free-games
 const GAMERPOWER_API_URL = 'https://www.gamerpower.com/api/giveaways?platform=epic-games-store&type=game';
 const PLATFORM = 'epic-games';
 
