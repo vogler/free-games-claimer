@@ -31,6 +31,9 @@ function extractGameIdFromUrl(url) {
 // Statuses that indicate a game doesn't need to be claimed
 const DONE_STATUSES = ['claimed', 'existed', 'manual', 'unavailable-in-region'];
 
+// Statuses that indicate we should skip during GamerPower pre-check (but still retry gp-unavailable-in-region)
+const GP_DONE_STATUSES = ['claimed', 'existed', 'manual'];
+
 function isGpGameAlreadyClaimed(storeUrl) {
   const username = getUsername(PLATFORM, cfg.eg_email);
   if (!username) return false; // Username not known yet
@@ -39,7 +42,7 @@ function isGpGameAlreadyClaimed(storeUrl) {
   const games = db.data[username];
   const status = games?.[game_id]?.status;
 
-  if (status && DONE_STATUSES.includes(status)) {
+  if (status && GP_DONE_STATUSES.includes(status)) {
     console.log(`[GamerPower] Already claimed by ${username}: ${storeUrl} -> ${game_id} (${status})`);
     return true;
   }
@@ -236,13 +239,31 @@ try {
 
   // GamerPower games - verify they are included in the free games list
   if (cfg.eg_check_gp && gpUrls.length > 0) {
-    console.log(`Verifying ${gpUrls.length} GamerPower giveaways are in Epic's free games list...`);
+    console.log(`Verifying ${gpUrls.length} GamerPower giveaways...`);
     for (const gpUrl of gpUrls) {
       // Normalize URLs for comparison (remove trailing slashes, query params)
       const gpUrlNormalized = gpUrl.split('?')[0].replace(/\/$/, '');
       const found = urls.some(url => url.split('?')[0].replace(/\/$/, '') === gpUrlNormalized);
       if (!found) {
-        throw new Error(`[GamerPower] ${gpUrl} is NOT in Epic's free games list! Epic's free games: ${urls.join(', ')}`);
+        // Not in Epic's free games list - check if it's region/platform blocked
+        console.log(`[GamerPower] ${gpUrl} is NOT in Epic's free games list, checking availability...`);
+        await page.goto(gpUrl, { waitUntil: 'domcontentloaded' });
+
+        // Check for "unavailable in your platform or region" warning
+        const unavailableWarning = page.locator('[data-testid="WarningLayout"] h1:has-text("unavailable")');
+        if (await unavailableWarning.count() > 0) {
+          const warningText = await unavailableWarning.innerText();
+          console.warn(`[GamerPower] WARNING: ${gpUrl} - ${warningText}`);
+          // Mark as unavailable in db so we track it, but don't fail
+          const gpGameId = gpUrl.split('/').pop();
+          db.data[user][gpGameId] ||= { title: gpGameId, time: datetime(), url: gpUrl };
+          db.data[user][gpGameId].status = 'gp-unavailable-in-region';
+          continue; // Skip this game but continue with others
+        }
+
+        // If no warning found, add it to the urls list to attempt claiming
+        console.log(`[GamerPower] Adding ${gpUrl} to claim list (not in Epic's free games list but available)`);
+        urls.push(gpUrl);
       } else {
         console.log(`[GamerPower] OK: ${gpUrl}`);
       }
