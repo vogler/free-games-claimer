@@ -5,14 +5,14 @@
 import { chromium } from 'patchright';
 import { authenticator } from 'otplib';
 import path from 'path';
-import { writeFileSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
 import { resolve, jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'unrealengine', ...a);
 
-const URL_CLAIM = 'https://www.unrealengine.com/marketplace/en-US/assets?count=20&sortBy=effectiveDate&sortDir=DESC&start=0&tag=4910';
-const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
+const URL_CLAIM = 'https://www.fab.com/limited-time-free';
+const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + encodeURIComponent(URL_CLAIM);
 
 console.log(datetime(), 'started checking unrealengine');
 
@@ -48,9 +48,22 @@ try {
 
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // 'domcontentloaded' faster than default 'load' https://playwright.dev/docs/api/class-page#page-goto
 
-  await page.waitForResponse(r => r.request().method() == 'POST' && r.url().startsWith('https://graphql.unrealengine.com/ue/graphql'));
+  page.locator('button:has-text("Continue")').click().catch(_ => { }); // already logged in, but need to accept updated "Epic Games Privacy Policy"
 
-  while (await page.locator('unrealengine-navigation').getAttribute('isloggedin') != 'true') {
+  // Wait for navigation element to load
+  await page.waitForTimeout(2000);
+
+  // Check if logged in - egs-navigation might not exist on fab.com, so check for login indicators
+  const isLoggedIn = async () => {
+    const egsNav = page.locator('egs-navigation');
+    if (await egsNav.count() > 0) {
+      return await egsNav.getAttribute('isloggedin') == 'true';
+    }
+    // Alternative: check for user-specific elements on fab.com
+    return await page.locator('a[href="/library"]').count() > 0;
+  };
+
+  while (!(await isLoggedIn())) {
     console.error('Not signed in anymore. Please login in the browser or here in the terminal.');
     if (cfg.novnc_port) console.info(`Open http://localhost:${cfg.novnc_port} to login inside the docker container.`);
     if (!cfg.debug) context.setDefaultTimeout(cfg.login_timeout); // give user some extra time to log in
@@ -87,109 +100,117 @@ try {
         process.exit(1);
       }
     }
-    await page.waitForURL('**unrealengine.com/marketplace/**');
+    await page.waitForURL('**fab.com/**');
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
   await page.waitForTimeout(1000);
-  user = await page.locator('unrealengine-navigation').getAttribute('displayname'); // 'null' if !isloggedin
+
+  // Get user info - try egs-navigation first, fallback to other methods
+  const egsNav = page.locator('egs-navigation');
+  if (await egsNav.count() > 0) {
+    user = await egsNav.getAttribute('displayname');
+  } else {
+    // Fallback: try to get username from page elements
+    user = 'fab-user'; // Default if we can't determine username
+  }
   console.log(`Signed in as ${user}`);
   db.data[user] ||= {};
 
   page.locator('button:has-text("Accept All Cookies")').click().catch(_ => { });
 
-  const ids = [];
-  for (const p of await page.locator('article.asset').all()) {
-    const link = p.locator('h3 a');
-    const title = await link.innerText();
-    const url = 'https://www.unrealengine.com' + await link.getAttribute('href');
-    console.log([title, url]);
-    const id = url.split('/').pop();
-    db.data[user][id] ||= { title, time: datetime(), url, status: 'failed' }; // this will be set on the initial run only!
-    const notify_game = { title, url, status: 'failed' };
-    notify_games.push(notify_game); // status is updated below
-    // if (await p.locator('.btn .add-review-btn').count()) { // did not work
-    if ((await p.getAttribute('class')).includes('asset--owned')) {
-      console.log('  ↳ Already claimed');
-      if (db.data[user][id].status != 'claimed') {
-        db.data[user][id].status = 'existed';
-        notify_game.status = 'existed';
-      }
+  // Detect free items - similar to epic-games.js
+  const game_loc = page.locator('a[href^="/listings/"]');
+  await game_loc.last().waitFor().catch(_ => {
+    console.error('Seems like currently there are no free items available...');
+  });
+  const urlSlugs = await Promise.all((await game_loc.all()).map(a => a.getAttribute('href')));
+  const urls = urlSlugs.map(s => 'https://www.fab.com' + s);
+  console.log('Free items:', urls);
+
+  for (const url of urls) {
+    if (db.data[user][url.split('/').pop()]?.status == 'claimed') {
+      console.log('Already claimed, skipping:', url);
       continue;
     }
-    if (await p.locator('.btn .in-cart').count()) {
-      console.log('  ↳ Already in cart');
+    await page.goto(url);
+    await page.waitForTimeout(2000); // wait for page to load
+
+    const title = await page.locator('h1').first().innerText();
+    const game_id = url.split('/').pop();
+    const existedInDb = db.data[user][game_id];
+    db.data[user][game_id] ||= { title, time: datetime(), url };
+    console.log('Current free item:', title);
+    const notify_game = { title, url, status: 'failed' };
+    notify_games.push(notify_game);
+
+    // Check if already in library
+    if (await page.locator('h2:has-text("Saved in My Library")').count() > 0) {
+      console.log('  Already in library! Nothing to claim.');
+      if (!existedInDb) await notify(`Item already in library: ${url}`);
+      notify_game.status = 'existed';
+      db.data[user][game_id].status ||= 'existed';
+      if (db.data[user][game_id].status?.startsWith('failed')) db.data[user][game_id].status = 'manual';
+      continue;
+    }
+
+    console.log('  Not in library yet! Checking license options...');
+
+    // Check if Professional license is available and free
+    const licenseButton = page.locator('button.fabkit-InputContainer-root').first();
+    await licenseButton.click(); // Open license dropdown
+
+    // Wait for dropdown to appear and check options
+    await page.waitForTimeout(1000);
+    const professionalOption = page.locator('text=Professional').first();
+    if (await professionalOption.count() > 0) {
+      console.log('  Professional license found, checking if free...');
+      await professionalOption.click(); // Select Professional
+      await page.waitForTimeout(500);
+
+      // Check if Professional shows "Free"
+      const priceText = await page.locator('.fabkit-Text--xl.fabkit-Text--bold').first().innerText();
+      if (priceText.includes('Free')) {
+        console.log('  Professional license is free! Using Professional.');
+      } else {
+        console.log('  Professional license is not free, switching back to Personal.');
+        await licenseButton.click();
+        await page.waitForTimeout(500);
+        await page.locator('text=Personal').first().click();
+        await page.waitForTimeout(500);
+      }
     } else {
-      await p.locator('.btn .add').click();
-      console.log('  ↳ Added to cart');
+      console.log('  Only Personal license available.');
     }
-    ids.push(id);
-  }
-  if (!ids.length) {
-    console.log('Nothing to claim');
-  } else {
-    await page.waitForTimeout(2000);
-    const price = (await page.locator('.shopping-cart .total .price').innerText()).split(' ');
-    console.log('Price: ', price[1], 'instead of', price[0]);
-    if (price[1] != '0') {
-      const err = 'Price is not 0! Exit! Please <a href="https://github.com/vogler/free-games-claimer/issues/44">report</a>.';
-      console.error(err);
-      notify('unrealengine: ' + err);
-      process.exit(1);
-    }
-    // await page.pause();
-    console.log('Click shopping cart');
-    await page.locator('.shopping-cart').click();
-    // await page.waitForTimeout(2000);
-    await page.locator('button.checkout').click();
-    console.log('Click checkout');
-    // maybe: Accept End User License Agreement
-    page.locator('[name=accept-label]').check().then(() => {
-      console.log('Accept End User License Agreement');
-      page.locator('span:text-is("Accept")').click(); // otherwise matches 'Accept All Cookies'
-    }).catch(_ => { });
-    await page.waitForSelector('#webPurchaseContainer iframe'); // TODO needed?
-    const iframe = page.frameLocator('#webPurchaseContainer iframe');
 
     if (cfg.debug) await page.pause();
     if (cfg.dryrun) {
-      console.log('DRYRUN=1 -> Skip order!');
-      throw new Error('DRYRUN=1');
+      console.log('  DRYRUN=1 -> Skip claim!');
+      notify_game.status = 'skipped';
+      continue;
     }
 
-    console.log('Click Place Order');
-    // Playwright clicked before button was ready to handle event, https://github.com/vogler/free-games-claimer/issues/84#issuecomment-1474346591
-    await iframe.locator('button:has-text("Place Order"):not(:has(.payment-loading--loading))').click({ delay: 11 });
+    // Click Buy now button
+    console.log('  Clicking Buy now...');
+    const buyButton = page.locator('button:has-text("Buy now")').first();
+    await buyButton.click({ delay: 11 });
 
-    // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
-    const btnAgree = iframe.locator('button:has-text("I Agree")');
-    btnAgree.waitFor().then(() => btnAgree.click()).catch(_ => { }); // EU: wait for and click 'I Agree'
     try {
-      // context.setDefaultTimeout(100 * 1000); // give time to solve captcha, iframe goes blank after 60s?
-      const captcha = iframe.locator('#h_captcha_challenge_checkout_free_prod iframe');
-      captcha.waitFor().then(async () => { // don't await, since element may not be shown
-        // console.info('  Got hcaptcha challenge! NopeCHA extension will likely solve it.')
-        console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.');
-      }).catch(_ => { }); // may time out if not shown
-      await page.waitForSelector('text=Thank you');
-      for (const id of ids) {
-        db.data[user][id].status = 'claimed';
-        db.data[user][id].time = datetime(); // claimed time overwrites failed/dryrun time
-      }
-      notify_games.forEach(g => g.status == 'failed' && (g.status = 'claimed'));
-      console.log('Claimed successfully!');
-      // context.setDefaultTimeout(cfg.timeout);
+      // Wait for success confirmation
+      await page.waitForSelector('h2:has-text("Saved in My Library")', { timeout: 30000 });
+      db.data[user][game_id].status = 'claimed';
+      db.data[user][game_id].time = datetime();
+      notify_game.status = 'claimed';
+      console.log('  Claimed successfully!');
     } catch (e) {
       console.log(e);
-      // console.error('  Failed to claim! Try again if NopeCHA timed out. Click the extension to see if you ran out of credits (refill after 24h). To avoid captchas try to get a new IP or set a cookie from https://www.hcaptcha.com/accessibility');
-      console.error('  Failed to claim! To avoid captchas try to get a new IP address.');
-      await page.screenshot({ path: screenshot('failed', `${filenamify(datetime())}.png`), fullPage: true });
-      // db.data[user][id].status = 'failed';
-      notify_games.forEach(g => g.status = 'failed');
+      console.error('  Failed to claim!');
+      await page.screenshot({ path: screenshot('failed', `${game_id}_${filenamify(datetime())}.png`), fullPage: true });
+      db.data[user][game_id].status = 'failed';
+      notify_game.status = 'failed';
     }
-    // notify_game.status = db.data[user][game_id].status; // claimed or failed
 
-    if (notify_games.length) await page.screenshot({ path: screenshot(`${filenamify(datetime())}.png`), fullPage: false }); // fullPage is quite long...
-    console.log('Done');
+    const p = screenshot(`${game_id}.png`);
+    if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false });
   }
 } catch (error) {
   process.exitCode ||= 1;
