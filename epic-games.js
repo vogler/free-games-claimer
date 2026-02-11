@@ -46,7 +46,7 @@ function isGpGameAlreadyClaimed(storeUrl) {
     console.log(`[GamerPower] Already claimed by ${username}: ${storeUrl} -> ${game_id} (${status})`);
     return true;
   }
-
+  console.log(`[GamerPower] Not yet claimed by ${username}: ${storeUrl} -> ${game_id} (${status})`);
   return false;
 }
 
