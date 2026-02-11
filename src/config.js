@@ -35,6 +35,7 @@ export const cfg = {
   eg_otpkey: process.env.EG_OTPKEY,
   eg_parentalpin: process.env.EG_PARENTALPIN,
   eg_mobile: process.env.EG_MOBILE != '0', // claim mobile games
+  eg_check_gp: process.env.EG_CHECK_GP == '1', // check GamerPower for free Epic Games
   // auth prime-gaming
   pg_email: process.env.PG_EMAIL || process.env.EMAIL,
   pg_password: process.env.PG_PASSWORD || process.env.PASSWORD,
@@ -43,6 +44,8 @@ export const cfg = {
   gog_email: process.env.GOG_EMAIL || process.env.EMAIL,
   gog_password: process.env.GOG_PASSWORD || process.env.PASSWORD,
   gog_newsletter: process.env.GOG_NEWSLETTER == '1', // do not unsubscribe from newsletter after claiming a game
+  gog_check_gp: process.env.GOG_CHECK_GP == '1', // check GamerPower for free GOG games
+
   // auth AliExpress
   ae_email: process.env.AE_EMAIL || process.env.EMAIL,
   ae_password: process.env.AE_PASSWORD || process.env.PASSWORD,

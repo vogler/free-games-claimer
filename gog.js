@@ -3,14 +3,71 @@ import { chromium } from 'patchright';
 import chalk from 'chalk';
 import { resolve, jsonDb, datetime, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
+import { gpUrlToStoreUrls } from './src/gp.js';
+import { getUsername, setUsername, writeAccountsDb } from './src/accounts.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'gog', ...a);
 
 const URL_CLAIM = 'https://www.gog.com/en';
+const GAMERPOWER_API_URL = 'https://www.gamerpower.com/api/giveaways?platform=gog&type=game';
+const PLATFORM = 'gog';
 
 console.log(datetime(), 'started checking gog');
 
 const db = await jsonDb('gog.json', {});
+
+function isGpGameAlreadyClaimed(storeUrl) {
+  const username = getUsername(PLATFORM, cfg.gog_email);
+  if (!username) return false; // Username not known yet
+  
+  // GOG URLs look like: https://www.gog.com/en/game/game-name
+  const match = storeUrl.match(/\/game\/([^/?]+)/);
+  const game_id = match ? match[1] : storeUrl.split('/').pop();
+  
+  // GOG db uses title as key, check if any game URL contains the game_id
+  const games = db.data[username];
+  if (!games) return false;
+  
+  for (const [title, info] of Object.entries(games)) {
+    if (info.url?.includes(game_id) && (info.status === 'claimed' || info.status === 'existed')) {
+      console.log(`[GamerPower] Already claimed by ${username}: ${storeUrl}`);
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+async function getUnclaimedGpUrls() {
+  if (!cfg.gog_check_gp) return [];
+
+  // gpUrlToStoreUrls handles fetching API and resolving URLs (opens browser only if needed)
+  const allGpGames = await gpUrlToStoreUrls(GAMERPOWER_API_URL);
+
+  // Filter to GOG store URLs only
+  const gogGames = allGpGames.filter(g => g.storeUrl.includes('gog.com'));
+  console.log(`[GamerPower] ${gogGames.length} GOG store URLs`);
+
+  // Filter out already claimed games
+  const unclaimed = gogGames.filter(g => !isGpGameAlreadyClaimed(g.storeUrl));
+  console.log(`[GamerPower] ${unclaimed.length} unclaimed games`);
+
+  return unclaimed.map(g => g.storeUrl);
+}
+
+// GOG_CHECK_GP requires GOG_EMAIL to be set for claimed status tracking
+if (cfg.gog_check_gp && !cfg.gog_email) {
+  throw new Error('GOG_CHECK_GP requires GOG_EMAIL to be set');
+}
+
+// Check GamerPower first (before starting browser)
+const gpUrls = await getUnclaimedGpUrls();
+
+// If GOG_CHECK_GP is enabled and no unclaimed giveaways, exit early without opening browser
+if (cfg.gog_check_gp && gpUrls.length === 0) {
+  console.log('No unclaimed GamerPower giveaways. Exiting.');
+  process.exit(0);
+}
 
 if (cfg.width < 1280) { // otherwise 'Sign in' and #menuUsername are hidden (but attached to DOM), see https://github.com/vogler/free-games-claimer/issues/335
   console.error(`Window width is set to ${cfg.width} but needs to be at least 1280 for GOG!`);
@@ -105,6 +162,12 @@ try {
   }
   user = await page.locator('#menuUsername').first().textContent(); // innerText is uppercase due to styling!
   console.log(`Signed in as ${user}`);
+  
+  // Save email -> username mapping if email is configured
+  if (cfg.gog_email) {
+    setUsername(PLATFORM, cfg.gog_email, user);
+    await writeAccountsDb();
+  }
   db.data[user] ||= {};
 
   const banner = page.locator('#giveaway');
@@ -117,6 +180,23 @@ try {
     const title = match_all[1] ? match_all[1] : match_all[2];
     const url = await banner.locator('a').first().getAttribute('href');
     console.log(`Current free game: ${chalk.blue(title)} - ${url}`);
+
+    // GamerPower games - verify they are included in the current giveaway
+    if (cfg.gog_check_gp && gpUrls.length > 0) {
+      console.log(`Verifying ${gpUrls.length} GamerPower giveaways match GOG's current giveaway...`);
+      for (const gpUrl of gpUrls) {
+        // Normalize URLs for comparison (extract game slug)
+        const gpMatch = gpUrl.match(/\/game\/([^/?]+)/);
+        const gpSlug = gpMatch ? gpMatch[1] : gpUrl.split('/').pop();
+        const found = url && url.includes(gpSlug);
+        if (!found) {
+          throw new Error(`[GamerPower] ${gpUrl} does NOT match GOG's current giveaway: ${url}`);
+        } else {
+          console.log(`[GamerPower] OK: ${gpUrl}`);
+        }
+      }
+    }
+
     db.data[user][title] ||= { title, time: datetime(), url };
     if (cfg.dryrun) process.exit(1);
     if (cfg.interactive && !await confirm()) process.exit(0);

@@ -99,6 +99,7 @@ Available options/variables and their default values:
 | EG_PASSWORD    |              | Epic Games password for login. Overrides PASSWORD.                                                                           |
 | EG_OTPKEY      |              | Epic Games MFA OTP key.                                                                                                      |
 | EG_PARENTALPIN |              | Epic Games Parental Controls PIN.                                                                                            |
+| EG_CHECK_GP    | 0            | Check GamerPower API before opening browser. Exits early if no unclaimed giveaways.                                          |
 | PG_EMAIL       |              | Prime Gaming email for login. Overrides EMAIL.                                                                               |
 | PG_PASSWORD    |              | Prime Gaming password for login. Overrides PASSWORD.                                                                         |
 | PG_OTPKEY      |              | Prime Gaming MFA OTP key.                                                                                                    |
@@ -107,6 +108,7 @@ Available options/variables and their default values:
 | GOG_EMAIL      |              | GOG email for login. Overrides EMAIL.                                                                                        |
 | GOG_PASSWORD   |              | GOG password for login. Overrides PASSWORD.                                                                                  |
 | GOG_NEWSLETTER | 0            | Do not unsubscribe from newsletter after claiming a game if 1.                                                               |
+| GOG_CHECK_GP   | 0            | Check GamerPower API before opening browser. Exits early if no unclaimed giveaways.                                          |
 | LG_EMAIL       |              | Legacy Games: email to use for redeeming (if not set, defaults to PG_EMAIL).                                                 |
 
 See `src/config.js` for all options.
