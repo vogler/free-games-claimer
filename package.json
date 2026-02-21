@@ -22,7 +22,6 @@
     "node": ">=17"
   },
   "dependencies": {
-    "playwright-extra": "^4.5.1",
     "chalk": "^5.4.1",
     "dotenv": "^17.2.0",
     "enquirer": "^2.4.1",
