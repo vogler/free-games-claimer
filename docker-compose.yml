@@ -11,5 +11,5 @@ services:
       - fgc:/fgc/data
     command: bash -c "node mi-points"
     environment:
-      # - EMAIL=foo@bar.org
-      # - NOTIFY='tgram://...'
+      # - MI_EMAIL=
+      # - MI_PASSWORD=
