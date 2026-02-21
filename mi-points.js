@@ -1,11 +1,11 @@
-import { chromium } from 'playwright-extra';
+import { chromium } from 'patchright';
 
 import { resolve, jsonDb, datetime, stealth, notify } from './src/util.js';
 import { existsSync } from 'fs';
 import { cfg } from './src/config.js';
 
 // IMPORTANT: Enable stealth plugin to avoid detection
-chromium.use(stealth);
+//chromium.use(stealth);
 
 const EMAIL = cfg.mi_email;
 const PASSWORD = cfg.mi_password;
