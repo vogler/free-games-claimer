@@ -1,15 +1,13 @@
 {
-  "name": "free-games-claimer",
-  "version": "1.4.0",
-  "description": "Automatically claims free games on the Epic Games Store, Amazon Prime Gaming and GOG.",
-  "homepage": "https://github.com/vogler/free-games-claimer",
+  "name": "free-games-claimer-with-mi-points",  
+  "version": "1.4.1",                          
+  "description": "Claims Epic, GOG, Prime Gaming + Xiaomi Mi Points!",  
+  "homepage": "https://github.com/Sirus1985/free-games-claimer_with_mi_points",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vogler/free-games-claimer.git"
+    "url": "https://github.com/Sirus1985/free-games-claimer_with_mi_points.git"
   },
-  "author": "Ralf Vogler",
-  "license": "AGPL-3.0-only",
-  "main": "index.js",
+  "author": "Ralf Vogler + Sirus1985 (Xiaomi Extension)",
   "scripts": {
     "docker:build": "docker build . -t ghcr.io/vogler/free-games-claimer",
     "docker": "cross-env-shell docker run --rm -it -p 5900:5900 -p 6080:6080 -v \\\"$INIT_CWD/data\\\":/fgc/data --name fgc ghcr.io/vogler/free-games-claimer",
