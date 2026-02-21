@@ -9,12 +9,19 @@ chromium.use(stealth);
 
 const EMAIL = cfg.mi_email;
 const PASSWORD = cfg.mi_password;
-const COOKIE_FILE = resolve('data/mi-cookies.json');
+
+// Sanitize email for filename (replace @ and other special chars)
+function cookieFileForEmail(email) {
+  const safe = email.replace(/[^a-zA-Z0-9._-]/g, '_');
+  return resolve(`data/mi-cookies-${safe}.json`);
+}
 
 if (!EMAIL || !PASSWORD) {
   console.error('ERROR: Please set MI_EMAIL and MI_PASSWORD.');
   process.exit(1);
 }
+
+const COOKIE_FILE = cookieFileForEmail(EMAIL);
 
 (async () => {
   const browser = await chromium.launch({
@@ -35,10 +42,12 @@ if (!EMAIL || !PASSWORD) {
     viewport: { width: cfg.width, height: cfg.height }
   };
 
-  // Load cookies if available
+  // Load cookies if available for this email
   if (existsSync(COOKIE_FILE)) {
-    console.log('🍪 Loading cookies from previous session...');
+    console.log(`🍪 Loading cookies for ${EMAIL} from ${COOKIE_FILE}...`);
     contextOptions.storageState = COOKIE_FILE;
+  } else {
+    console.log(`No cookie file found for ${EMAIL}, starting fresh login.`);
   }
 
   const context = await browser.newContext(contextOptions);
@@ -48,6 +57,7 @@ if (!EMAIL || !PASSWORD) {
 
   try {
     console.log('--- Xiaomi Points Claimer Start ---');
+    console.log(`Using account: ${EMAIL}`);
 
     // 1. Target: Points Center
     console.log('Navigating to Points Center...');
@@ -129,7 +139,7 @@ if (!EMAIL || !PASSWORD) {
         if (cfg.dryrun) {
           console.log('💧 DRYRUN: would click claim button now.');
         } else {
-          // 🔧 CRITICAL: Check we're still on points-center before clicking
+          // Check we're still on points-center before clicking
           const currentUrl = page.url();
           if (!currentUrl.includes('points-center')) {
             console.log('⚠️ Not on points-center page, skipping claim.');
@@ -138,7 +148,7 @@ if (!EMAIL || !PASSWORD) {
             await takeScreenshot(page, 'debug-before-claim-click.png');
             await humanClick(page, claimButton);
 
-            // 🔧 ROBUST LOGIN DETECTION: URL change OR login elements
+            // Robust login detection: URL change OR login elements
             try {
               await Promise.race([
                 page.waitForURL(
@@ -199,8 +209,8 @@ if (!EMAIL || !PASSWORD) {
       notify(
         cfg.notify_title || 'Xiaomi Points',
         cfg.dryrun 
-          ? 'DRYRUN: Xiaomi points claim simulated.' 
-          : 'Xiaomi points claim completed.'
+          ? `DRYRUN: Xiaomi points claim simulated for ${EMAIL}.`
+          : `Xiaomi points claim completed for ${EMAIL}.`
       );
     }
 
@@ -211,7 +221,7 @@ if (!EMAIL || !PASSWORD) {
     if (cfg.notify) {
       notify(
         cfg.notify_title || 'Xiaomi Points',
-        `Error: ${error.message}`
+        `Error for ${EMAIL}: ${error.message}`
       );
     }
 
@@ -225,7 +235,7 @@ async function performLogin(page, context) {
   console.log('✍️ Starting login process...');
   await takeScreenshot(page, 'debug-login-page.png');
 
-  // 🔧 Multiple selectors for email field
+  // Multiple selectors for email field
   const emailSelectors = [
     'input[name="account"]',
     'input[id="username"]',
@@ -246,13 +256,11 @@ async function performLogin(page, context) {
     }
   }
 
-  if (!emailField) {
-    throw new Error('No email input field found on login page');
-  }
+  if (!emailField) throw new Error('No email input field found on login page');
 
   await emailField.type(EMAIL, { delay: 80 + Math.random() * 120 });
 
-  // 🔧 Multiple selectors for password
+  // Multiple selectors for password
   const pwdSelectors = [
     'input[name="password"]',
     'input[id="pwd"]',
@@ -270,9 +278,7 @@ async function performLogin(page, context) {
     } catch (e) {}
   }
 
-  if (!pwdField) {
-    throw new Error('No password input field found');
-  }
+  if (!pwdField) throw new Error('No password input field found');
 
   await pwdField.type(PASSWORD, { delay: 80 + Math.random() * 120 });
 
@@ -319,9 +325,9 @@ async function performLogin(page, context) {
   console.log('✅ Login successful.');
   await takeScreenshot(page, 'debug-post-login.png');
 
-  // Save session
+  // Save session for this specific email
   await context.storageState({ path: COOKIE_FILE });
-  console.log('💾 Session cookies saved.');
+  console.log(`💾 Session cookies saved for ${EMAIL} at ${COOKIE_FILE}.`);
 }
 
 // Helper: natural delays
@@ -346,14 +352,12 @@ async function humanClick(page, selectorOrLocator) {
       ? page.locator(selectorOrLocator).first()
       : selectorOrLocator;
 
-    // 🔧 Validate element exists BEFORE proceeding
     await element.waitFor({ state: 'visible', timeout: 3000 });
     await element.waitFor({ state: 'attached', timeout: 2000 });
   } catch (e) {
     throw new Error(`humanClick failed: Element not found/visible (${selectorOrLocator})`);
   }
 
-  // Scroll to element
   const box = await element.boundingBox();
   if (box) {
     const viewport = page.viewportSize();
@@ -369,7 +373,6 @@ async function humanClick(page, selectorOrLocator) {
     }
   }
 
-  // Natural mouse movement
   if (box) {
     const targetX = box.x + box.width * (0.3 + Math.random() * 0.4);
     const targetY = box.y + box.height * (0.3 + Math.random() * 0.4);
