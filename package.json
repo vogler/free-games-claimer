@@ -1,17 +1,21 @@
 {
-  "name": "free-games-claimer-with-mi-points",  
-  "version": "1.4.1",                          
-  "description": "Claims Epic, GOG, Prime Gaming + Xiaomi Mi Points!",  
-  "homepage": "https://github.com/Sirus1985/free-games-claimer_with_mi_points",
+  "name": "free-games-claimer",
+  "version": "1.4.0",
+  "description": "Automatically claims free games on the Epic Games Store, Amazon Prime Gaming and GOG.",
+  "homepage": "https://github.com/vogler/free-games-claimer",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Sirus1985/free-games-claimer_with_mi_points.git"
+    "url": "https://github.com/vogler/free-games-claimer.git"
   },
-  "author": "Ralf Vogler + Sirus1985 (Xiaomi Extension)",
+  "author": "Ralf Vogler",
+  "license": "AGPL-3.0-only",
+  "main": "index.js",
   "scripts": {
+    "lint": "npx eslint .",
     "docker:build": "docker build . -t ghcr.io/vogler/free-games-claimer",
-    "docker": "cross-env-shell docker run --rm -it -p 5900:5900 -p 6080:6080 -v \\\"$INIT_CWD/data\\\":/fgc/data --name fgc ghcr.io/vogler/free-games-claimer",
-    "lint": "npx eslint ."
+    "docker:build-log": "(docker buildx build --progress=plain . -t ghcr.io/vogler/free-games-claimer; docker image ls) 2>&1 | tee data/docker-build.log",
+    "docker": "docker run --rm -it -p 6080:6080 -v fgc:/fgc/data --pull=always ghcr.io/vogler/free-games-claimer",
+    "deps:update": "npx taze major -w && npm i"
   },
   "type": "module",
   "engines": {
@@ -19,18 +23,15 @@
   },
   "dependencies": {
     "chalk": "^5.4.1",
-    "cross-env": "^7.0.3",
-    "dotenv": "^16.5.0",
+    "dotenv": "^17.2.0",
     "enquirer": "^2.4.1",
-    "fingerprint-injector": "^2.1.66",
+    "fingerprint-injector": "^2.1.69",
     "lowdb": "^7.0.1",
     "otplib": "^12.0.1",
-    "playwright-firefox": "^1.52.0",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "playwright-extra": "^4.5.1",
+    "patchright": "^1.52.5"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin-js": "^4.2.0",
-    "eslint": "^9.26.0"
+    "@stylistic/eslint-plugin": "^5.2.2",
+    "eslint": "^9.31.0"
   }
 }
