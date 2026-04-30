@@ -1,6 +1,6 @@
-import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
+import { chromium } from 'patchright'; // patchright patches Chromium to bypass bot detection
 import chalk from 'chalk';
-import { resolve, jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT } from './src/util.js';
+import { resolve, jsonDb, datetime, filenamify, prompt, notify, html_game_list, handleSIGINT, clearBrowserLock, writeLastRun, stealth, generateFingerprint } from './src/util.js';
 import { cfg } from './src/config.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'gog', ...a);
@@ -11,22 +11,33 @@ console.log(datetime(), 'started checking gog');
 
 const db = await jsonDb('gog.json', {});
 
+clearBrowserLock(cfg.dir.browser);
+
 if (cfg.width < 1280) { // otherwise 'Sign in' and #menuUsername are hidden (but attached to DOM), see https://github.com/vogler/free-games-claimer/issues/335
   console.error(`Window width is set to ${cfg.width} but needs to be at least 1280 for GOG!`);
   process.exit(1);
 }
 
+const fp = generateFingerprint(cfg.width, cfg.height);
+
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await firefox.launchPersistentContext(cfg.dir.browser, {
+const context = await chromium.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
+  userAgent: fp.fingerprint.navigator.userAgent,
   locale: 'en-US', // ignore OS locale to be sure to have english text for locators -> done via /en in URL
-  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
-  recordHar: cfg.record ? { path: `data/record/gog-${filenamify(datetime())}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
+  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined,
+  recordHar: cfg.record ? { path: `data/record/gog-${filenamify(datetime())}.har` } : undefined,
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
+  args: [
+    '--disable-blink-features=AutomationControlled',
+  ],
 });
 
 handleSIGINT(context);
+
+// stealth: sets window.chrome, navigator.plugins, etc. + injects consistent fingerprint
+await stealth(context, fp);
 
 if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
@@ -101,11 +112,15 @@ try {
   } else {
     const text = await page.locator('.giveaway__content-header').innerText();
     const match_all = text.match(/Claim (.*) and don't miss the|Success! (.*) was added to/);
-    const title = match_all[1] ? match_all[1] : match_all[2];
+    if (!match_all) {
+      console.error('Could not parse giveaway title from text:', text);
+      throw new Error('Failed to parse GOG giveaway title');
+    }
+    const title = match_all[1] ?? match_all[2];
     const url = await banner.locator('a').first().getAttribute('href');
     console.log(`Current free game: ${chalk.blue(title)} - ${url}`);
     db.data[user][title] ||= { title, time: datetime(), url };
-    if (cfg.dryrun) process.exit(1);
+    if (cfg.dryrun) { console.log('  DRYRUN=1 -> Skip claim!'); process.exit(0); }
     // await page.locator('#giveaway:not(.is-loading)').waitFor(); // otherwise screenshot is sometimes with loading indicator instead of game title; #TODO fix, skipped due to timeout, see #240
     await banner.screenshot({ path: screenshot(`${filenamify(title)}.png`) }); // overwrites every time - only keep first?
 
@@ -123,7 +138,13 @@ try {
       status = 'claimed';
       console.log('  Claimed successfully!');
     } else {
-      const message = JSON.parse(response).message;
+      let message;
+      try {
+        message = JSON.parse(response).message;
+      } catch (_) {
+        console.error('  Unexpected response from GOG claim API:', response);
+        message = response;
+      }
       if (message == 'Already claimed') {
         status = 'existed'; // same status text as for epic-games
         console.log('  Already in library! Nothing to claim.');
@@ -149,6 +170,7 @@ try {
   if (error.message && process.exitCode != 130) notify(`gog failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
+  writeLastRun('gog');
   if (notify_games.filter(g => g.status != 'existed').length) { // don't notify if all were already claimed
     notify(`gog (${user}):<br>${html_game_list(notify_games)}`);
   }

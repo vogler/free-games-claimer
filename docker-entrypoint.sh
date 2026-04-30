@@ -28,7 +28,7 @@ EOT
 # Remove X server display lock, fix for `docker compose up` which reuses container which made it fail after initial run, https://github.com/vogler/free-games-claimer/issues/31
 # echo $DISPLAY
 # ls -l /tmp/.X11-unix/
-rm -f /tmp/.X1-lock
+rm -f /tmp/.X11-lock
 
 # 6000+SERVERNUM is the TCP port Xvfb is listening on:
 # SERVERNUM=$(echo "$DISPLAY" | sed 's/:\([0-9][0-9]*\).*/\1/')

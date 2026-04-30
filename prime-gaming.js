@@ -1,32 +1,51 @@
-import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
+import { chromium } from 'patchright'; // patchright patches Chromium to bypass bot detection
 import { authenticator } from 'otplib';
 import chalk from 'chalk';
-import { resolve, jsonDb, datetime, stealth, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
+import { resolve, jsonDb, datetime, stealth, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT, clearBrowserLock, writeLastRun, generateFingerprint } from './src/util.js';
 import { cfg } from './src/config.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'prime-gaming', ...a);
 
 // const URL_LOGIN = 'https://www.amazon.de/ap/signin'; // wrong. needs some session args to be valid?
-const URL_CLAIM = 'https://gaming.amazon.com/home';
+const BASE_URL = 'https://luna.amazon.com';
+const URL_CLAIM = `${BASE_URL}/claims/home`;
 
 console.log(datetime(), 'started checking prime-gaming');
 
 const db = await jsonDb('prime-gaming.json', {});
 
+clearBrowserLock(cfg.dir.browser);
+
+const fp = generateFingerprint(cfg.width, cfg.height);
+
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await firefox.launchPersistentContext(cfg.dir.browser, {
+const context = await chromium.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
+  userAgent: fp.fingerprint.navigator.userAgent,
   locale: 'en-US', // ignore OS locale to be sure to have english text for locators
-  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
-  recordHar: cfg.record ? { path: `data/record/pg-${filenamify(datetime())}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
+  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined,
+  recordHar: cfg.record ? { path: `data/record/pg-${filenamify(datetime())}.har` } : undefined,
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
+  args: [
+    '--disable-blink-features=AutomationControlled',
+  ],
 });
 
 handleSIGINT(context);
 
-// TODO test if needed
-await stealth(context);
+// stealth: sets window.chrome, navigator.plugins, etc. + injects consistent fingerprint
+await stealth(context, fp);
+
+// Inject passkey blocker - Amazon shows passkey prompts during login that interrupt automation
+await context.addInitScript(() => {
+  // Reject passkey creation/login prompts silently
+  const reject = () => Promise.reject(new DOMException('Not allowed', 'NotAllowedError'));
+  Object.defineProperty(navigator, 'credentials', {
+    value: { create: reject, get: reject, store: () => Promise.resolve(), preventSilentAccess: () => Promise.resolve() },
+    writable: false,
+  });
+});
 
 if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
@@ -59,7 +78,7 @@ try {
       await page.click('input[type="submit"]');
       page.waitForURL('**/ap/signin**').then(async () => { // check for wrong credentials
         const error = await page.locator('.a-alert-content').first().innerText();
-        if (!error.trim.length) return;
+        if (!error.trim().length) return;
         console.error('Login error:', error);
         await notify(`prime-gaming: login: ${error}`);
         await context.close(); // finishes potential recording
@@ -82,7 +101,7 @@ try {
         process.exit(1);
       }
     }
-    await page.waitForURL('https://gaming.amazon.com/home?signedIn=true');
+    await page.waitForURL(`${BASE_URL}/claims/home?signedIn=true`);
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
   user = await page.locator('[data-a-target="user-dropdown-first-name-text"]').first().innerText();
@@ -156,7 +175,7 @@ try {
     await card.scrollIntoViewIfNeeded();
     const title = await (await card.$('.item-card-details__body__primary')).innerText();
     const slug = await (await card.$('a')).getAttribute('href');
-    const url = 'https://gaming.amazon.com' + slug.split('?')[0];
+    const url = BASE_URL + slug.split('?')[0];
     console.log('Current free game:', chalk.blue(title));
     if (cfg.pg_timeLeft && await skipBasedOnTime(url)) continue;
     if (cfg.dryrun) continue;
@@ -174,7 +193,7 @@ try {
   for (const card of external) { // need to get data incl. URLs in this loop and then navigate in another, otherwise .all() would update after coming back and .elementHandles() like above would lead to error due to page navigation: elementHandle.$: Protocol error (Page.adoptNode)
     const title = await card.locator('.item-card-details__body__primary').innerText();
     const slug = await card.locator('a:has-text("Claim")').first().getAttribute('href');
-    const url = 'https://gaming.amazon.com' + slug.split('?')[0];
+    const url = BASE_URL + slug.split('?')[0];
     // await (await card.$('text=Claim')).click(); // goes to URL of game, no need to wait
     external_info.push({ title, url });
   }
@@ -375,7 +394,7 @@ try {
     const dlcs = await Promise.all(cards.map(async card => ({
       game: await card.locator('.item-card-details__body p').innerText(),
       title: await card.locator('.item-card-details__body__primary').innerText(),
-      url: 'https://gaming.amazon.com' + await card.locator('a').first().getAttribute('href'),
+      url: BASE_URL + await card.locator('a').first().getAttribute('href'),
     })));
     // console.log(dlcs);
 
@@ -435,6 +454,7 @@ try {
   if (error.message && process.exitCode != 130) notify(`prime-gaming failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
+  writeLastRun('prime-gaming');
   if (notify_games.length) { // list should only include claimed games
     notify(`prime-gaming (${user}):<br>${html_game_list(notify_games)}`);
   }

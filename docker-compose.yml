@@ -1,15 +1,52 @@
-# start with `docker compose up`
+# start with `docker compose up -d`
 services:
   free-games-claimer:
-    container_name: fgc # is printed in front of every output line
-    image: ghcr.io/vogler/free-games-claimer # otherwise image name will be free-games-claimer-free-games-claimer
+    container_name: fgc
+    image: ghcr.io/vogler/free-games-claimer
     build: .
+    restart: unless-stopped   # auto-restart after crash or docker daemon restart
     ports:
       # - "5900:5900" # VNC server
       - "6080:6080" # noVNC (browser-based VNC client)
     volumes:
       - fgc:/fgc/data
-    # command: bash -c "node epic-games; node gog"
+    # Run scripts once and exit (original behavior):
+    # command: bash -c "node epic-games; node prime-gaming; node gog; node steam-games"
+    #
+    # Run on schedule (default: every day at 07:00) - recommended for Portainer:
+    command: /fgc/run-scheduled.sh
     environment:
-      # - EMAIL=foo@bar.org
-      # - NOTIFY='tgram://...'
+      - SCHEDULE_HOUR=7         # hour of day (0-23) for daily run
+      # - SCRIPTS=node epic-games; node gog   # override which scripts run
+
+      # Epic Games Store
+      # - EG_EMAIL=epic@foo.org
+      # - EG_PASSWORD=secret
+      # - EG_OTPKEY=BASE32KEYHERE
+
+      # Amazon Prime Gaming
+      # - PG_EMAIL=amazon@foo.org
+      # - PG_PASSWORD=secret
+      # - PG_OTPKEY=BASE32KEYHERE
+
+      # GOG
+      # - GOG_EMAIL=gog@foo.org
+      # - GOG_PASSWORD=secret
+
+      # Steam
+      # - STEAM_USERNAME=mysteamlogin
+      # - STEAM_PASSWORD=secret
+      # - STEAM_OTPKEY=BASE32KEYHERE   # Steam Guard app OTP key
+
+      # Notifications (use one or both)
+      # Option A: Telegram (no external deps)
+      # - TG_TOKEN=123456789:ABCdefGhIJKlmNoPQRsTuVwXyZ
+      # - TG_CHAT_ID=-100123456789
+      # Option B: Apprise (pip install apprise) - supports 60+ services
+      # - NOTIFY=tgram://bot_token/chat_id
+
+      # - EMAIL=shared@foo.org     # fallback email for all stores
+      # - SHOW=0                   # disable VNC display (headless only)
+
+volumes:
+  fgc:

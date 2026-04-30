@@ -15,10 +15,10 @@ export const cfg = {
   get headless() {
     return !this.debug && !this.show;
   },
-  width: Number(process.env.WIDTH) || 1920, // width of the opened browser
-  height: Number(process.env.HEIGHT) || 1080, // height of the opened browser
-  timeout: (Number(process.env.TIMEOUT) || 60) * 1000, // default timeout for playwright is 30s
-  login_timeout: (Number(process.env.LOGIN_TIMEOUT) || 180) * 1000, // higher timeout for login, will wait twice: prompt + wait for manual login
+  width: process.env.WIDTH ? Number(process.env.WIDTH) : 1920, // width of the opened browser
+  height: process.env.HEIGHT ? Number(process.env.HEIGHT) : 1080, // height of the opened browser
+  timeout: ((process.env.TIMEOUT ? Number(process.env.TIMEOUT) : 60)) * 1000, // default timeout for playwright is 30s
+  login_timeout: ((process.env.LOGIN_TIMEOUT ? Number(process.env.LOGIN_TIMEOUT) : 180)) * 1000, // higher timeout for login, will wait twice: prompt + wait for manual login
   novnc_port: process.env.NOVNC_PORT, // running in docker if set
   notify: process.env.NOTIFY, // apprise notification services
   notify_title: process.env.NOTIFY_TITLE, // apprise notification title
@@ -50,4 +50,11 @@ export const cfg = {
   lg_email: process.env.LG_EMAIL || process.env.PG_EMAIL || process.env.EMAIL, // prime-gaming: external: legacy-games: email to use for redeeming
   pg_claimdlc: process.env.PG_CLAIMDLC == '1', // prime-gaming: claim in-game content
   pg_timeLeft: Number(process.env.PG_TIMELEFT), // prime-gaming: check time left to claim and skip game if there are more than PG_TIMELEFT days left to claim it
+  // auth steam
+  steam_username: process.env.STEAM_USERNAME,
+  steam_password: process.env.STEAM_PASSWORD,
+  steam_otpkey: process.env.STEAM_OTPKEY, // Steam Guard app OTP key (base32)
+  // notifications: Telegram (alternative/addition to apprise)
+  tg_token: process.env.TG_TOKEN,       // Telegram bot token (from @BotFather)
+  tg_chat_id: process.env.TG_CHAT_ID,   // Telegram chat/channel ID
 };

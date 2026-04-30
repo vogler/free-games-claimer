@@ -1,11 +1,69 @@
 // https://stackoverflow.com/questions/46745014/alternative-for-dirname-in-node-js-when-using-es6-modules
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { existsSync, unlinkSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+const _require = createRequire(import.meta.url);
+const { FingerprintGenerator } = _require('fingerprint-generator');
+const { FingerprintInjector } = _require('fingerprint-injector');
+const _fingerprintGenerator = new FingerprintGenerator({ browsers: [{ name: 'chrome', minVersion: 130 }], devices: ['desktop'], operatingSystems: ['windows'] });
+const _fingerprintInjector = new FingerprintInjector();
+
+// Load a persistent fingerprint from disk, generating it once on first run.
+// A real user always appears as the same "computer" - same canvas hash, WebGL renderer, fonts, etc.
+// Regenerating every run is more suspicious than a stable identity.
+// Delete data/fingerprint.json to force a new fingerprint (e.g. after changing WIDTH/HEIGHT).
+export const generateFingerprint = (width = 1920, height = 1080) => {
+  const fpFile = dataDir('fingerprint.json');
+  if (existsSync(fpFile)) {
+    try {
+      return JSON.parse(_require('node:fs').readFileSync(fpFile, 'utf8'));
+    } catch (_) { /* corrupted file - regenerate */ }
+  }
+  let fp;
+  try {
+    fp = _fingerprintGenerator.getFingerprint({ screen: { minWidth: width, maxWidth: width, minHeight: height, maxHeight: height } });
+  } catch (_) {
+    fp = _fingerprintGenerator.getFingerprint();
+  }
+  try {
+    writeFileSync(fpFile, JSON.stringify(fp, null, 2));
+    console.log('Generated new browser fingerprint, saved to', fpFile);
+  } catch (_) { /* non-critical */ }
+  return fp;
+};
 // not the same since these will give the absolute paths for this file instead of for the file using them
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // explicit object instead of Object.fromEntries since the built-in type would loose the keys, better type: https://dev.to/svehla/typescript-object-fromentries-389c
 export const dataDir = s => path.resolve(__dirname, '..', 'data', s);
+
+// Remove stale browser profile lock left behind by a crashed/killed previous run.
+// Firefox uses parent.lock, Chromium/patchright uses SingletonLock.
+// On Windows the file is held open by the process, so if removal fails the profile is still in use.
+export const clearBrowserLock = (dir) => {
+  for (const lockName of ['parent.lock', 'SingletonLock', 'SingletonCookie', 'SingletonSocket']) {
+    const lockFile = path.join(dir, lockName);
+    if (existsSync(lockFile)) {
+      try {
+        unlinkSync(lockFile);
+        console.log('Removed stale browser lock file:', lockFile);
+      } catch (_) {
+        console.error(`Browser profile is already in use: ${lockFile}`);
+        console.error('Close other browser instances sharing this profile, or set a different BROWSER_DIR.');
+        process.exit(1);
+      }
+    }
+  }
+};
+
+// Write a lastrun timestamp so Docker HEALTHCHECK can verify the scheduler is alive.
+export const writeLastRun = (script) => {
+  try {
+    const p = dataDir('lastrun.json');
+    writeFileSync(p, JSON.stringify({ script, time: new Date().toISOString() }));
+  } catch (_) { /* non-critical */ }
+};
 
 // modified path.resolve to return null if first argument is '0', used to disable screenshots
 export const resolve = (...a) => a.length && a[0] == '0' ? null : path.resolve(...a);
@@ -22,41 +80,33 @@ export const datetime = (d = new Date()) => datetimeUTC(new Date(d.getTime() - d
 export const filenamify = s => s.replaceAll(':', '.').replace(/[^a-z0-9 _\-.]/gi, '_'); // alternative: https://www.npmjs.com/package/filenamify - On Unix-like systems, / is reserved. On Windows, <>:"/\|?* along with trailing periods are reserved.
 
 export const handleSIGINT = (context = null) => process.on('SIGINT', async () => { // e.g. when killed by Ctrl-C
-  console.error('\nInterrupted by SIGINT. Exit!'); // Exception shows where the script was:\n'); // killed before catch in docker...
+  console.error('\nInterrupted by SIGINT. Exit!');
   process.exitCode = 130; // 128+SIGINT to indicate to parent that process was killed
   if (context) await context.close(); // in order to save recordings also on SIGINT, we need to disable Playwright's handleSIGINT and close the context ourselves
 });
 
-export const launchChromium = async options => {
-  const { chromium } = await import('playwright-chromium'); // stealth plugin needs no outdated playwright-extra
-
-  // https://www.nopecha.com extension source from https://github.com/NopeCHA/NopeCHA/releases/tag/0.1.16
-  // const ext = path.resolve('nopecha'); // used in Chromium, currently not needed in Firefox
-
-  const context = chromium.launchPersistentContext(cfg.dir.browser, {
-    // chrome will not work in linux arm64, only chromium
-    // channel: 'chrome', // https://playwright.dev/docs/browsers#google-chrome--microsoft-edge
-    args: [ // https://peter.sh/experiments/chromium-command-line-switches
-      // don't want to see bubble 'Restore pages? Chrome didn't shut down correctly.'
-      // '--restore-last-session', // does not apply for crash/killed
-      '--hide-crash-restore-bubble',
-      // `--disable-extensions-except=${ext}`,
-      // `--load-extension=${ext}`,
-    ],
-    // ignoreDefaultArgs: ['--enable-automation'], // remove default arg that shows the info bar with 'Chrome is being controlled by automated test software.'. Since Chromeium 106 this leads to show another info bar with 'You are using an unsupported command-line flag: --no-sandbox. Stability and security will suffer.'.
-    ...options,
-  });
-  return context;
+// Retry wrapper - retries an async function on failure with delay between attempts.
+export const withRetry = async (label, fn, { retries = 3, delayMs = 30000 } = {}) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (i >= retries - 1) throw e;
+      console.error(`${label}: attempt ${i + 1}/${retries} failed: ${e.message?.split('\n')[0]}`);
+      console.log(`Retrying in ${delayMs / 1000}s...`);
+      await delay(delayMs);
+    }
+  }
 };
 
-export const stealth = async context => {
+export const stealth = async (context, fingerprint = null) => {
   // stealth with playwright: https://github.com/berstend/puppeteer-extra/issues/454#issuecomment-917437212
   // https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth/evasions
   const enabledEvasions = [
     'chrome.app',
     'chrome.csi',
     'chrome.loadTimes',
-    'chrome.runtime',
+    'chrome.runtime', // partially broken in Chrome 100+, patched below
     // 'defaultArgs',
     'iframe.contentWindow',
     'media.codecs',
@@ -84,6 +134,39 @@ export const stealth = async context => {
   for (const evasion of stealth.callbacks) {
     await context.addInitScript(evasion.cb, evasion.a);
   }
+
+  // fingerprint-injector: injects canvas fingerprint, WebGL renderer/vendor, font metrics,
+  // navigator properties (hardwareConcurrency, deviceMemory, languages, plugins, etc.)
+  // and sets matching sec-ch-ua / user-agent HTTP headers.
+  // Must run BEFORE the chrome.runtime patch so the patch isn't overwritten.
+  if (fingerprint) {
+    await _fingerprintInjector.attachFingerprintToPlaywright(context, fingerprint);
+  }
+
+  // chrome.runtime patch: puppeteer-extra-plugin-stealth's version is broken in Chrome 100+
+  // because the real runtime object structure changed. We patch it manually.
+  // Without this, bot detectors see window.chrome.runtime === undefined which is detectable.
+  await context.addInitScript(() => {
+    if (!window.chrome) return;
+    if (window.chrome.runtime && window.chrome.runtime.PlatformOs) return; // already set correctly (non-headless real Chrome)
+    try {
+      Object.defineProperty(window.chrome, 'runtime', {
+        value: {
+          PlatformOs: { MAC: 'mac', WIN: 'win', ANDROID: 'android', CROS: 'cros', LINUX: 'linux', OPENBSD: 'openbsd' },
+          PlatformArch: { ARM: 'arm', ARM64: 'arm64', X86_32: 'x86-32', X86_64: 'x86-64', MIPS: 'mips', MIPS64: 'mips64' },
+          RequestUpdateCheckStatus: { THROTTLED: 'throttled', NO_UPDATE: 'no_update', UPDATE_AVAILABLE: 'update_available' },
+          OnInstalledReason: { INSTALL: 'install', UPDATE: 'update', CHROME_UPDATE: 'chrome_update', SHARED_MODULE_UPDATE: 'shared_module_update' },
+          OnRestartRequiredReason: { APP_UPDATE: 'app_update', OS_UPDATE: 'os_update', PERIODIC: 'periodic' },
+          connect: () => { throw new Error('Extension context invalidated.'); },
+          sendMessage: () => { throw new Error('Extension context invalidated.'); },
+          id: undefined,
+        },
+        writable: false,
+        enumerable: false,
+        configurable: false,
+      });
+    } catch (_) { /* already defined by real Chrome runtime - that's fine */ }
+  });
 };
 
 // used prompts before, but couldn't cancel prompt
@@ -106,33 +189,56 @@ enquirer.use(timeoutPlugin(cfg.login_timeout)); // TODO may not want to have thi
 export const prompt = o => enquirer.prompt({ name: 'name', type: 'input', message: 'Enter value', ...o }).then(r => r.name).catch(_ => {});
 export const confirm = o => prompt({ type: 'confirm', message: 'Continue?', ...o });
 
-// notifications via apprise CLI
+// notifications via apprise CLI (set NOTIFY env var)
 import { execFile } from 'child_process';
 import { cfg } from './config.js';
 
-export const notify = html => new Promise((resolve, reject) => {
+export const notify = html => {
+  notifyTelegram(html).catch(_ => {}); // fire-and-forget Telegram in parallel
   if (!cfg.notify) {
     if (cfg.debug) console.debug('notify: NOTIFY is not set!');
-    return resolve();
+    return Promise.resolve();
   }
-  // const cmd = `apprise '${cfg.notify}' ${title} -i html -b '${html}'`; // this had problems if e.g. ' was used in arg; could have `npm i shell-escape`, but instead using safer execFile which takes args as array instead of exec which spawned a shell to execute the command
-  const args = [cfg.notify, '-i', 'html', '-b', `'${html}'`];
-  if (cfg.notify_title) args.push(...['-t', cfg.notify_title]);
-  if (cfg.debug) console.debug(`apprise ${args.map(a => `'${a}'`).join(' ')}`); // this also doesn't escape, but it's just for info
-  execFile('apprise', args, (error, stdout, stderr) => {
-    if (error) {
-      console.log(`error: ${error.message}`);
-      if (error.message.includes('command not found')) {
-        console.info('Run `pip install apprise`. See https://github.com/vogler/free-games-claimer#notifications');
+  return new Promise((resolve, reject) => {
+    const args = [cfg.notify, '-i', 'html', '-b', `'${html}'`];
+    if (cfg.notify_title) args.push(...['-t', cfg.notify_title]);
+    if (cfg.debug) console.debug(`apprise ${args.map(a => `'${a}'`).join(' ')}`);
+    execFile('apprise', args, (error, stdout, stderr) => {
+      if (error) {
+        console.log(`error: ${error.message}`);
+        if (error.message.includes('command not found')) {
+          console.info('Run `pip install apprise` or set TG_TOKEN+TG_CHAT_ID for Telegram. See README.');
+        }
+        return reject(error);
       }
-      return reject(error);
-    }
-    if (stderr) console.error(`stderr: ${stderr}`);
-    if (stdout) console.log(`stdout: ${stdout}`);
-    resolve();
+      if (stderr) console.error(`stderr: ${stderr}`);
+      if (stdout) console.log(`stdout: ${stdout}`);
+      resolve();
+    });
   });
-});
+};
+
+// Direct Telegram notification without Apprise (set TG_TOKEN and TG_CHAT_ID env vars).
+// Works independently of NOTIFY/apprise - can be used alongside or as replacement.
+export const notifyTelegram = async (html) => {
+  if (!cfg.tg_token || !cfg.tg_chat_id) return;
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${cfg.tg_token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: cfg.tg_chat_id,
+        text: html,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+      }),
+    });
+    if (!res.ok) console.error('Telegram notification error:', await res.text());
+  } catch (e) {
+    console.error('Telegram notification failed:', e.message);
+  }
+};
 
 export const escapeHtml = unsafe => unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll('\'', '&#039;');
 
-export const html_game_list = games => games.map(g => `- <a href="${g.url}">${escapeHtml(g.title)}</a> (${g.status})`).join('<br>');
+export const html_game_list = games => games.map(g => `- <a href="${escapeHtml(g.url)}">${escapeHtml(g.title)}</a> (${g.status})`).join('<br>'); // status may intentionally contain HTML (e.g. redeem links from prime-gaming)

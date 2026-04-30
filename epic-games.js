@@ -1,9 +1,9 @@
-import { firefox } from 'playwright-firefox'; // stealth plugin needs no outdated playwright-extra
+import { chromium } from 'patchright'; // patchright patches Chromium to bypass bot detection (captcha, Cloudflare)
 import { authenticator } from 'otplib';
 import chalk from 'chalk';
 import path from 'path';
-import { existsSync, writeFileSync, appendFileSync } from 'fs';
-import { resolve, jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list, handleSIGINT } from './src/util.js';
+import { existsSync, writeFileSync } from 'fs';
+import { resolve, jsonDb, datetime, stealth, filenamify, prompt, notify, html_game_list, handleSIGINT, clearBrowserLock, writeLastRun, withRetry, generateFingerprint } from './src/util.js';
 import { cfg } from './src/config.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'epic-games', ...a);
@@ -17,35 +17,28 @@ const db = await jsonDb('epic-games.json', {});
 
 if (cfg.time) console.time('startup');
 
-const browserPrefs = path.join(cfg.dir.browser, 'prefs.js');
-if (existsSync(browserPrefs)) {
-  console.log('Adding webgl.disabled to', browserPrefs);
-  appendFileSync(browserPrefs, 'user_pref("webgl.disabled", true);'); // apparently Firefox removes duplicates (and sorts), so no problem appending every time
-} else {
-  console.log(browserPrefs, 'does not exist yet, will patch it on next run. Restart the script if you get a captcha.');
-}
+clearBrowserLock(cfg.dir.browser);
+
+const fp = generateFingerprint(cfg.width, cfg.height);
 
 // https://playwright.dev/docs/auth#multi-factor-authentication
-const context = await firefox.launchPersistentContext(cfg.dir.browser, {
+const context = await chromium.launchPersistentContext(cfg.dir.browser, {
   headless: cfg.headless,
   viewport: { width: cfg.width, height: cfg.height },
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0', // see replace of Headless in util.newStealthContext. TODO Windows UA enough to avoid 'device not supported'? update if browser is updated?
-  // userAgent firefox (macOS): Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:106.0) Gecko/20100101 Firefox/106.0
-  // userAgent firefox (docker): Mozilla/5.0 (X11; Linux aarch64; rv:109.0) Gecko/20100101 Firefox/115.0
+  userAgent: fp.fingerprint.navigator.userAgent,
   locale: 'en-US', // ignore OS locale to be sure to have english text for locators
-  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined, // will record a .webm video for each page navigated; without size, video would be scaled down to fit 800x800
-  recordHar: cfg.record ? { path: `data/record/eg-${filenamify(datetime())}.har` } : undefined, // will record a HAR file with network requests and responses; can be imported in Chrome devtools
+  recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined,
+  recordHar: cfg.record ? { path: `data/record/eg-${filenamify(datetime())}.har` } : undefined,
   handleSIGINT: false, // have to handle ourselves and call context.close(), otherwise recordings from above won't be saved
-  // user settings for firefox have to be put in $BROWSER_DIR/user.js
-  args: [ // https://wiki.mozilla.org/Firefox/CommandLineOptions
-    // '-kiosk',
+  args: [
+    '--disable-blink-features=AutomationControlled', // extra stealth on top of patchright patches
   ],
 });
 
 handleSIGINT(context);
 
 // Without stealth plugin, the website shows an hcaptcha on login with username/password and in the last step of claiming a game. It may have other heuristics like unsuccessful logins as well. After <6h (TBD) it resets to no captcha again. Getting a new IP also resets.
-await stealth(context);
+await stealth(context, fp);
 
 if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
 
@@ -156,8 +149,8 @@ try {
 
   for (const url of urls) {
     if (cfg.time) console.time('claim game');
-    await page.goto(url); // , { waitUntil: 'domcontentloaded' });
-    const purchaseBtn = page.locator('button[data-testid="purchase-cta-button"] >> :has-text("e"), :has-text("i")').first(); // when loading, the button text is empty -> need to wait for some text {'get', 'in library', 'requires base game'} -> just wait for e or i to not be too specific; :text-matches("\w+") somehow didn't work - https://github.com/vogler/free-games-claimer/issues/375
+    await withRetry(`goto ${url}`, () => page.goto(url), { retries: 3, delayMs: 15000 });
+    const purchaseBtn = page.locator('button[data-testid="purchase-cta-button"]').filter({ hasText: /[ei]/i }); // when loading, the button text is empty -> need to wait for some text {'get', 'in library', 'requires base game'} -> just wait for e or i to not be too specific; >> selector was deprecated in Playwright - https://github.com/vogler/free-games-claimer/issues/375
     await purchaseBtn.waitFor();
     const btnText = (await purchaseBtn.innerText()).toLowerCase(); // barrier to block until page is loaded
 
@@ -228,7 +221,7 @@ try {
       // Accept End User License Agreement (only needed once)
       page.locator(':has-text("end user license agreement")').waitFor().then(async () => {
         console.log('  Accept End User License Agreement (only needed once)');
-        console.log(page.innerHTML);
+        console.log(await page.innerHTML('body'));
         console.log('Please report the HTML above here: https://github.com/vogler/free-games-claimer/issues/371');
         await page.locator('input#agree').check(); // TODO Bundle: got stuck here; likely unrelated to bundle and locator just changed: https://github.com/vogler/free-games-claimer/issues/371
         await page.locator('button:has-text("Accept")').click();
@@ -315,6 +308,7 @@ try {
   if (error.message && process.exitCode != 130) notify(`epic-games failed: ${error.message.split('\n')[0]}`);
 } finally {
   await db.write(); // write out json db
+  writeLastRun('epic-games');
   if (notify_games.filter(g => g.status == 'claimed' || g.status == 'failed').length) { // don't notify if all have status 'existed', 'manual', 'requires base game', 'unavailable-in-region', 'skipped'
     notify(`epic-games (${user}):<br>${html_game_list(notify_games)}`);
   }
