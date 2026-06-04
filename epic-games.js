@@ -4,7 +4,7 @@ import { authenticator } from 'otplib';
 import chalk from 'chalk';
 import path from 'path';
 import { existsSync, writeFileSync } from 'fs';
-import { resolve, jsonDb, datetime, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
+import { resolve, jsonDb, datetime, dateFromStr, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
 import { getMobileGames } from './src/epic-games-mobile.js';
 
@@ -162,7 +162,21 @@ try {
 
   for (const url of urls) {
     if (cfg.time) console.time('claim game');
-    if (db.data[user][url.split('/').pop()]?.status == 'claimed') {
+    const game_id = url.split('/').pop();
+    let game = db.data[user][game_id]; // undefined for new game, updated below
+
+    // If game already existed in db and the date is more than a week in the past, add current datetime to existed list
+    if (game?.time) {
+      // Use the last entry in existed array if it exists, otherwise fall back to game.time
+      const timeToCheck = game.existed?.slice(-1)[0] ?? game.time;
+      const storedDate = dateFromStr(timeToCheck);
+      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      if (storedDate < oneWeekAgo) {
+        game.existed ??= [];
+        game.existed.push(datetime());
+      }
+    }
+    if (game?.status == 'claimed') {
       console.log('Already claimed, skipping:', url);
       if (cfg.time) console.timeEnd('claim game');
       continue;
@@ -208,9 +222,8 @@ try {
     } else {
       title = await page.locator('h1').first().innerText();
     }
-    const game_id = page.url().split('/').pop();
-    const existedInDb = db.data[user][game_id];
-    db.data[user][game_id] ||= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
+    game = db.data[user][game_id] ??= { title, time: datetime(), url: page.url() }; // this will be set on the initial run only!
+
     console.log('Current free game:', chalk.blue(title));
     if (bundle_includes) console.log('  This bundle includes:', bundle_includes);
     const notify_game = { title, url, status: 'failed' };
@@ -218,14 +231,14 @@ try {
 
     if (btnText == 'in library') {
       console.log('  Already in library! Nothing to claim.');
-      if (!existedInDb) await notify(`Game already in library: ${url}`);
+      if (!game) await notify(`Game already in library: ${url}`);
       notify_game.status = 'existed';
-      db.data[user][game_id].status ||= 'existed'; // does not overwrite claimed or failed
-      if (db.data[user][game_id].status.startsWith('failed')) db.data[user][game_id].status = 'manual'; // was failed but now it's claimed
+      game.status ??= 'existed'; // does not overwrite claimed or failed
+      if (game.status.startsWith('failed')) game.status = 'manual'; // was failed but now it's claimed
     } else if (btnText == 'requires base game') {
       console.log('  Requires base game! Nothing to claim.');
       notify_game.status = 'requires base game';
-      db.data[user][game_id].status ||= 'failed:requires-base-game';
+      game.status ??= 'failed:requires-base-game';
       // TODO claim base game if it is free
       const baseUrl = 'https://store.epicgames.com' + await page.locator('a:has-text("Overview")').getAttribute('href');
       console.log('  Base game:', baseUrl);
@@ -258,7 +271,7 @@ try {
       // skip game if unavailable in region, https://github.com/vogler/free-games-claimer/issues/46 TODO check games for account's region
       if (await iframe.locator(':has-text("unavailable in your region")').count() > 0) {
         console.error('  This product is unavailable in your region!');
-        db.data[user][game_id].status = notify_game.status = 'unavailable-in-region';
+        game.status = notify_game.status = 'unavailable-in-region';
         if (cfg.time) console.timeEnd('claim game');
         continue;
       }
@@ -310,8 +323,8 @@ try {
           await notify('epic-games: failed to challenge captcha. Please check.');
         }).catch(_ => { });
         await page.locator("text=It's all yours").waitFor({ state: 'attached' }); // TODO Bundle: got stuck here, but normal game now as well
-        db.data[user][game_id].status = 'claimed';
-        db.data[user][game_id].time = datetime(); // claimed time overwrites failed/dryrun time
+        game.status = 'claimed';
+        game.time = datetime(); // claimed time overwrites failed/dryrun time
         console.log('  Claimed successfully!');
         // context.setDefaultTimeout(cfg.timeout);
       } catch (e) {
@@ -320,9 +333,9 @@ try {
         console.error('  Failed to claim! To avoid captchas try to get a new IP address.');
         const p = screenshot('failed', `${game_id}_${filenamify(datetime())}.png`);
         await page.screenshot({ path: p, fullPage: true });
-        db.data[user][game_id].status = 'failed';
+        game.status = 'failed';
       }
-      notify_game.status = db.data[user][game_id].status; // claimed or failed
+      notify_game.status = game.status; // claimed or failed
 
       const p = screenshot(`${game_id}.png`);
       if (!existsSync(p)) await page.screenshot({ path: p, fullPage: false }); // fullPage is quite long...
