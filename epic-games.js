@@ -8,6 +8,27 @@ import { resolve, jsonDb, datetime, dateFromStr, filenamify, prompt, confirm, no
 import { cfg } from './src/config.js';
 import { getMobileGames } from './src/epic-games-mobile.js';
 
+const getGameUrls = async () => {
+  // const params = new URLSearchParams({ locale: 'en-US', country: 'US', allowCountries: 'US' });
+  // const body = await (await fetch(`https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions?${params}`)).json();
+  const body = await (await fetch('https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions')).json();
+  const now = new Date();
+  const slug = ({ catalogNs, offerMappings, productSlug, urlSlug }) =>
+    catalogNs?.mappings?.find(m => m.pageType === 'productHome')?.pageSlug ?? catalogNs?.mappings?.[0]?.pageSlug
+    ?? offerMappings?.find(m => m.pageType === 'productHome')?.pageSlug ?? offerMappings?.[0]?.pageSlug
+    ?? productSlug?.replace(/\/home$/, '')
+    ?? urlSlug;
+  return (body.data?.Catalog?.searchStore?.elements ?? [])
+    .filter(e => e.promotions?.promotionalOffers?.some(({ promotionalOffers }) =>
+      promotionalOffers?.some(({ startDate, endDate, discountSetting }) =>
+        discountSetting?.discountPercentage === 0 && new Date(startDate) <= now && now <= new Date(endDate)
+      )
+    ))
+    .map(slug)
+    .filter(Boolean)
+    .map(s => `https://store.epicgames.com/en-US/p/${s}`);
+};
+
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'epic-games', ...a);
 
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
@@ -134,21 +155,8 @@ try {
   if (cfg.time) console.timeEnd('login');
   if (cfg.time) console.time('claim all games');
 
-  // Detect free games
-  const game_loc = page.locator('a:has(span:text-is("Free Now"))');
-  await game_loc.last().waitFor().catch(_ => {
-    // rarely there are no free games available -> catch Timeout
-    // TODO would be better to wait for alternative like 'coming soon' instead of waiting for timeout
-    // see https://github.com/vogler/free-games-claimer/issues/210#issuecomment-1727420943
-    console.error('Seems like currently there are no free games available in your region...');
-    // urls below should then be an empty list
-  });
-  // clicking on `game_sel` sometimes led to a 404, see https://github.com/vogler/free-games-claimer/issues/25
-  // debug showed that in those cases the href was still correct, so we `goto` the urls instead of clicking.
-  // Alternative: parse the json loaded to build the page https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions
-  // i.e. filter data.Catalog.searchStore.elements for .promotions.promotionalOffers being set and build URL with .catalogNs.mappings[0].pageSlug or .urlSlug if not set to some wrong id like it was the case for spirit-of-the-north-f58a66 - this is also what's done here: https://github.com/claabs/epicgames-freegames-node/blob/938a9653ffd08b8284ea32cf01ac8727d25c5d4c/src/puppet/free-games.ts#L138-L213
-  const urlSlugs = await Promise.all((await game_loc.all()).map(a => a.getAttribute('href')));
-  const urls = urlSlugs.map(s => 'https://store.epicgames.com' + s);
+  const urls = await getGameUrls();
+  if (!urls.length) console.error('Seems like currently there are no free games available in your region...'); // see https://github.com/vogler/free-games-claimer/issues/210#issuecomment-1727420943
 
   // Free mobile games - https://github.com/vogler/free-games-claimer/issues/474
   // https://egs-platform-service.store.epicgames.com/api/v2/public/discover/home?count=10&country=DE&locale=en&platform=android&start=0&store=EGS
