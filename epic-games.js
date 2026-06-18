@@ -330,7 +330,10 @@ try {
           console.error('  Failed to challenge captcha, please try again later.');
           await notify('epic-games: failed to challenge captcha. Please check.');
         }).catch(_ => { });
-        await page.locator("text=It's all yours").waitFor({ state: 'attached' }); // TODO Bundle: got stuck here, but normal game now as well
+        await Promise.any([
+          page.locator("text=It's all yours").waitFor({ state: 'attached' }), // TODO Bundle: got stuck here, but normal game now as well
+          page.locator("text=Download the Epic Games Launcher to play").waitFor({ state: 'attached' })
+        ]);
         game.status = 'claimed';
         game.time = datetime(); // claimed time overwrites failed/dryrun time
         console.log('  Claimed successfully!');
