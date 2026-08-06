@@ -332,7 +332,8 @@ try {
         }).catch(_ => { });
         await Promise.any([
           page.locator("text=It's all yours").waitFor({ state: 'attached' }), // TODO Bundle: got stuck here, but normal game now as well
-          page.locator("text=Download the Epic Games Launcher to play").waitFor({ state: 'attached' })
+          page.locator("text=Download the Epic Games Launcher to play").waitFor({ state: 'attached' }),
+          page.locator("text=Is Epic Games Launcher installed?").waitFor({ state: 'attached' })
         ]);
         game.status = 'claimed';
         game.time = datetime(); // claimed time overwrites failed/dryrun time
