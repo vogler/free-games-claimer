@@ -2,3 +2,4 @@ node_modules/
 data/
 *.env
 megalinter-reports/
+.playwright-mcp/
