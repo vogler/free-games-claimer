@@ -143,69 +143,91 @@ const ensureLoggedIn = async (page: Page, context: BrowserContext, region: strin
   console.log(`Waiting up to ${cfg.login_timeout / 1000}s for login / 2FA completion in browser or terminal...`);
   context.setDefaultTimeout(cfg.login_timeout);
 
-  // Check if 2FA / Identity verification page appears
-  const is2FARequired = await Promise.race([
-    page.waitForURL(url => url.pathname.includes('/fe/service/identity') || url.pathname.includes('verify'), { timeout: 15000 }).then(() => true).catch(() => false),
-    page.waitForURL(url => !url.hostname.includes('account.xiaomi.com') && (url.hostname.includes('mi.com') || url.hostname.includes('buy.mi.com')), { timeout: 15000 }).then(() => false).catch(() => false),
-  ]);
-
-  if (is2FARequired && page.url().includes('account.xiaomi.com')) {
-    console.log(chalk.cyan('Identity / 2FA verification required...'));
-
-    const codeInput = page.locator('input.mi-input__inner, input[type="text"]:not([name="account"]), input[type="tel"], input[type="number"]');
-    const sendEmailBtn = page.locator('button.mi-button--primary, button[type="submit"]');
-
-    // Wait for the verification SPA to render either the Send button or the code input
-    await Promise.race([
-      sendEmailBtn.waitFor({ state: 'visible', timeout: 10000 }),
-      codeInput.waitFor({ state: 'visible', timeout: 10000 }),
-    ]).catch(() => {});
-
-    // Check for any visible error messages (e.g. rate limits)
-    const checkError = async () => {
-      const errorLocator = page.locator('.mi-form-helper-text--error, .mi-input__error, .ant-form-item-explain-error, .mi-form-item__error');
-      if (await errorLocator.first().isVisible().catch(() => false)) {
-        const errorText = await errorLocator.first().innerText().catch(() => '');
-        if (errorText) throw new Error(`Xiaomi verification error: ${errorText}`);
-      }
-    };
-
-    await checkError();
-
-    // If code input is not visible yet, click the Send button to dispatch the email code
-    if (!await codeInput.isVisible().catch(() => false)) {
-      if (await sendEmailBtn.isVisible().catch(() => false)) {
-        console.log(datetime(), 'Triggering verification code email...');
-        await sendEmailBtn.click().catch(() => {});
-        await page.waitForTimeout(1000);
-        await checkError();
-      }
-    }
-
-    // Wait for the code input field to be rendered
-    await codeInput.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
-    await checkError();
-
-    if (await codeInput.isVisible().catch(() => false)) {
-      const otp = await prompt({
-        type: 'text',
-        message: 'Enter 2FA verification code sent to your email',
-        validate: (n: string) => n.toString().length === 6 || 'The code must be 6 digits!',
-      });
-
-      if (otp) {
-        await codeInput.fill(otp);
-        await codeInput.press('Enter').catch(() => {});
-
-        // Target the main submit button at the bottom of the form
-        const submitCodeBtn = page.locator('button.mi-button--primary, button[type="submit"]').last();
-        if (await submitCodeBtn.isVisible().catch(() => false)) {
-          await submitCodeBtn.click({ force: true }).catch(() => {});
+  let lastIdentityError: string | null = null;
+  const responseListener = async (res: any) => {
+    const url = res.url();
+    if (url.includes('account.xiaomi.com/identity/') || url.includes('account.xiaomi.com/pass/')) {
+      try {
+        const text = await res.text();
+        const cleanJson = text.replace(/^&&&START&&&/, '');
+        const data = JSON.parse(cleanJson);
+        if (data.code !== undefined && data.code !== 0 && (data.tips || data.description || data.desc)) {
+          lastIdentityError = data.tips || data.description || data.desc;
         }
-        await page.waitForTimeout(1000);
-        await checkError();
+      } catch {}
+    }
+  };
+  page.on('response', responseListener);
+
+  try {
+    // Check if 2FA / Identity verification page appears
+    const is2FARequired = await Promise.race([
+      page.waitForURL(url => url.pathname.includes('/fe/service/identity') || url.pathname.includes('verify'), { timeout: 15000 }).then(() => true).catch(() => false),
+      page.waitForURL(url => !url.hostname.includes('account.xiaomi.com') && (url.hostname.includes('mi.com') || url.hostname.includes('buy.mi.com')), { timeout: 15000 }).then(() => false).catch(() => false),
+    ]);
+
+    if (is2FARequired && page.url().includes('account.xiaomi.com')) {
+      console.log(chalk.cyan('Identity / 2FA verification required...'));
+
+      const codeInput = page.locator('input.mi-input__inner, input.miui-input__inner, input[type="text"]:not([name="account"]), input[type="tel"], input[type="number"]');
+      const sendEmailBtn = page.locator('button.miui-btn-primary, button.mi-button--primary, button[type="submit"]');
+
+      // Wait for the verification SPA to render either the Send button or the code input
+      await Promise.race([
+        sendEmailBtn.waitFor({ state: 'visible', timeout: 10000 }),
+        codeInput.waitFor({ state: 'visible', timeout: 10000 }),
+      ]).catch(() => {});
+
+      // Check for any visible error messages (e.g. rate limits or API errors)
+      const checkError = async () => {
+        if (lastIdentityError) {
+          throw new Error(`Xiaomi verification error: ${lastIdentityError}`);
+        }
+        const domError = await page.locator('[class*="Notification"], [class*="tips"], [class*="error"], [role="alert"]').first().innerText().catch(() => '');
+        if (domError && !domError.includes('Senden') && !domError.includes('Send') && !domError.includes('Hilfe') && !domError.includes('Help')) {
+          throw new Error(`Xiaomi verification error: ${domError}`);
+        }
+      };
+
+      await checkError();
+
+      // If code input is not visible yet, click the Send button to dispatch the email code
+      if (!await codeInput.isVisible().catch(() => false)) {
+        if (await sendEmailBtn.isVisible().catch(() => false)) {
+          console.log(datetime(), 'Triggering verification code email...');
+          await sendEmailBtn.click().catch(() => {});
+          await page.waitForTimeout(1000);
+          await checkError();
+        }
+      }
+
+      // Wait for the code input field to be rendered
+      await codeInput.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+      await checkError();
+
+      if (await codeInput.isVisible().catch(() => false)) {
+        const otp = await prompt({
+          type: 'text',
+          message: 'Enter 2FA verification code sent to your email',
+          validate: (n: string) => n.toString().length === 6 || 'The code must be 6 digits!',
+        });
+
+        if (otp) {
+          await codeInput.fill(otp);
+          await codeInput.press('Enter').catch(() => {});
+
+          // Target the main submit button at the bottom of the form
+          const submitCodeBtn = page.locator('button.miui-btn-primary, button.mi-button--primary, button[type="submit"]').last();
+          if (await submitCodeBtn.isVisible().catch(() => false)) {
+            await submitCodeBtn.click({ force: true }).catch(() => {});
+          }
+          await page.waitForTimeout(1000);
+          await checkError();
+        }
       }
     }
+  } finally {
+    page.off('response', responseListener);
   }
 
   // Wait for redirect back from account.xiaomi.com to mi.com
