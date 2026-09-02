@@ -12,6 +12,7 @@ Claims free games periodically on
 <!-- - <img src="https://www.freepnglogos.com/uploads/xbox-logo-picture-png-14.png" width="32"/> [Xbox Live Games with Gold](https://www.xbox.com/en-US/live/gold#gameswithgold) ([experimental](https://github.com/vogler/free-games-claimer/issues/19)) -->
 and some other free stuff (WIP):
 - AliExpress coins (reduce prices)
+- Xiaomi / Mi points (`bun mi.ts`)
 - Google Play points - WIP
 - Assets on fab.com (previously unrealengine.com, same login as Epic Games) - WIP
 - Microsoft Rewards: points can be spent on e.g. Xbox Game Pass - WIP
@@ -107,6 +108,8 @@ Available options/variables and their default values:
 | GOG_EMAIL      |              | GOG email for login. Overrides EMAIL.                                                                                        |
 | GOG_PASSWORD   |              | GOG password for login. Overrides PASSWORD.                                                                                  |
 | GOG_NEWSLETTER | 0            | Do not unsubscribe from newsletter after claiming a game if 1.                                                               |
+| MI_EMAIL       |              | Xiaomi / Mi email for login. Overrides EMAIL.                                                                               |
+| MI_PASSWORD    |              | Xiaomi / Mi password for login. Overrides PASSWORD.                                                                          |
 | LG_EMAIL       |              | Legacy Games: email to use for redeeming (if not set, defaults to PG_EMAIL).                                                 |
 
 See `src/config.js` for all options.
