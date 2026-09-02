@@ -46,6 +46,9 @@ export const cfg = {
   // auth AliExpress
   ae_email: process.env.AE_EMAIL || process.env.EMAIL,
   ae_password: process.env.AE_PASSWORD || process.env.PASSWORD,
+  // auth Xiaomi / Mi
+  mi_email: process.env.MI_EMAIL || process.env.EMAIL,
+  mi_password: process.env.MI_PASSWORD || process.env.PASSWORD,
   // OTP only via GOG_EMAIL, can't add app...
   // experimmental
   pg_redeem: process.env.PG_REDEEM == '1', // prime-gaming: redeem keys on external stores
