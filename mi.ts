@@ -1,9 +1,12 @@
-import { chromium, type BrowserContext, type Page } from 'patchright';
 import chalk from 'chalk';
+import { chromium, type BrowserContext, type Page } from 'patchright';
+import { FingerprintInjector } from 'fingerprint-injector';
+import { FingerprintGenerator } from 'fingerprint-generator';
 import { datetime, filenamify, jsonDb, prompt, notify, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
 
 interface CheckInStatus {
+  isLoggedIn: boolean;
   isCheckedIn: boolean;
   streak: number;
   earned: number;
@@ -22,61 +25,16 @@ interface MiDatabase {
   history: CheckInRecord[];
 }
 
-const ensureLoggedIn = async (page: Page, context: BrowserContext): Promise<void> => {
-  console.log(datetime(), 'Checking authentication at Xiaomi Account...');
-  await page.goto('https://account.xiaomi.com/', { waitUntil: 'domcontentloaded' });
-
-  const accountInput = page.locator('input[name="account"]');
-  const isLoginForm = await accountInput.isVisible().catch(() => false);
-
-  if (!isLoginForm) {
-    console.log(chalk.green('Already authenticated!'));
-    return;
-  }
-
-  console.log('Login form detected. Proceeding with authentication...');
-
-  // Accept cookies if banner is present
-  const cookieBtn = page.locator('.mi-cookie-banner__button');
-  await cookieBtn.click().catch(() => {});
-
-  const email = cfg.mi_email || await prompt({ message: 'Enter Xiaomi email/phone' });
-  if (!email) throw new Error('Xiaomi email is required for login');
-  await accountInput.fill(email);
-
-  const passwordInput = page.locator('input[name="password"]');
-  const password = cfg.mi_password || await prompt({ type: 'password', message: 'Enter Xiaomi password' });
-  if (!password) throw new Error('Xiaomi password is required for login');
-  await passwordInput.fill(password);
-
-  // Ensure terms agreement checkbox is checked
-  const checkbox = page.locator('.ant-checkbox-input');
-  if (await checkbox.isVisible() && !await checkbox.isChecked()) {
-    await checkbox.check().catch(async () => {
-      await page.locator('.ant-checkbox').click().catch(() => {});
-    });
-  }
-
-  // Submit credentials
-  const submitBtn = page.locator('button[type="submit"]');
-  await submitBtn.click();
-
-  console.log(`Waiting up to ${cfg.login_timeout / 1000}s for login / 2FA completion...`);
-  context.setDefaultTimeout(cfg.login_timeout);
-
-  await page.waitForURL(url => !url.pathname.includes('/fe/service/login'), { timeout: cfg.login_timeout });
-  context.setDefaultTimeout(cfg.debug ? 0 : cfg.timeout);
-
-  console.log(chalk.green('Successfully authenticated!'));
-};
-
 const detectRegion = async (page: Page): Promise<string> => {
   console.log(datetime(), 'Detecting account storefront region...');
   await page.goto('https://www.mi.com/', { waitUntil: 'domcontentloaded' });
 
   const currentUrl = page.url();
   const match = currentUrl.match(/mi\.com\/([a-z]{2}(?:-[a-z]{2})?)/i);
-  const region = match ? match[1].toLowerCase() : 'de';
+  if (!match) {
+    throw new Error(`Failed to detect storefront region from URL: ${currentUrl}`);
+  }
+  const region = match[1].toLowerCase();
 
   console.log('Detected region:', chalk.cyan(region));
   return region;
@@ -87,8 +45,8 @@ const navigateToPointsCenter = async (page: Page, region: string): Promise<void>
   console.log(datetime(), `Navigating to Points Center (${pointsCenterUrl})...`);
   await page.goto(pointsCenterUrl, { waitUntil: 'domcontentloaded' });
 
-  const taskSection = page.locator('.points-task__check');
-  await taskSection.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {
+  const taskSection = page.locator('.points-task__check, .points-task');
+  await taskSection.first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => {
     console.log('Task section not immediately visible, continuing...');
   });
 };
@@ -105,6 +63,7 @@ const getCheckInStatus = async (page: Page, region: string): Promise<CheckInStat
   }, region);
 
   if (apiData?.data) {
+    const isLoggedIn = Boolean(apiData.data.isLoggedIn);
     const taskGroup = apiData.data.taskGroups?.[0];
     const checkIn = taskGroup?.dailyCheckIn;
     const isCheckedIn = Boolean(checkIn?.isCheckedIn);
@@ -114,7 +73,7 @@ const getCheckInStatus = async (page: Page, region: string): Promise<CheckInStat
     const currentDayReward = cycleRewards.find((r: { dayInCycle: number; tokens: number }) => r.dayInCycle === checkIn?.streakDayInCycle);
     const earned = currentDayReward?.tokens || 10;
 
-    return { isCheckedIn, streak, earned, total };
+    return { isLoggedIn, isCheckedIn, streak, earned, total };
   }
 
   // Fallback: scrape directly from DOM
@@ -128,11 +87,143 @@ const getCheckInStatus = async (page: Page, region: string): Promise<CheckInStat
   const isButtonDisabled = await page.locator('button.points-task__info-login[disabled]').isVisible().catch(() => false);
   const isCheckedIn = hasCompletedDay || isButtonDisabled;
 
-  return { isCheckedIn, streak: 1, earned, total };
+  return { isLoggedIn: true, isCheckedIn, streak: 1, earned, total };
+};
+
+const ensureLoggedIn = async (page: Page, context: BrowserContext, region: string): Promise<void> => {
+  console.log(datetime(), 'Checking authentication status on Mi Store...');
+  const status = await getCheckInStatus(page, region);
+
+  if (status.isLoggedIn) {
+    console.log(chalk.green('Already authenticated on Mi Store!'));
+    return;
+  }
+
+  console.log(chalk.yellow('Not logged in on Mi Store. Starting login flow...'));
+
+  // Trigger login from Points Center to establish the proper SSO callback for buy.mi.com
+  await page.evaluate(() => {
+    const loginBtn = document.querySelector('.points-task__info-login') as HTMLButtonElement | null;
+    if (loginBtn) {
+      loginBtn.click();
+    } else {
+      const headerUser = document.querySelector('.site-header__user, a[href*="/user"]') as HTMLElement | null;
+      headerUser?.click();
+    }
+  });
+
+  // Wait for navigation to Xiaomi Account login page
+  await page.waitForURL(url => url.hostname.includes('account.xiaomi.com'), { timeout: 15000 }).catch(() => {});
+
+  const accountInput = page.locator('input[name="account"]');
+  await accountInput.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+
+  // Dismiss cookie banner on login page
+  const cookieBtn = page.locator('.mi-cookie-banner__button');
+  await cookieBtn.click({ timeout: 2000 }).catch(() => {});
+
+  const email = cfg.mi_email || await prompt({ message: 'Enter Xiaomi email/phone (press Enter to log in via browser)' });
+  if (email) {
+    await accountInput.fill(email);
+    const passwordInput = page.locator('input[name="password"]');
+    const password = cfg.mi_password || await prompt({ type: 'password', message: 'Enter Xiaomi password' });
+    if (password) {
+      await passwordInput.fill(password);
+      const checkbox = page.locator('.ant-checkbox-input');
+      if (await checkbox.isVisible() && !await checkbox.isChecked()) {
+        await checkbox.check().catch(async () => {
+          await page.locator('.ant-checkbox').click().catch(() => {});
+        });
+      }
+      const submitBtn = page.locator('button[type="submit"]');
+      await submitBtn.click();
+    }
+  }
+
+  console.log(`Waiting up to ${cfg.login_timeout / 1000}s for login / 2FA completion in browser or terminal...`);
+  context.setDefaultTimeout(cfg.login_timeout);
+
+  // Check if 2FA / Identity verification page appears
+  const is2FARequired = await Promise.race([
+    page.waitForURL(url => url.pathname.includes('/fe/service/identity') || url.pathname.includes('verify'), { timeout: 15000 }).then(() => true).catch(() => false),
+    page.waitForURL(url => !url.hostname.includes('account.xiaomi.com') && (url.hostname.includes('mi.com') || url.hostname.includes('buy.mi.com')), { timeout: 15000 }).then(() => false).catch(() => false),
+  ]);
+
+  if (is2FARequired && page.url().includes('account.xiaomi.com')) {
+    console.log(chalk.cyan('Identity / 2FA verification required...'));
+
+    const codeInput = page.locator('input.mi-input__inner, input[type="text"]:not([name="account"]), input[type="tel"], input[type="number"]');
+    const sendEmailBtn = page.locator('button.mi-button--primary, button[type="submit"]');
+
+    // Wait for the verification SPA to render either the Send button or the code input
+    await Promise.race([
+      sendEmailBtn.waitFor({ state: 'visible', timeout: 10000 }),
+      codeInput.waitFor({ state: 'visible', timeout: 10000 }),
+    ]).catch(() => {});
+
+    // Check for any visible error messages (e.g. rate limits)
+    const checkError = async () => {
+      const errorLocator = page.locator('.mi-form-helper-text--error, .mi-input__error, .ant-form-item-explain-error, .mi-form-item__error');
+      if (await errorLocator.first().isVisible().catch(() => false)) {
+        const errorText = await errorLocator.first().innerText().catch(() => '');
+        if (errorText) throw new Error(`Xiaomi verification error: ${errorText}`);
+      }
+    };
+
+    await checkError();
+
+    // If code input is not visible yet, click the Send button to dispatch the email code
+    if (!await codeInput.isVisible().catch(() => false)) {
+      if (await sendEmailBtn.isVisible().catch(() => false)) {
+        console.log(datetime(), 'Triggering verification code email...');
+        await sendEmailBtn.click().catch(() => {});
+        await page.waitForTimeout(1000);
+        await checkError();
+      }
+    }
+
+    // Wait for the code input field to be rendered
+    await codeInput.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+    await checkError();
+
+    if (await codeInput.isVisible().catch(() => false)) {
+      const otp = await prompt({
+        type: 'text',
+        message: 'Enter 2FA verification code sent to your email',
+        validate: (n: string) => n.toString().length === 6 || 'The code must be 6 digits!',
+      });
+
+      if (otp) {
+        await codeInput.fill(otp);
+        await codeInput.press('Enter').catch(() => {});
+
+        // Target the main submit button at the bottom of the form
+        const submitCodeBtn = page.locator('button.mi-button--primary, button[type="submit"]').last();
+        if (await submitCodeBtn.isVisible().catch(() => false)) {
+          await submitCodeBtn.click({ force: true }).catch(() => {});
+        }
+        await page.waitForTimeout(1000);
+        await checkError();
+      }
+    }
+  }
+
+  // Wait for redirect back from account.xiaomi.com to mi.com
+  await page.waitForURL(url => !url.hostname.includes('account.xiaomi.com') && (url.hostname.includes('mi.com') || url.hostname.includes('buy.mi.com')), { timeout: cfg.login_timeout });
+  context.setDefaultTimeout(cfg.debug ? 0 : cfg.timeout);
+
+  // Ensure we are on the points-center page
+  await navigateToPointsCenter(page, region);
+  console.log(chalk.green('Successfully authenticated on Mi Store!'));
 };
 
 const claimDailyPoints = async (page: Page, region: string): Promise<CheckInStatus> => {
   const initialStatus = await getCheckInStatus(page, region);
+
+  if (!initialStatus.isLoggedIn) {
+    console.log(chalk.red('Not logged in on Points Center. Cannot claim points.'));
+    return initialStatus;
+  }
 
   if (initialStatus.isCheckedIn) {
     console.log(chalk.yellow('Already checked in for today!'));
@@ -141,6 +232,7 @@ const claimDailyPoints = async (page: Page, region: string): Promise<CheckInStat
 
   console.log(datetime(), 'Claiming daily points...');
 
+  // Try clicking check-in button or coin icon
   const checkInBtn = page.locator('button.points-task__info-login:not([disabled])');
   const todayIcon = page.locator('.points-task__day-icon--today');
 
@@ -184,6 +276,11 @@ const saveHistory = async (record: CheckInRecord): Promise<void> => {
 const main = async (): Promise<void> => {
   console.log(datetime(), 'Started checking Xiaomi Mi Points Center');
 
+  const { fingerprint, headers } = new FingerprintGenerator().getFingerprint({
+    devices: ['desktop'],
+    operatingSystems: ['macos', 'windows', 'linux'],
+  });
+
   const context = await chromium.launchPersistentContext(cfg.dir.browser, {
     headless: cfg.headless,
     viewport: { width: cfg.width, height: cfg.height },
@@ -191,19 +288,33 @@ const main = async (): Promise<void> => {
     recordVideo: cfg.record ? { dir: 'data/record/', size: { width: cfg.width, height: cfg.height } } : undefined,
     recordHar: cfg.record ? { path: `data/record/mi-${filenamify(datetime())}.har` } : undefined,
     handleSIGINT: false,
+    userAgent: fingerprint.navigator.userAgent,
+    extraHTTPHeaders: {
+      'accept-language': headers['accept-language'] || 'en-US,en;q=0.9',
+    },
     args: ['--hide-crash-restore-bubble'],
   });
 
   handleSIGINT(context);
+  await new FingerprintInjector().attachFingerprintToPlaywright(context, { fingerprint, headers });
+
   if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
+
+  // Suppress TrustArc cookie consent banners across mi.com (essential cookies only)
+  await context.addCookies([
+    { name: 'notice_behavior', value: 'implied,eu', domain: '.mi.com', path: '/' },
+    { name: 'notice_preferences', value: '0:', domain: '.mi.com', path: '/' },
+    { name: 'notice_gdpr_prefs', value: '0:', domain: '.mi.com', path: '/' },
+    { name: 'cmapi_cookie_privacy', value: 'permit 1 required', domain: '.mi.com', path: '/' },
+  ]);
 
   const page = context.pages().length ? context.pages()[0] : await context.newPage();
   await page.setViewportSize({ width: cfg.width, height: cfg.height });
 
   try {
-    await ensureLoggedIn(page, context);
     const region = await detectRegion(page);
     await navigateToPointsCenter(page, region);
+    await ensureLoggedIn(page, context, region);
 
     const initialStatus = await getCheckInStatus(page, region);
     const wasAlreadyCheckedIn = initialStatus.isCheckedIn;
@@ -218,11 +329,13 @@ const main = async (): Promise<void> => {
       total: finalStatus.total,
     };
 
-    await saveHistory(record);
+    if (finalStatus.isLoggedIn) {
+      await saveHistory(record);
+    }
 
     console.log();
     console.log(chalk.bold('================ Xiaomi Points ================'));
-    console.log('Status:      ', wasAlreadyCheckedIn ? chalk.yellow('Already Checked In') : chalk.green(`Claimed (+${finalStatus.earned} points)`));
+    console.log('Status:      ', !finalStatus.isLoggedIn ? chalk.red('Login Failed') : wasAlreadyCheckedIn ? chalk.yellow('Already Checked In') : chalk.green(`Claimed (+${finalStatus.earned} points)`));
     console.log('Streak:      ', `${finalStatus.streak} day(s)`);
     console.log('Total Points:', chalk.bold(finalStatus.total.toLocaleString()));
     console.log(chalk.bold('==============================================='));
