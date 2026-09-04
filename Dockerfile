@@ -70,7 +70,7 @@ COPY . .
 
 # Shell scripts need Linux line endings. On Windows, git might be configured to check out dos/CRLF line endings, so we convert them for those people in case they want to build the image. They could also use --config core.autocrlf=input
 RUN dos2unix ./*.sh && chmod +x ./*.sh
-COPY docker-entrypoint.sh /usr/local/bin/
+RUN cp docker-entrypoint.sh /usr/local/bin/
 
 # set by .github/workflows/docker.yml
 ARG COMMIT=""
@@ -106,4 +106,4 @@ HEALTHCHECK --interval=5s --timeout=5s CMD pgrep node && curl --fail http://loca
 # Script to setup display server & VNC is always executed.
 ENTRYPOINT ["docker-entrypoint.sh"]
 # Default command to run. This is replaced by appending own command, e.g. `docker run ... node prime-gaming` to only run this script.
-CMD node epic-games; node prime-gaming; node gog
+CMD node steam-games; node epic-games; node prime-gaming; node gog

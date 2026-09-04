@@ -15,8 +15,7 @@ BROWSER="${BROWSER_DIR:-data/browser}"
 rm -f "/fgc/$BROWSER/SingletonLock"
 
 # Remove X server display lock, fix for `docker compose up` which reuses container which made it fail after initial run, https://github.com/vogler/free-games-claimer/issues/31
-# Maybe no longer needed after adding #478's -nolisten unix below
-rm -f /tmp/.X1-lock
+rm -f /tmp/.X1-lock /tmp/.tX1-lock /tmp/.X11-unix/X1
 
 export DISPLAY=:1 # need to export this, otherwise playwright complains with 'Looks like you launched a headed browser without having a XServer running.'
 if [ -z "$VNC_PASSWORD" ]; then
@@ -31,7 +30,7 @@ else
 fi
 # TurboVNC server replaces Xvfb+x11vnc
 # shellcheck disable=SC2086
-/opt/TurboVNC/bin/vncserver $DISPLAY -geometry "${WIDTH}x${HEIGHT}" -depth "${DEPTH}" -rfbport "${VNC_PORT}" $pw -vgl -log /fgc/data/TurboVNC.log -xstartup /usr/bin/ratpoison 2>/dev/null # -noxstartup -novnc /usr/share/novnc/
+/opt/TurboVNC/bin/vncserver $DISPLAY -geometry "${WIDTH}x${HEIGHT}" -depth "${DEPTH}" -rfbport "${VNC_PORT}" $pw -vgl -log /fgc/data/TurboVNC.log -xstartup /usr/bin/ratpoison # -noxstartup -novnc /usr/share/novnc/
 echo "TurboVNC is running on port $VNC_PORT ($pwt) with resolution ${WIDTH}x${HEIGHT}"
 # TODO keep websockify just for custom NOVNC_PORT? https://www.perplexity.ai/search/how-to-specify-the-novnc-port-rfv96C9tTZufnyFPRye5xA#0
 websockify -D --web "/usr/share/novnc/" "$NOVNC_PORT" "localhost:$VNC_PORT" 2>/dev/null 1>&2 &

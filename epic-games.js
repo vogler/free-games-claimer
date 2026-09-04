@@ -137,6 +137,11 @@ try {
         console.error('Login error:', await error.innerText());
         console.log('Please login in the browser!');
       }).catch(_ => { });
+      // handle "Is this the right account?" prompt, but don't await it
+      page.waitForSelector('button#yes, button[aria-label="Yes, continue"]', { timeout: 30000 }).then(async (btn) => {
+        console.log('Got "Is this the right account?" prompt, clicking Yes, continue...');
+        await btn.click({ delay: 111 });
+      }).catch(_ => { });
       // handle MFA, but don't await it
       page.waitForURL('**/id/login/mfa**').then(async () => {
         console.log('Enter the security code to continue - This appears to be a new device, browser or location. A security code has been sent to your email address at ...');

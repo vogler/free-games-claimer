@@ -29,9 +29,31 @@ Raspberry Pi (and other SBC): [requires 64-bit OS](https://github.com/vogler/fre
 
 ### Container
 
-You can [install Docker](https://docs.docker.com/get-docker/) and run this command in a terminal:
+You can [install Docker](https://docs.docker.com/get-docker/) and use either `docker run` or `docker compose`.
+
+#### Method 1: docker run
+Run this command in a terminal:
 ```sh
 docker run --rm -it -p 6080:6080 -v fgc:/fgc/data --pull=always ghcr.io/vogler/free-games-claimer
+```
+
+*(Note: If the official image has not been updated yet and you want to use the newest fixes from my branch, run these two commands instead:)*
+```sh
+docker build -t fgc https://github.com/P-Adamiec/free-games-claimer.git#steam-and-auth-ui-fix
+docker run --rm -it -p 6080:6080 -v fgc:/fgc/data fgc
+```
+
+#### Method 2: docker compose
+There's also a `docker-compose.yml` which you can use as an alternative (or if you need it for Portainer, your NAS, Unraid, ...). 
+If you want to use the standard version, just download the `docker-compose.yml` file and run `docker compose up -d`.
+
+*(Note: If you want to use the newest fixes from my branch, follow these steps:)*
+Clone my branch to your computer. This gives you easy access to customize the `docker-compose.yml` file:
+```bash
+git clone -b steam-and-auth-ui-fix https://github.com/P-Adamiec/free-games-claimer.git
+cd free-games-claimer
+# (Optional: Edit the docker-compose.yml file here to your needs)
+docker compose up -d --build
 ```
 
 _This currently gives you a captcha challenge for epic-games. Until [issue #183](https://github.com/vogler/free-games-claimer/issues/183) is fixed, it is recommended to just run `node epic-games` without Docker on a desktop machine (not headless, see below)._
@@ -39,7 +61,6 @@ _This currently gives you a captcha challenge for epic-games. Until [issue #183]
 This will run `node epic-games; node prime-gaming; node gog` - if you only want to claim games for one of the stores, you can override the default command by appending e.g. `node epic-games` at the end of the `docker run` command, or if you want several, `bash -c "node epic-games.js; node gog.js"`.
 Data (including json files with claimed games, codes to redeem, screenshots) is stored in the Docker volume `fgc`.
 
-There's also a `docker-compose.yml` which you can use as an alternative with `docker compose up` (or if you need it for Portainer, your NAS, Unraid, ...).
 
 <!-- <details>
   <summary>I want to run without Docker or develop locally.</summary> -->
@@ -106,7 +127,9 @@ Available options/variables and their default values:
 | PG_CLAIMDLC    | 0            | Prime Gaming: try to claim DLCs ([experimental](https://github.com/vogler/free-games-claimer/issues/55)).                    |
 | GOG_EMAIL      |              | GOG email for login. Overrides EMAIL.                                                                                        |
 | GOG_PASSWORD   |              | GOG password for login. Overrides PASSWORD.                                                                                  |
-| GOG_NEWSLETTER | 0            | Do not unsubscribe from newsletter after claiming a game if 1.                                                               |
+| GOG_NEWSLETTER | 1            | Do not unsubscribe from newsletter after claiming a game if 1.                                                               |
+| STEAM_USERNAME |              | Steam username for login.                                                                                                    |
+| STEAM_PASSWORD |              | Steam password for login. Overrides PASSWORD.                                                                                |
 | LG_EMAIL       |              | Legacy Games: email to use for redeeming (if not set, defaults to PG_EMAIL).                                                 |
 
 See `src/config.js` for all options.
