@@ -192,13 +192,16 @@ try {
     await page.goto(url); // , { waitUntil: 'domcontentloaded' });
     // when loading, the button text is empty -> need to wait for some text {'get', 'in library', 'requires base game'} -> just wait for e or i to not be too specific; :text-matches("\w+") somehow didn't work - https://github.com/vogler/free-games-claimer/issues/375
     // was using locator('...').first().waitFor(), but that at some point led to exception locator.waitFor: Error: Can't query n-th element
+    // Epic dropped data-testid="purchase-cta-button" in 10/2026; the sidebar button now only has a hashed _sidebarBuyButton_ class
+    const purchaseSel = 'button[data-testid="purchase-cta-button"], button[class*="_sidebarBuyButton_"]';
     await page.waitForFunction(
-      () => {
-        const btn = document.querySelector('button[data-testid="purchase-cta-button"]');
+      sel => {
+        const btn = document.querySelector(sel);
         return btn && /[ei]/i.test(btn.textContent) && btn.textContent != 'Loading';
-      }
+      },
+      purchaseSel,
     );
-    const purchaseBtn = page.locator('button[data-testid="purchase-cta-button"]').first();
+    const purchaseBtn = page.locator(purchaseSel).first();
     const btnText = (await purchaseBtn.innerText()).toLowerCase(); // barrier to block until page is loaded
 
     // click Continue if 'This game contains mature content recommended only for ages 18+'
@@ -220,7 +223,7 @@ try {
     let title;
     let bundle_includes;
     if (await page.locator('span:text-is("About Bundle")').count()) {
-      title = (await page.locator('span:has-text("Buy"):left-of([data-testid="purchase-cta-button"])').first().innerText()).replace('Buy ', '');
+      title = (await page.locator(`span:has-text("Buy"):left-of(:is(${purchaseSel}))`).first().innerText()).replace('Buy ', '');
       // h1 first didn't exist for bundles but now it does... However h1 would e.g. be 'Fallout® Classic Collection' instead of 'Fallout Classic Collection'
       try {
         bundle_includes = await Promise.all((await page.locator('.product-card-top-row h5').all()).map(b => b.innerText()));
@@ -274,7 +277,15 @@ try {
       }).catch(_ => { });
 
       // it then creates an iframe for the purchase
-      await page.waitForSelector('#webPurchaseContainer iframe'); // TODO needed?
+      // or, if the store only shows a cached display name, Epic redirects to its login page
+      await Promise.race([
+        page.waitForSelector('#webPurchaseContainer iframe'), // TODO needed?
+        page.waitForURL(/epicgames\.com\/id\/login/),
+      ]);
+      if (page.url().includes('/id/login')) {
+        console.error('  Session expired: Epic asks to sign in again before claiming.');
+        throw new Error('epic-games session expired (redirected to /id/login on Get)');
+      }
       const iframe = page.frameLocator('#webPurchaseContainer iframe');
       // skip game if unavailable in region, https://github.com/vogler/free-games-claimer/issues/46 TODO check games for account's region
       if (await iframe.locator(':has-text("unavailable in your region")').count() > 0) {
