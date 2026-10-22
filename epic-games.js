@@ -192,19 +192,27 @@ try {
     await page.goto(url); // , { waitUntil: 'domcontentloaded' });
     // when loading, the button text is empty -> need to wait for some text {'get', 'in library', 'requires base game'} -> just wait for e or i to not be too specific; :text-matches("\w+") somehow didn't work - https://github.com/vogler/free-games-claimer/issues/375
     // was using locator('...').first().waitFor(), but that at some point led to exception locator.waitFor: Error: Can't query n-th element
+    // Epic dropped data-testid="purchase-cta-button" in 10/2026; the sidebar button now only has a hashed _sidebarBuyButton_ class
+    const purchaseSel = 'button[data-testid="purchase-cta-button"], button[class*="_sidebarBuyButton_"]';
     await page.waitForFunction(
-      () => {
-        const btn = document.querySelector('button[data-testid="purchase-cta-button"]');
+      sel => {
+        const btn = document.querySelector(sel);
         return btn && /[ei]/i.test(btn.textContent) && btn.textContent != 'Loading';
-      }
+      },
+      purchaseSel,
     );
-    const purchaseBtn = page.locator('button[data-testid="purchase-cta-button"]').first();
+    const purchaseBtn = page.locator(purchaseSel).first();
     const btnText = (await purchaseBtn.innerText()).toLowerCase(); // barrier to block until page is loaded
 
     // click Continue if 'This game contains mature content recommended only for ages 18+'
     if (await page.locator('button:has-text("Continue")').count() > 0) {
       console.log('  This game contains mature content recommended only for ages 18+');
-      if (await page.locator('[data-testid="AgeSelect"]').count()) {
+      if (await page.locator('[role="combobox"][aria-label="Month"]').count()) { // new age gate (10/2026): MM/DD/YYYY comboboxes; the HasAcceptedAgeGates cookie is no longer enough
+        for (const [label, value] of [['Month', '01'], ['Day', '01'], ['Year', '1987']]) {
+          await page.locator(`[role="combobox"][aria-label="${label}"]`).click();
+          await page.getByRole('option', { name: value, exact: true }).click();
+        }
+      } else if (await page.locator('[data-testid="AgeSelect"]').count()) {
         console.error('  Got "To continue, please provide your date of birth" - This shouldn\'t happen due to cookie set above. Please report to https://github.com/vogler/free-games-claimer/issues/275');
         await page.locator('#month_toggle').click();
         await page.locator('#month_menu li:has-text("01")').click();
@@ -213,14 +221,15 @@ try {
         await page.locator('#year_toggle').click();
         await page.locator('#year_menu li:has-text("1987")').click();
       }
-      await page.click('button:has-text("Continue")', { delay: 111 });
+      await page.click('button:has-text("Continue"):not([disabled])', { delay: 111, timeout: 10000 }).catch(_ => { }); // the gate sometimes closes by itself and the button gets detached
+      await page.locator('[role="combobox"][aria-label="Month"]').waitFor({ state: 'detached', timeout: 15000 }).catch(_ => { });
       await page.waitForTimeout(2000);
     }
 
     let title;
     let bundle_includes;
     if (await page.locator('span:text-is("About Bundle")').count()) {
-      title = (await page.locator('span:has-text("Buy"):left-of([data-testid="purchase-cta-button"])').first().innerText()).replace('Buy ', '');
+      title = (await page.locator(`span:has-text("Buy"):left-of(:is(${purchaseSel}))`).first().innerText()).replace('Buy ', '');
       // h1 first didn't exist for bundles but now it does... However h1 would e.g. be 'Fallout® Classic Collection' instead of 'Fallout Classic Collection'
       try {
         bundle_includes = await Promise.all((await page.locator('.product-card-top-row h5').all()).map(b => b.innerText()));
@@ -274,8 +283,18 @@ try {
       }).catch(_ => { });
 
       // it then creates an iframe for the purchase
-      await page.waitForSelector('#webPurchaseContainer iframe'); // TODO needed?
-      const iframe = page.frameLocator('#webPurchaseContainer iframe');
+      // 10/2026: the checkout is no longer inside #webPurchaseContainer, it's an iframe with src .../checkout?purchaseToken=...
+      const checkoutIframe = '#webPurchaseContainer iframe, iframe[src*="/checkout"]';
+      // or, if the store only shows a cached display name, Epic redirects to its login page
+      await Promise.race([
+        page.waitForSelector(checkoutIframe),
+        page.waitForURL(/epicgames\.com\/id\/login/),
+      ]);
+      if (page.url().includes('/id/login')) {
+        console.error('  Session expired: Epic asks to sign in again before claiming.');
+        throw new Error('epic-games session expired (redirected to /id/login on Get)');
+      }
+      const iframe = page.frameLocator(checkoutIframe).first();
       // skip game if unavailable in region, https://github.com/vogler/free-games-claimer/issues/46 TODO check games for account's region
       if (await iframe.locator(':has-text("unavailable in your region")').count() > 0) {
         console.error('  This product is unavailable in your region!');
@@ -333,7 +352,8 @@ try {
         await Promise.any([
           page.locator("text=It's all yours").waitFor({ state: 'attached' }), // TODO Bundle: got stuck here, but normal game now as well
           page.locator("text=Download the Epic Games Launcher to play").waitFor({ state: 'attached' }),
-          page.locator("text=Is Epic Games Launcher installed?").waitFor({ state: 'attached' })
+          page.locator("text=Is Epic Games Launcher installed?").waitFor({ state: 'attached' }),
+          page.locator('button[class*="_sidebarBuyButton_"]:has-text("In Library")').waitFor({ state: 'attached' }), // new checkout (10/2026): no success text, but the sidebar button switches to 'In Library'
         ]);
         game.status = 'claimed';
         game.time = datetime(); // claimed time overwrites failed/dryrun time
