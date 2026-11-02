@@ -194,11 +194,11 @@ try {
     // was using locator('...').first().waitFor(), but that at some point led to exception locator.waitFor: Error: Can't query n-th element
     await page.waitForFunction(
       () => {
-        const btn = document.querySelector('button[data-testid="purchase-cta-button"]');
+        const btn = document.querySelector('button[class*="sidebarBuyButton"]');
         return btn && /[ei]/i.test(btn.textContent) && btn.textContent != 'Loading';
       }
     );
-    const purchaseBtn = page.locator('button[data-testid="purchase-cta-button"]').first();
+    const purchaseBtn = page.locator('button[class*="sidebarBuyButton"]').first();
     const btnText = (await purchaseBtn.innerText()).toLowerCase(); // barrier to block until page is loaded
 
     // click Continue if 'This game contains mature content recommended only for ages 18+'
@@ -220,7 +220,7 @@ try {
     let title;
     let bundle_includes;
     if (await page.locator('span:text-is("About Bundle")').count()) {
-      title = (await page.locator('span:has-text("Buy"):left-of([data-testid="purchase-cta-button"])').first().innerText()).replace('Buy ', '');
+      title = (await page.locator('span:has-text("Buy"):left-of([class*="sidebarBuyButton"])').first().innerText()).replace('Buy ', '');
       // h1 first didn't exist for bundles but now it does... However h1 would e.g. be 'Fallout® Classic Collection' instead of 'Fallout Classic Collection'
       try {
         bundle_includes = await Promise.all((await page.locator('.product-card-top-row h5').all()).map(b => b.innerText()));
