@@ -33,6 +33,7 @@ const screenshot = (...a) => resolve(cfg.dir.screenshots, 'epic-games', ...a);
 
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
 const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
+const BUY_BUTTON_SELECTOR = 'button[data-testid="purchase-cta-button"], button[class*="_sidebarBuyButton"]';
 
 console.log(datetime(), 'started checking epic-games');
 
@@ -193,12 +194,13 @@ try {
     // when loading, the button text is empty -> need to wait for some text {'get', 'in library', 'requires base game'} -> just wait for e or i to not be too specific; :text-matches("\w+") somehow didn't work - https://github.com/vogler/free-games-claimer/issues/375
     // was using locator('...').first().waitFor(), but that at some point led to exception locator.waitFor: Error: Can't query n-th element
     await page.waitForFunction(
-      () => {
-        const btn = document.querySelector('button[data-testid="purchase-cta-button"]');
-        return btn && /[ei]/i.test(btn.textContent) && btn.textContent != 'Loading';
-      }
+      sel => {
+        const btn = document.querySelector(sel);
+        return btn && (/[ei]/i).test(btn.textContent) && btn.textContent != 'Loading';
+      },
+      BUY_BUTTON_SELECTOR,
     );
-    const purchaseBtn = page.locator('button[data-testid="purchase-cta-button"]').first();
+    const purchaseBtn = page.locator(BUY_BUTTON_SELECTOR).first();
     const btnText = (await purchaseBtn.innerText()).toLowerCase(); // barrier to block until page is loaded
 
     // click Continue if 'This game contains mature content recommended only for ages 18+'
@@ -220,7 +222,7 @@ try {
     let title;
     let bundle_includes;
     if (await page.locator('span:text-is("About Bundle")').count()) {
-      title = (await page.locator('span:has-text("Buy"):left-of([data-testid="purchase-cta-button"])').first().innerText()).replace('Buy ', '');
+      title = (await page.locator(`span:has-text("Buy"):left-of(${BUY_BUTTON_SELECTOR})`).first().innerText()).replace('Buy ', '');
       // h1 first didn't exist for bundles but now it does... However h1 would e.g. be 'Fallout® Classic Collection' instead of 'Fallout Classic Collection'
       try {
         bundle_includes = await Promise.all((await page.locator('.product-card-top-row h5').all()).map(b => b.innerText()));
