@@ -34,6 +34,7 @@ const screenshot = (...a) => resolve(cfg.dir.screenshots, 'epic-games', ...a);
 const URL_CLAIM = 'https://store.epicgames.com/en-US/free-games';
 const URL_LOGIN = 'https://www.epicgames.com/id/login?lang=en-US&noHostRedirect=true&redirectUrl=' + URL_CLAIM;
 const BUY_BUTTON_SELECTOR = 'button[data-testid="purchase-cta-button"], button[class*="_sidebarBuyButton"]';
+const CHECKOUT_IFRAME_SELECTOR = 'iframe[title="Checkout"], iframe[src*="checkout"], #webPurchaseContainer iframe';
 
 console.log(datetime(), 'started checking epic-games');
 
@@ -276,8 +277,8 @@ try {
       }).catch(_ => { });
 
       // it then creates an iframe for the purchase
-      await page.waitForSelector('#webPurchaseContainer iframe'); // TODO needed?
-      const iframe = page.frameLocator('#webPurchaseContainer iframe');
+      await page.waitForSelector(CHECKOUT_IFRAME_SELECTOR); // TODO needed?
+      const iframe = page.frameLocator(CHECKOUT_IFRAME_SELECTOR);
       // skip game if unavailable in region, https://github.com/vogler/free-games-claimer/issues/46 TODO check games for account's region
       if (await iframe.locator(':has-text("unavailable in your region")').count() > 0) {
         console.error('  This product is unavailable in your region!');
@@ -308,7 +309,7 @@ try {
       }
 
       // Playwright clicked before button was ready to handle event, https://github.com/vogler/free-games-claimer/issues/84#issuecomment-1474346591
-      await iframe.locator('button:has-text("Add to library"):not(:has(.payment-loading--loading))').click({ delay: 11 });
+      await iframe.locator('button:has-text("Add to library"):not(:has(.payment-loading--loading)), button:has-text("Place Order"):not(:has(.payment-loading--loading))').click({ delay: 11 });
 
       // I Agree button is only shown for EU accounts! https://github.com/vogler/free-games-claimer/pull/7#issuecomment-1038964872
       const btnAgree = iframe.locator('button:has-text("I Accept")');
@@ -333,9 +334,13 @@ try {
           await notify('epic-games: failed to challenge captcha. Please check.');
         }).catch(_ => { });
         await Promise.any([
-          page.locator("text=It's all yours").waitFor({ state: 'attached' }), // TODO Bundle: got stuck here, but normal game now as well
-          page.locator("text=Download the Epic Games Launcher to play").waitFor({ state: 'attached' }),
-          page.locator("text=Is Epic Games Launcher installed?").waitFor({ state: 'attached' })
+          page.locator('#launcher-onboard-install-prompt-title').waitFor({ state: 'attached' }),
+          page.locator('button:has-text("Yes, it\'s installed")').waitFor({ state: 'attached' }),
+          page.locator('text=It\'s all yours').waitFor({ state: 'attached' }), // TODO Bundle: got stuck here, but normal game now as well
+          page.locator('text=Download the Epic Games Launcher to play').waitFor({ state: 'attached' }),
+          page.locator('text=Is Epic Games Launcher installed?').waitFor({ state: 'attached' }),
+          page.locator('text=Thank you').waitFor({ state: 'attached' }),
+          page.locator(BUY_BUTTON_SELECTOR).filter({ hasText: /in library/i }).waitFor({ state: 'attached' }),
         ]);
         game.status = 'claimed';
         game.time = datetime(); // claimed time overwrites failed/dryrun time
